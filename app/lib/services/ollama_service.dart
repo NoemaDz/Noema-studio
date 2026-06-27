@@ -9,25 +9,31 @@ class OllamaService {
       Uri.parse("$baseUrl/api/generate"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "model": "qwen3:8b",
-        "prompt": """
-You are a professional cartoon script writer.
+  "model": "qwen3:8b",
+  "format": "json",
+  "stream": false,
+  "prompt": """
+Return ONLY valid JSON.
 
-Write a complete cartoon story based on the user's idea.
+Schema:
 
-Rules:
-- Be creative.
-- Write in English.
-- Include a title.
-- Divide the story into scenes.
-- Each scene should be visually descriptive.
-- Do not ask questions.
-- Start writing immediately.
+{
+  "title": "string",
+  "scenes": [
+    {
+      "id": 1,
+      "description": "string"
+    }
+  ]
+}
+
+Generate 5 scenes.
 
 User idea:
 $prompt
-""",
-        "stream": false,
+"""
+
+        
       }),
     );
 

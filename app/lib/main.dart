@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/ollama_service.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const AIStudioApp());
@@ -81,7 +82,11 @@ class _HomePageState extends State<HomePage> {
     final story = await ollama.generateStory(ideaController.text);
 
     setState(() {
-      output = story;
+      final data = jsonDecode(story);
+
+setState(() {
+  output = const JsonEncoder.withIndent('  ').convert(data);
+});
     });
   } catch (e) {
     setState(() {
