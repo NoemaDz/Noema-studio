@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/ollama_service.dart';
 
 void main() {
   runApp(const AIStudioApp());
@@ -31,6 +32,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final projectController = TextEditingController();
   final ideaController = TextEditingController();
+  final ollama = OllamaService();
 
   String output = "Waiting...";
 
@@ -70,12 +72,23 @@ class _HomePageState extends State<HomePage> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () {
-                  setState(() {
-                    output =
-                        "Project: ${projectController.text}\n\nIdea:\n${ideaController.text}";
-                  });
-                },
+               onPressed: () async {
+  setState(() {
+    output = "Generating...";
+  });
+
+  try {
+    final story = await ollama.generateStory(ideaController.text);
+
+    setState(() {
+      output = story;
+    });
+  } catch (e) {
+    setState(() {
+      output = e.toString();
+    });
+  }
+},
                 child: const Text("Generate Story"),
               ),
             ),
