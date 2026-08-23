@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="docs/images/hero_banner.jpg" alt="Noema Studio Hero Banner" width="800">
   <h1>🎬 Noema Studio</h1>
   <p>An AI-native production studio for turning creative ideas into structured, coherent, and editable multimedia productions using local models (ComfyUI, Ollama) and cloud engines (OpenAI).</p>
   <p>
