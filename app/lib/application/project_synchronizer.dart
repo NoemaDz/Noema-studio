@@ -1,0 +1,129 @@
+import 'package:flutter/foundation.dart';
+import '../core/noema_project.dart';
+import '../core/providers/image_provider.dart';
+import '../models/job.dart';
+import '../core/job_events.dart';
+import '../presentation/state/project_state.dart';
+import '../../main.dart'; // To access noema global
+import '../core/pipeline/stages/video_compilation_stage.dart';
+
+class ProjectSynchronizer {
+  final NoemaProject project;
+
+  final ImageProvider provider;
+  final ProjectState state;
+
+  ProjectSynchronizer({
+    required this.project,
+    required this.provider,
+    required this.state,
+  });
+
+  void attach(JobEvents events) {
+    events.subscribe((job) async {
+      await synchronize(job);
+    });
+    
+    // Initial sync for jobs that are already completed before the monitor starts
+    for (final job in project.jobs) {
+      if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
+        synchronize(job);
+      }
+    }
+  }
+
+  Future<void> synchronize(Job job) async {
+    if (job.status == JobStatus.failed) {
+      // If a job fails, we should update the UI to show the error
+      state.refresh();
+      return;
+    }
+
+    if (job.status == JobStatus.completed && job.type == "video_compile") {
+      project.finalVideoPath = job.result;
+      state.refresh();
+      noema.saveProject(project);
+      return;
+    }
+
+    if (job.status != JobStatus.completed) {
+      return;
+    }
+
+    if (job.type == "audio") {
+      project.updateAudioFromJob(job);
+      state.refresh();
+      noema.saveProject(project);
+      _checkAndTriggerVideoCompilation();
+      return;
+    }
+
+    if (job.type == "image") {
+      try {
+        debugPrint("ProjectSynchronizer: Downloading asset for job ${job.id} (type: ${job.type})");
+        final asset = await provider.downloadAsset(job.id);
+        debugPrint("ProjectSynchronizer: Downloaded asset: $asset");
+        if (asset != null) {
+          debugPrint("ProjectSynchronizer: project.images contains ${project.images.length} images.");
+          bool found = false;
+          for (final image in project.images) {
+            debugPrint("ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}");
+            if (image.jobId == job.id) {
+              image.asset = asset;
+              state.refresh();
+              noema.saveProject(project);
+              debugPrint("ProjectSynchronizer: Assigned asset to image!");
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            debugPrint("ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!");
+            debugPrint("ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}");
+          }
+        }
+      } catch (e) {
+        debugPrint("ProjectSynchronizer Error: $e");
+      }
+      _checkAndTriggerVideoCompilation();
+      return;
+    }
+  }
+
+  void _checkAndTriggerVideoCompilation() async {
+    if (project.images.isEmpty || project.audios.isEmpty) return;
+
+    bool allReady = true;
+    for (final img in project.images) {
+      if (img.asset?.path == null) allReady = false;
+    }
+    for (final aud in project.audios) {
+      if (aud.asset?.path == null) allReady = false;
+    }
+
+    bool hasVideoJob = project.jobs.any((j) => j.type == "video_compile");
+
+    if (allReady && !hasVideoJob) {
+      // Find the VideoCompilationStage from registry
+      final stage = noema.bootstrap.pipelineRegistry.stages.whereType<VideoCompilationStage>().firstOrNull;
+      if (stage != null) {
+        // Add a pending job to show progress in UI while compiling
+        final pendingJob = Job(id: "compile_pending", type: "video_compile", status: JobStatus.pending, progress: 0.0, result: "");
+        project.jobs.add(pendingJob);
+        state.refresh();
+        
+        await stage.run(project);
+        
+        // Remove the temporary pending job
+        project.jobs.removeWhere((j) => j.id == "compile_pending");
+        
+        // Add the new job to monitor
+        final videoJob = project.jobs.where((j) => j.type == "video_compile").firstOrNull;
+        if (videoJob != null) {
+          // Manually synchronize the completed job to update UI and save project
+          synchronize(videoJob);
+        }
+      }
+    }
+  }
+}

@@ -1,134 +1,82 @@
 import 'package:flutter/material.dart';
-import 'services/ollama_service.dart';
-import 'dart:convert';
+import 'core/noema.dart';
+import 'infrastructure/comfyui/comfyui_plugin.dart';
+import 'infrastructure/ollama/ollama_plugin.dart';
+import 'infrastructure/tts/flutter_tts_plugin.dart';
+import 'infrastructure/ffmpeg/ffmpeg_plugin.dart';
+import 'core/plugins/core_pipeline_plugin.dart';
+import 'ui/screens/studio_screen.dart';
 
-void main() {
+import 'core/plugins/ingestion_plugin.dart';
+import 'infrastructure/openai/openai_plugin.dart';
+import 'application/comfyui_installer_service.dart';
+import 'ui/screens/setup_wizard_screen.dart';
+
+final noema = Noema();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  noema.init([
+    ComfyUIPlugin(),
+    OllamaPlugin(),
+    OpenAIPlugin(),
+    FlutterTTSPlugin(),
+    FFmpegPlugin(),
+    IngestionPlugin(),
+    CorePipelinePlugin(),
+  ]);
+
+  await noema.bootstrap.appSettings.loadSettings();
+
   runApp(const AIStudioApp());
 }
 
-class AIStudioApp extends StatelessWidget {
+class AIStudioApp extends StatefulWidget {
   const AIStudioApp({super.key});
+
+  @override
+  State<AIStudioApp> createState() => _AIStudioAppState();
+}
+
+class _AIStudioAppState extends State<AIStudioApp> {
+  final ComfyUIInstallerService _installerService = ComfyUIInstallerService();
+  bool _isChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInstaller();
+  }
+
+  Future<void> _checkInstaller() async {
+    await _installerService.checkInstallation();
+    setState(() {
+      _isChecked = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'AI Studio',
+      title: "AI Studio",
       theme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.dark,
         colorSchemeSeed: Colors.indigo,
+        fontFamily: 'Segoe UI',
       ),
-      home: const HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final projectController = TextEditingController();
-  final ideaController = TextEditingController();
-  final ollama = OllamaService();
-
-  String output = "Waiting...";
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("AI Studio"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-
-            TextField(
-              controller: projectController,
-              decoration: const InputDecoration(
-                labelText: "Project Name",
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: ideaController,
-              maxLines: 6,
-              decoration: const InputDecoration(
-                labelText: "Your Idea",
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-               onPressed: () async {
-  setState(() {
-    output = "Generating...";
-  });
-
-  try {
-    final story = await ollama.generateStory(ideaController.text);
-
-    setState(() {
-      final data = jsonDecode(story);
-
-setState(() {
-  output = const JsonEncoder.withIndent('  ').convert(data);
-});
-    });
-  } catch (e) {
-    setState(() {
-      output = e.toString();
-    });
-  }
-},
-                child: const Text("Generate Story"),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Output",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SingleChildScrollView(
-                  child: Text(output),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      home: _isChecked 
+          ? (_installerService.isInstalled 
+              ? const StudioScreen() 
+              : SetupWizardScreen(
+                  installerService: _installerService,
+                  onComplete: () {
+                    setState(() {}); // Rebuilds and goes to StudioScreen
+                  },
+                ))
+          : const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }

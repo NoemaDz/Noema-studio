@@ -1,39 +1,23 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../main.dart'; // To access global noema
 
-class OllamaService {
-  static const String baseUrl = "http://localhost:11434";
+class OllamaDriver {
+  String get baseUrl => noema.bootstrap.appSettings.ollamaUrl;
 
   Future<String> generateStory(String prompt) async {
     final response = await http.post(
       Uri.parse("$baseUrl/api/generate"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-  "model": "qwen3:8b",
-  "format": "json",
-  "stream": false,
-  "prompt": """
-Return ONLY valid JSON.
-
-Schema:
-
-{
-  "title": "string",
-  "scenes": [
-    {
-      "id": 1,
-      "description": "string"
-    }
-  ]
-}
-
-Generate 5 scenes.
-
-User idea:
-$prompt
-"""
-
-        
+        "model": noema.bootstrap.appSettings.llmModelName,
+        "format": "json",
+        "stream": false,
+        "prompt": prompt,
+        "options": {
+          "num_predict": 4096,
+          "temperature": 0.7
+        }
       }),
     );
 
