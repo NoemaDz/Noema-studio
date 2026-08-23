@@ -52,8 +52,8 @@ graph TD;
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/nabil/noema-studio.git
-   cd noema-studio/app
+   git clone https://github.com/NoemaDz/Noema-studio.git
+   cd Noema-studio/app
    ```
 2. Install Flutter dependencies:
    ```bash
@@ -87,4 +87,4 @@ Want to build a new plugin to support Runway ML? Or a new Stage for Lip-Syncing?
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how the Plugin Architecture works.
 
 ---
-**Founder & Architect:** [Nabil](https://github.com/nabil)
+**Founder & Architect:** [NoemaDz](https://github.com/NoemaDz)
