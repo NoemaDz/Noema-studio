@@ -4,14 +4,18 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart';
+import '../../core/plugins/plugin_context.dart';
 import '../../models/job.dart';
 import 'package:flutter/services.dart';
 import '../../models/asset.dart';
 import '../../models/asset_type.dart';
-import '../../main.dart'; // To access global noema
 
 class ComfyUIDriver {
-  String get baseUrl => noema.bootstrap.appSettings.comfyUIUrl;
+  final PluginContext context;
+  
+  ComfyUIDriver(this.context);
+
+  String get baseUrl => context.appSettings.comfyUIUrl;
 
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) async {
     // Check if we have characters for IP-Adapter
@@ -77,19 +81,29 @@ class ComfyUIDriver {
   }
 
   Future<JobStatus> getJobStatus(String jobId) async {
-    final response = await http.get(Uri.parse("$baseUrl/history/$jobId"));
-
-    if (response.statusCode != 200) {
-      return JobStatus.running;
+    try {
+      final queueResponse = await http.get(Uri.parse("$baseUrl/queue"));
+      if (queueResponse.statusCode == 200) {
+        final queueData = jsonDecode(queueResponse.body);
+        final running = queueData["queue_running"] as List;
+        final pending = queueData["queue_pending"] as List;
+        
+        if (running.any((q) => q[1] == jobId)) return JobStatus.running;
+        if (pending.any((q) => q[1] == jobId)) return JobStatus.queued;
+      }
+      
+      final historyResponse = await http.get(Uri.parse("$baseUrl/history/$jobId"));
+      if (historyResponse.statusCode == 200) {
+        final historyData = jsonDecode(historyResponse.body);
+        if (historyData.containsKey(jobId)) {
+          return JobStatus.completed;
+        }
+      }
+    } catch (e) {
+      debugPrint("ComfyUIDriver Error in getJobStatus: $e");
     }
-
-    final Map<String, dynamic> data = jsonDecode(response.body);
-
-    if (data.isEmpty) {
-      return JobStatus.running;
-    }
-
-    return JobStatus.completed;
+    
+    return JobStatus.failed;
   }
 
   Future<Asset?> downloadAsset(String jobId) async {
@@ -155,5 +169,11 @@ class ComfyUIDriver {
     return null;
   }
 
-  Future<void> cancelJob(String jobId) async {}
+  Future<void> cancelJob(String jobId) async {
+    try {
+      await http.post(Uri.parse("$baseUrl/interrupt"));
+    } catch (e) {
+      debugPrint("ComfyUIDriver Error in cancelJob: $e");
+    }
+  }
 }

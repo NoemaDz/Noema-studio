@@ -3,8 +3,15 @@ import '../../models/job.dart';
 import 'comfyui_driver.dart';
 import '../../models/asset.dart';
 
+import '../../core/plugins/plugin_context.dart';
+
 class ComfyUIProvider extends ImageProvider {
-  final ComfyUIDriver driver = ComfyUIDriver();
+  final PluginContext context;
+  late final ComfyUIDriver driver;
+
+  ComfyUIProvider(this.context) {
+    driver = ComfyUIDriver(context);
+  }
 
   @override
   String get id => "comfyui";

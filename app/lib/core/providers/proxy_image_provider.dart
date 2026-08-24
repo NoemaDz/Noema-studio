@@ -2,7 +2,6 @@ import '../plugins/plugin_context.dart';
 import 'image_provider.dart';
 import '../../models/job.dart';
 import '../../models/asset.dart';
-import '../../main.dart'; // to access noema global
 
 class ProxyImageProvider extends ImageProvider {
   final PluginContext context;
@@ -19,7 +18,7 @@ class ProxyImageProvider extends ImageProvider {
   bool get available => true;
 
   ImageProvider get _activeProvider {
-    final activeId = noema.bootstrap.appSettings.activeImageProvider;
+    final activeId = context.appSettings.activeImageProvider;
     return context.providers.all.whereType<ImageProvider>().firstWhere(
       (p) => p.id == activeId && p.id != "proxy_image",
       orElse: () => context.providers.all.whereType<ImageProvider>().firstWhere((p) => p.id != "proxy_image"),

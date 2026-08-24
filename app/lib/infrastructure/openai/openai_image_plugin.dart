@@ -11,6 +11,6 @@ class OpenAIImagePlugin implements IPlugin {
 
   @override
   void register(PluginContext context) {
-    context.providers.register(OpenAIImageProvider());
+    context.providers.register(OpenAIImageProvider(context));
   }
 }

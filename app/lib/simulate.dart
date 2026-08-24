@@ -62,7 +62,9 @@ void main() async {
     // In our quick CLI script, we must loop to keep the process alive
     int emptyJobsCounter = 0;
     while (project.finalVideoPath == null) {
-      if (project.jobs.isEmpty) {
+      final projectJobs = noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id)).toList();
+      
+      if (projectJobs.isEmpty) {
         emptyJobsCounter++;
         if (emptyJobsCounter > 5) {
           print(
@@ -74,25 +76,25 @@ void main() async {
         emptyJobsCounter = 0;
       }
 
-      bool anyFailed = project.jobs.any((j) => j.status == JobStatus.failed);
+      bool anyFailed = projectJobs.any((j) => j.status == JobStatus.failed);
       if (anyFailed) {
         print("Error: A background job failed.");
         break;
       }
 
       bool allJobsDone =
-          project.jobs.isNotEmpty &&
-          project.jobs.every((j) => j.status == JobStatus.completed);
+          projectJobs.isNotEmpty &&
+          projectJobs.every((j) => j.status == JobStatus.completed);
       if (allJobsDone &&
           project.finalVideoPath == null &&
-          project.jobs.any((j) => j.type == "video_compile")) {
+          projectJobs.any((j) => j.type == "video_compile")) {
         // Video job completed but path not updated? Handled by synchronizer.
         // If we get here, give the synchronizer a tick to update it.
       }
 
       await Future.delayed(const Duration(seconds: 2));
       print(
-        "Waiting... Active jobs: ${project.jobs.where((j) => j.status == JobStatus.running || j.status == JobStatus.queued).length} / ${project.jobs.length}",
+        "Waiting... Active jobs: ${projectJobs.where((j) => j.status == JobStatus.running || j.status == JobStatus.queued).length} / ${projectJobs.length}",
       );
     }
 

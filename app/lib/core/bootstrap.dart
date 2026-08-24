@@ -60,6 +60,8 @@ class Bootstrap {
       providers: providerRegistry,
       pipelines: pipelineRegistry,
       engine: workflowEngine,
+      appSettings: appSettings,
+      jobManager: jobManager,
     );
 
     pluginManager = PluginManager(context: pluginContext);

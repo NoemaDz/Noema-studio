@@ -63,7 +63,7 @@ class ProjectGenerationService {
       state: projectState,
     );
     synchronizer.attach(jobEvents);
-    jobMonitor.start(project.jobs);
+    jobMonitor.start();
 
     await projectPipeline.generateProduction(
       project,

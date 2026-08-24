@@ -11,6 +11,6 @@ class ComfyUIPlugin implements IPlugin {
 
   @override
   void register(PluginContext context) {
-    context.providers.register(ComfyUIProvider());
+    context.providers.register(ComfyUIProvider(context));
   }
 }

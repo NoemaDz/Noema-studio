@@ -26,7 +26,8 @@ class ProjectSynchronizer {
     });
 
     // Initial sync for jobs that are already completed before the monitor starts
-    for (final job in project.jobs) {
+    final jobs = noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id));
+    for (final job in jobs) {
       if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
         synchronize(job);
       }
@@ -112,7 +113,8 @@ class ProjectSynchronizer {
       if (aud.asset?.path == null) allReady = false;
     }
 
-    bool hasVideoJob = project.jobs.any((j) => j.type == "video_compile");
+    final jobs = noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id));
+    bool hasVideoJob = jobs.any((j) => j.type == "video_compile");
 
     if (allReady && !hasVideoJob) {
       // Find the VideoCompilationStage from registry
@@ -128,7 +130,8 @@ class ProjectSynchronizer {
           progress: 0.0,
           result: "",
         );
-        project.jobs.add(pendingJob);
+        noema.bootstrap.jobManager.add(pendingJob);
+        project.jobIds.add(pendingJob.id);
         state.refresh();
 
         try {
@@ -136,22 +139,25 @@ class ProjectSynchronizer {
         } catch (e) {
           debugPrint("ProjectSynchronizer: VideoCompilationStage failed: $e");
           // Emit a failed job so the UI doesn't hang
-          project.jobs.add(Job(
+          final errJob = Job(
             id: "video_compile_error",
             type: "video_compile",
             status: JobStatus.failed,
             progress: 0,
             result: "Compilation failed: $e",
-          ));
+          );
+          noema.bootstrap.jobManager.add(errJob);
+          project.jobIds.add(errJob.id);
           state.refresh();
         }
 
         // Remove the temporary pending job
-        project.jobs.removeWhere((j) => j.id == "compile_pending");
+        noema.bootstrap.jobManager.remove("compile_pending");
+        project.jobIds.remove("compile_pending");
 
         // Add the new job to monitor
-        final videoJob = project.jobs
-            .where((j) => j.type == "video_compile")
+        final videoJob = noema.bootstrap.jobManager.jobs
+            .where((j) => project.jobIds.contains(j.id) && j.type == "video_compile")
             .firstOrNull;
         if (videoJob != null) {
           // Manually synchronize the completed job to update UI and save project

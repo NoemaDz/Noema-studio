@@ -14,11 +14,12 @@ class JobMonitor {
 
   JobMonitor(this.runner, this.manager, this.events);
 
-  void start(List<Job> jobs) {
+  void start() {
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 2), (_) async {
-      for (final job in jobs) {
+      final activeJobs = manager.jobs.toList();
+      for (final job in activeJobs) {
         if (job.status == JobStatus.completed ||
             job.status == JobStatus.failed) {
           continue;

@@ -51,7 +51,7 @@ class ProjectOverview extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.work_outline),
               title: const Text("Jobs"),
-              trailing: Text("${project.jobs.length}"),
+              trailing: Text("${project.jobIds.length}"),
             ),
 
             ListTile(

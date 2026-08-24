@@ -5,6 +5,7 @@ import 'task_node.dart';
 import 'pipeline_engine.dart';
 import 'contracts/pipeline_stage.dart';
 import '../../models/job.dart';
+import '../../../main.dart'; // For noema.bootstrap.jobManager
 
 /// Converts registered [PipelineStage]s into a true DAG of [TaskNode]s
 /// and executes them via [PipelineEngine].
@@ -81,7 +82,18 @@ class ProjectPipeline {
       return scene == null || scene.audioState != GenerationState.completed;
     });
     // Keep pending jobs clean
-    project.jobs.removeWhere((j) => j.status == JobStatus.pending || j.status == JobStatus.running || j.status == JobStatus.failed);
+    final jobsToRemove = noema.bootstrap.jobManager.jobs
+        .where((j) => project.jobIds.contains(j.id) &&
+            (j.status == JobStatus.pending ||
+             j.status == JobStatus.running ||
+             j.status == JobStatus.failed))
+        .map((j) => j.id)
+        .toList();
+
+    for (final jobId in jobsToRemove) {
+      noema.bootstrap.jobManager.remove(jobId);
+      project.jobIds.remove(jobId);
+    }
 
     // ── Phase 2: Per-scene parallel DAG ───────────────────────────────────
     if (sceneStages.isNotEmpty && project.story.scenes.isNotEmpty) {

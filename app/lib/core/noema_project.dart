@@ -49,7 +49,7 @@ class NoemaProject {
 
   // ── Execution State ───────────────────────────────────────────────────────
   final List<ProjectTask> tasks = [];
-  final List<Job> jobs = [];
+  final List<String> jobIds = [];
   GenerationState projectState;
 
   // ── Meta ──────────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ class NoemaProject {
       'audios': audios.map((e) => e.toJson()).toList(),
       'finalVideoPath': finalVideoPath,
       'tasks': tasks.map((e) => e.toJson()).toList(),
-      'jobs': jobs.map((e) => e.toJson()).toList(),
+      'jobIds': jobIds,
       'settings': settings,
       'metadata': metadata,
     };
@@ -191,12 +191,8 @@ class NoemaProject {
       );
     }
 
-    if (json['jobs'] != null) {
-      project.jobs.addAll(
-        (json['jobs'] as List).map(
-          (e) => Job.fromJson(e as Map<String, dynamic>),
-        ),
-      );
+    if (json['jobIds'] != null) {
+      project.jobIds.addAll(List<String>.from(json['jobIds'] as List));
     }
 
     if (json['settings'] != null) {

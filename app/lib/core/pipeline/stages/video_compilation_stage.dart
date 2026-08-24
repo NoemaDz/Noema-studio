@@ -2,6 +2,7 @@ import '../contracts/pipeline_stage.dart';
 import '../../settings/platform_paths.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
+import '../../../../main.dart';
 import '../../workflow/workflow_context.dart';
 import '../../providers/video_compiler_provider.dart';
 import '../../../workflows/video/video_workflow.dart';
@@ -73,7 +74,8 @@ class VideoCompilationStage extends PipelineStage {
     final result = await engine.runWithContext(workflow, context);
 
     final job = result.get<Job>("video_compile")!;
-    project.jobs.add(job);
+    noema.bootstrap.jobManager.add(job);
+    project.jobIds.add(job.id);
 
     // finalVideoPath will be updated when the job completes, similar to how updateAudioFromJob works.
     project.finalVideoPath = outputPath;

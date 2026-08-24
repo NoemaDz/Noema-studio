@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../contracts/pipeline_stage.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
+import '../../../../main.dart';
 import '../../workflow/workflow_context.dart';
 import '../../providers/image_provider.dart';
 import '../../../workflows/image/image_workflow.dart';
@@ -59,7 +60,8 @@ class SceneImageStage extends PipelineStage {
       final job = result.get<Job>('image');
       if (job != null) {
         job.metadata['title'] = 'Generating Scene ${scene.id} Image';
-        project.jobs.add(job);
+        noema.bootstrap.jobManager.add(job);
+        project.jobIds.add(job.id);
         project.images.add(
           GeneratedImage(
             sceneId: scene.id,

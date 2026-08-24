@@ -1,7 +1,6 @@
 import '../plugins/plugin_context.dart';
 import 'tts_provider.dart';
 import '../../models/job.dart';
-import '../../main.dart'; // to access noema global
 
 class ProxyTTSProvider extends TTSProvider {
   final PluginContext context;
@@ -19,7 +18,7 @@ class ProxyTTSProvider extends TTSProvider {
 
   @override
   Future<Job> generateAudio(String text) {
-    final activeId = noema.bootstrap.appSettings.activeTtsProvider;
+    final activeId = context.appSettings.activeTtsProvider;
     // Find the provider with this id
     final provider = context.providers.all.whereType<TTSProvider>().firstWhere(
       (p) => p.id == activeId && p.id != "proxy_tts",

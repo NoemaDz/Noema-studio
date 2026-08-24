@@ -1,6 +1,5 @@
 import '../plugins/plugin_context.dart';
 import 'llm_provider.dart';
-import '../../main.dart'; // to access noema global
 
 class ProxyLLMProvider extends LLMProvider {
   final PluginContext context;
@@ -18,7 +17,7 @@ class ProxyLLMProvider extends LLMProvider {
 
   @override
   Future<String> generate(String prompt) {
-    final activeId = noema.bootstrap.appSettings.activeLlmProvider;
+    final activeId = context.appSettings.activeLlmProvider;
     // Find the provider with this id
     final provider = context.providers.all.whereType<LLMProvider>().firstWhere(
       (p) => p.id == activeId,

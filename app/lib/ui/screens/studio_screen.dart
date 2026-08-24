@@ -117,7 +117,7 @@ class _StudioScreenState extends State<StudioScreen> {
         state: noema.bootstrap.projectState,
       );
       synchronizer.attach(noema.bootstrap.jobEvents);
-      noema.bootstrap.jobMonitor.start(p.jobs);
+      noema.bootstrap.jobMonitor.start();
 
       await noema.generateProduction(p);
 
@@ -211,7 +211,7 @@ class _StudioScreenState extends State<StudioScreen> {
           state: noema.bootstrap.projectState,
         );
         synchronizer.attach(noema.bootstrap.jobEvents);
-        noema.bootstrap.jobMonitor.start(project.jobs);
+        noema.bootstrap.jobMonitor.start();
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(
@@ -348,7 +348,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       statusText: _statusText,
                       pipelineStatus:
                           noema.bootstrap.projectState.pipelineStatus,
-                      jobs: project?.jobs ?? [],
+                      jobs: project != null ? noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id)).toList() : [],
                       onGenerate: _generateProject,
                       onImportStory: _importStory,
                     ),

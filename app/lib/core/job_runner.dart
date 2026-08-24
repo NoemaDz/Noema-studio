@@ -17,9 +17,8 @@ class JobRunner {
         break;
 
       case JobStatus.running:
-        if (job.progress < 0.9) {
-          job.progress += 0.1;
-        }
+        // We will no longer artificially increment progress. 
+        // In the future, this should fetch real progress from the provider.
         break;
 
       case JobStatus.queued:

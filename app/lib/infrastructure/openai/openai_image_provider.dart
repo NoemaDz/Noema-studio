@@ -4,13 +4,16 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import '../../core/providers/image_provider.dart';
 import '../../core/settings/platform_paths.dart';
+import '../../core/plugins/plugin_context.dart';
 import '../../models/asset_type.dart';
 import '../../models/job.dart';
 import '../../models/asset.dart';
-import '../../main.dart'; // to access noema global
 
 class OpenAIImageProvider extends ImageProvider {
+  final PluginContext context;
   final Map<String, Job> _jobs = {};
+
+  OpenAIImageProvider(this.context);
 
   @override
   String get id => "openai_image";
@@ -19,12 +22,12 @@ class OpenAIImageProvider extends ImageProvider {
   String get name => "OpenAI DALL-E 3";
 
   @override
-  bool get available => noema.bootstrap.appSettings.openAiKey.isNotEmpty;
+  bool get available => context.appSettings.openAiKey.isNotEmpty;
 
   @override
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) async {
-    final apiKey = noema.bootstrap.appSettings.openAiKey;
-    final url = noema.bootstrap.appSettings.openAiUrl;
+    final apiKey = context.appSettings.openAiKey;
+    final url = context.appSettings.openAiUrl;
     
     if (apiKey.isEmpty) {
       throw Exception("OpenAI API key is missing");
