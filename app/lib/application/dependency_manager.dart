@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 import 'package:archive/archive_io.dart';
-import 'package:path_provider/path_provider.dart';
 import '../core/settings/platform_paths.dart';
 
 class DependencyManager {

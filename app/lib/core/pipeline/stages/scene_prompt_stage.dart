@@ -9,7 +9,7 @@ import '../../utils/json_extractor.dart';
 /// Pipeline Stage: Scene Prompt Generation
 /// Runs the ScenePromptWorkflow to build AI image prompts for each scene.
 /// Uses JsonExtractor to safely parse LLM output even if it contains markdown.
-class ScenePromptStage implements PipelineStage {
+class ScenePromptStage extends PipelineStage {
   @override
   int get priority => 40;
 

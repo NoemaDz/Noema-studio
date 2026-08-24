@@ -1,5 +1,5 @@
 import '../contracts/pipeline_stage.dart';
-import '../settings/platform_paths.dart';
+import '../../settings/platform_paths.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
 import '../../workflow/workflow_context.dart';
@@ -7,9 +7,8 @@ import '../../providers/video_compiler_provider.dart';
 import '../../../workflows/video/video_workflow.dart';
 import '../../../models/job.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
-class VideoCompilationStage implements PipelineStage {
+class VideoCompilationStage extends PipelineStage {
   @override
   int get priority => 70;
 

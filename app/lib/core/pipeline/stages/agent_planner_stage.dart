@@ -8,7 +8,7 @@ import '../../../models/scene.dart';
 import '../../../models/story.dart';
 import '../../../models/scene_directive.dart';
 
-class AgentPlannerStage implements PipelineStage {
+class AgentPlannerStage extends PipelineStage {
   @override
   int get priority => 5; // Runs before everything else
 

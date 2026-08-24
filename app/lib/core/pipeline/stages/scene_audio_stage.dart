@@ -7,7 +7,7 @@ import '../../../workflows/audio/audio_workflow.dart';
 import '../../../models/generated_audio.dart';
 import '../../../models/job.dart';
 
-class SceneAudioStage implements PipelineStage {
+class SceneAudioStage extends PipelineStage {
   @override
   int get priority => 60;
 

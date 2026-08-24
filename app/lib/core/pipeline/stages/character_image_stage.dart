@@ -6,7 +6,7 @@ import '../../workflow/workflow_engine.dart';
 
 import '../../../workflows/character_images/character_image_workflow.dart';
 
-class CharacterImageStage implements PipelineStage {
+class CharacterImageStage extends PipelineStage {
   @override
   int get priority => 30;
 

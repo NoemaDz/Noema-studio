@@ -9,7 +9,7 @@ import '../../noema_project.dart';
 import '../../../workflows/story/story_workflow.dart';
 import '../contracts/pipeline_stage.dart';
 
-class StoryStage implements PipelineStage {
+class StoryStage extends PipelineStage {
   @override
   int get priority => 10;
 

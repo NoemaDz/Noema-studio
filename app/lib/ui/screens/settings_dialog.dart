@@ -200,8 +200,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         ),
                       ],
                       onChanged: (value) {
-                        if (value != null)
+                        if (value != null) {
                           setState(() => _activeLlmProvider = value);
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
@@ -292,8 +293,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         ),
                       ],
                       onChanged: (value) {
-                        if (value != null)
+                        if (value != null) {
                           setState(() => _activeTtsProvider = value);
+                        }
                       },
                     ),
                     if (_activeTtsProvider == 'openai_tts') ...[
@@ -311,8 +313,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value != null)
+                          if (value != null) {
                             setState(() => _openAiTtsVoice = value);
+                          }
                         },
                       ),
                       if (_activeLlmProvider != 'openai') ...[
@@ -343,8 +346,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value != null)
+                          if (value != null) {
                             setState(() => _edgeTtsVoice = value);
+                          }
                         },
                       ),
                     ],
@@ -387,8 +391,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        if (value != null)
+                        if (value != null) {
                           setState(() => _selectedEffect = value);
+                        }
                       },
                     ),
                   ],

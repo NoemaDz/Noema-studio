@@ -50,8 +50,9 @@ class ComfyUIRunnerService extends ChangeNotifier {
   }
 
   Future<void> start() async {
-    if (_status == EngineStatus.ready || _status == EngineStatus.starting)
+    if (_status == EngineStatus.ready || _status == EngineStatus.starting) {
       return;
+    }
 
     _updateStatus(EngineStatus.starting);
 

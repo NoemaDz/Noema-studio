@@ -10,7 +10,7 @@ import '../../../workflows/characters/character_workflow.dart';
 import '../../noema_project.dart';
 import '../contracts/pipeline_stage.dart';
 
-class CharacterStage implements PipelineStage {
+class CharacterStage extends PipelineStage {
   @override
   int get priority => 20;
 

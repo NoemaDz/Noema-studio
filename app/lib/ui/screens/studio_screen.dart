@@ -134,10 +134,12 @@ class _StudioScreenState extends State<StudioScreen> {
 
     try {
       await noema.saveProject(project);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Project saved successfully.")),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error saving: $e")));
@@ -162,6 +164,7 @@ class _StudioScreenState extends State<StudioScreen> {
         synchronizer.attach(noema.bootstrap.jobEvents);
         noema.bootstrap.jobMonitor.start(project.jobs);
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Error loading project: $e")));
