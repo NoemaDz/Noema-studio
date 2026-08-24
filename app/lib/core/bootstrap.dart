@@ -56,6 +56,7 @@ class Bootstrap {
     workflowEngine = WorkflowEngine();
     appSettings = AppSettings();
 
+    jobManager = JobManager();
     pluginContext = PluginContext(
       providers: providerRegistry,
       pipelines: pipelineRegistry,
@@ -85,7 +86,7 @@ class Bootstrap {
       engine: workflowEngine,
     );
 
-    jobManager = JobManager();
+
     jobRunner = JobRunner(imageProvider);
     jobEvents = JobEvents();
     projectState = ProjectState();
