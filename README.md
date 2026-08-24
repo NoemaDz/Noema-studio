@@ -42,6 +42,28 @@ graph TD;
     FFmpeg --> FinalVideo[Final MP4 Export]
 ```
 
+## 🗺️ Roadmap & Status (v0.1.0-alpha)
+
+Noema is currently in **Early Alpha**. We believe in transparency for the open-source community regarding what is working, what is in progress, and what is planned.
+
+### ✅ Implemented
+- **Project-Centric Architecture:** Robust `NoemaProject` aggregate root for tracking all creative assets.
+- **True DAG Pipeline Engine:** Concurrent, per-scene execution graph for production stages.
+- **Agent Planner (Ollama/OpenAI):** AI decomposing ideas into structured stories, scenes, and characters.
+- **Provider Abstraction (V1):** Interface for plugging in `ImageProvider`, `TTSProvider`, `LLMProvider`.
+- **Local Generation (ComfyUI):** Image generation using ComfyUI APIs and Job polling.
+
+### 🚧 In Progress
+- **Scene Audio (TTS):** Finalizing dialogue generation via local/cloud TTS.
+- **Video Compilation:** Intelligent FFMPEG looping and stitching to match audio lengths.
+- **Test Coverage:** Building integration tests for pipeline failover and project state persistence.
+
+### 🔮 Planned (Future)
+- **Capability-Based Orchestration:** Dynamic provider resolution (e.g., auto-routing to OpenAI if local ComfyUI lacks VRAM).
+- **Custom Plugin Ecosystem:** Formal SDK for 3rd party providers (Runway, Sora, etc.).
+- **Automatic Audio/SFX/Music:** Generative music synced to scene moods.
+
+
 ## 🚀 Getting Started
 
 ### Prerequisites
