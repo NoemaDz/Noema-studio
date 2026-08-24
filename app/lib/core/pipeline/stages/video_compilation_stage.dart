@@ -2,9 +2,9 @@ import '../contracts/pipeline_stage.dart';
 import '../../settings/platform_paths.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
-import '../../../../main.dart';
 import '../../workflow/workflow_context.dart';
 import '../../providers/video_compiler_provider.dart';
+import '../../job_manager.dart';
 import '../../../workflows/video/video_workflow.dart';
 import '../../../models/job.dart';
 import 'package:path/path.dart' as p;
@@ -15,8 +15,13 @@ class VideoCompilationStage extends PipelineStage {
 
   final WorkflowEngine engine;
   final VideoCompilerProvider provider;
+  final JobManager jobManager;
 
-  VideoCompilationStage({required this.engine, required this.provider});
+  VideoCompilationStage({
+    required this.engine,
+    required this.provider,
+    required this.jobManager,
+  });
 
   @override
   Future<void> run(NoemaProject project) async {
@@ -74,7 +79,7 @@ class VideoCompilationStage extends PipelineStage {
     final result = await engine.runWithContext(workflow, context);
 
     final job = result.get<Job>("video_compile")!;
-    noema.bootstrap.jobManager.add(job);
+    jobManager.add(job);
     project.jobIds.add(job.id);
 
     // finalVideoPath will be updated when the job completes, similar to how updateAudioFromJob works.

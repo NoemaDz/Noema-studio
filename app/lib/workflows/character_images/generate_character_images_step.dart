@@ -1,7 +1,7 @@
 import '../../core/noema_project.dart';
 import '../../core/providers/image_provider.dart';
-import '../../../main.dart';
 import '../../core/workflow/workflow_context.dart';
+import '../../core/job_manager.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
 import '../../models/character.dart';
@@ -30,7 +30,8 @@ class GenerateCharacterImagesStep extends WorkflowStep<void> {
 
       job.metadata["title"] = "Generating Character: ${character.name}";
 
-      noema.bootstrap.jobManager.add(job);
+      final jobManager = context.get<JobManager>("jobManager")!;
+      jobManager.add(job);
       project.jobIds.add(job.id);
       pendingJobs[character] = job.id;
     }

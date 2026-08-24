@@ -20,8 +20,10 @@ class JsonProjectStorage implements ProjectStorage {
   Future<void> save(NoemaProject project) async {
     final dir = await getStorageDir(project.id);
     final file = File(p.join(dir, "project.json"));
+    final tmpFile = File(p.join(dir, "project.json.tmp"));
 
-    await file.writeAsString(encode(project));
+    await tmpFile.writeAsString(encode(project));
+    await tmpFile.rename(file.path);
   }
 
   @override
@@ -49,7 +51,9 @@ class JsonProjectStorage implements ProjectStorage {
   }
 
   String encode(NoemaProject project) {
-    return jsonEncode(project.toJson());
+    final map = project.toJson();
+    map['schemaVersion'] = 1;
+    return jsonEncode(map);
   }
 
   Story decodeStory(String json) {

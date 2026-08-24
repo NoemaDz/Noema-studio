@@ -1,9 +1,9 @@
 import '../contracts/pipeline_stage.dart';
-import '../../../../main.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
 import '../../workflow/workflow_context.dart';
 import '../../providers/tts_provider.dart';
+import '../../job_manager.dart';
 import '../../../workflows/audio/audio_workflow.dart';
 import '../../../models/generated_audio.dart';
 import '../../../models/job.dart';
@@ -17,8 +17,13 @@ class SceneAudioStage extends PipelineStage {
 
   final WorkflowEngine engine;
   final TTSProvider provider;
+  final JobManager jobManager;
 
-  SceneAudioStage({required this.engine, required this.provider});
+  SceneAudioStage({
+    required this.engine,
+    required this.provider,
+    required this.jobManager,
+  });
 
   @override
   Future<void> run(NoemaProject project) async {
@@ -38,7 +43,7 @@ class SceneAudioStage extends PipelineStage {
 
       final result = await engine.runWithContext(workflow, context);
       final job = result.get<Job>("audio")!;
-      noema.bootstrap.jobManager.add(job);
+      jobManager.add(job);
       project.jobIds.add(job.id);
 
       final audio = GeneratedAudio(
@@ -66,7 +71,7 @@ class SceneAudioStage extends PipelineStage {
 
       final result = await engine.runWithContext(workflow, context);
       final job = result.get<Job>("audio")!;
-      noema.bootstrap.jobManager.add(job);
+      jobManager.add(job);
       project.jobIds.add(job.id);
 
       final audio = GeneratedAudio(
@@ -90,7 +95,7 @@ class SceneAudioStage extends PipelineStage {
 
       final result = await engine.runWithContext(workflow, context);
       final job = result.get<Job>("audio")!;
-      noema.bootstrap.jobManager.add(job);
+      jobManager.add(job);
       project.jobIds.add(job.id);
 
       final audio = GeneratedAudio(

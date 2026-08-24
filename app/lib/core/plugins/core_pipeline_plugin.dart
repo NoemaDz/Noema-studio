@@ -64,19 +64,35 @@ class CorePipelinePlugin implements IPlugin {
     );
 
     context.pipelines.register(
-      CharacterImageStage(engine: context.engine, provider: imageProvider),
+      CharacterImageStage(
+        engine: context.engine,
+        provider: imageProvider,
+        jobManager: context.jobManager,
+      ),
     );
 
     context.pipelines.register(
-      SceneImageStage(engine: context.engine, provider: imageProvider),
+      SceneImageStage(
+        engine: context.engine,
+        provider: imageProvider,
+        jobManager: context.jobManager,
+      ),
     );
 
     context.pipelines.register(
-      SceneAudioStage(engine: context.engine, provider: ttsProvider),
+      SceneAudioStage(
+        engine: context.engine,
+        provider: ttsProvider,
+        jobManager: context.jobManager,
+      ),
     );
 
     context.pipelines.register(
-      VideoCompilationStage(engine: context.engine, provider: videoProvider),
+      VideoCompilationStage(
+        engine: context.engine,
+        provider: videoProvider,
+        jobManager: context.jobManager,
+      ),
     );
   }
 }

@@ -5,7 +5,8 @@ import 'task_node.dart';
 import 'pipeline_engine.dart';
 import 'contracts/pipeline_stage.dart';
 import '../../models/job.dart';
-import '../../../main.dart'; // For noema.bootstrap.jobManager
+import '../cancellation_token.dart';
+import '../job_manager.dart';
 
 /// Converts registered [PipelineStage]s into a true DAG of [TaskNode]s
 /// and executes them via [PipelineEngine].
@@ -34,15 +35,20 @@ import '../../../main.dart'; // For noema.bootstrap.jobManager
 class ProjectPipeline {
   final PipelineRegistry registry;
   final PipelineEngine engine;
+  final JobManager jobManager;
 
-  ProjectPipeline({required this.registry, PipelineEngine? engine})
-    : engine = engine ?? PipelineEngine(maxConcurrentTasks: 2);
+  ProjectPipeline({
+    required this.registry,
+    required this.jobManager,
+    PipelineEngine? engine,
+  }) : engine = engine ?? PipelineEngine(maxConcurrentTasks: 2);
 
   /// Runs the initial planning phases (Story, Characters, Scene Prompts).
   /// This stops before any heavy generation happens.
   Future<NoemaProject> generatePlanning(
     NoemaProject project, {
     void Function(String status)? onUpdate,
+    CancellationToken? cancellationToken,
   }) async {
     final planningStages = _stagesInRange(0, 50);
 
@@ -50,6 +56,7 @@ class ProjectPipeline {
 
     // ── Phase 1: Sequential planning ──────────────────────────────────────
     for (final stage in planningStages) {
+      cancellationToken?.throwIfCancelled();
       final name = stage.runtimeType.toString();
       onUpdate?.call('[$name] planning...');
       await stage.run(project);
@@ -66,6 +73,7 @@ class ProjectPipeline {
   Future<NoemaProject> generateProduction(
     NoemaProject project, {
     void Function(String status)? onUpdate,
+    CancellationToken? cancellationToken,
   }) async {
     final sceneStages = _stagesInRange(50, 70);
     final compilationStages = _stagesInRange(70, 999);
@@ -82,7 +90,7 @@ class ProjectPipeline {
       return scene == null || scene.audioState != GenerationState.completed;
     });
     // Keep pending jobs clean
-    final jobsToRemove = noema.bootstrap.jobManager.jobs
+    final jobsToRemove = jobManager.jobs
         .where((j) => project.jobIds.contains(j.id) &&
             (j.status == JobStatus.pending ||
              j.status == JobStatus.running ||
@@ -91,7 +99,7 @@ class ProjectPipeline {
         .toList();
 
     for (final jobId in jobsToRemove) {
-      noema.bootstrap.jobManager.remove(jobId);
+      jobManager.remove(jobId);
       project.jobIds.remove(jobId);
     }
 
@@ -140,11 +148,13 @@ class ProjectPipeline {
           final status = _statusLabel(task);
           onUpdate?.call('Pipeline: ${task.name} — $status');
         },
+        cancellationToken: cancellationToken,
       );
     }
 
     // ── Phase 3: Sequential compilation ───────────────────────────────────
     for (final stage in compilationStages) {
+      cancellationToken?.throwIfCancelled();
       final name = stage.runtimeType.toString();
       onUpdate?.call('[$name] compiling...');
       await stage.run(project);

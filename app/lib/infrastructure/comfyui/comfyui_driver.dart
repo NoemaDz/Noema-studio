@@ -9,6 +9,7 @@ import '../../models/job.dart';
 import 'package:flutter/services.dart';
 import '../../models/asset.dart';
 import '../../models/asset_type.dart';
+import '../../core/retry_policy.dart';
 import 'comfyui_workflow_adapter.dart';
 
 class ComfyUIDriver {
@@ -52,20 +53,25 @@ class ComfyUIDriver {
       adapter.applyOptions(options);
     }
 
-    final response = await http.post(
+    final retryPolicy = const RetryPolicy(maxRetries: 3);
+
+    final response = await retryPolicy.execute(() => http.post(
       Uri.parse("$baseUrl/prompt"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"prompt": adapter.toJson()}),
-    );
+    ).timeout(const Duration(seconds: 15)));
+
+    if (response.statusCode != 200) {
+      throw Exception("ComfyUI API returned \${response.statusCode}");
+    }
 
     final data = jsonDecode(response.body);
-
     return Job(id: data["prompt_id"], type: "image", status: JobStatus.queued);
   }
 
   Future<JobStatus> getJobStatus(String jobId) async {
     try {
-      final queueResponse = await http.get(Uri.parse("$baseUrl/queue"));
+      final queueResponse = await http.get(Uri.parse("$baseUrl/queue")).timeout(const Duration(seconds: 5));
       if (queueResponse.statusCode == 200) {
         final queueData = jsonDecode(queueResponse.body);
         final running = queueData["queue_running"] as List;
@@ -75,7 +81,7 @@ class ComfyUIDriver {
         if (pending.any((q) => q[1] == jobId)) return JobStatus.queued;
       }
       
-      final historyResponse = await http.get(Uri.parse("$baseUrl/history/$jobId"));
+      final historyResponse = await http.get(Uri.parse("$baseUrl/history/$jobId")).timeout(const Duration(seconds: 5));
       if (historyResponse.statusCode == 200) {
         final historyData = jsonDecode(historyResponse.body);
         if (historyData.containsKey(jobId)) {
@@ -91,7 +97,8 @@ class ComfyUIDriver {
 
   Future<Asset?> downloadAsset(String jobId) async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/history/$jobId"));
+      final retryPolicy = const RetryPolicy(maxRetries: 3);
+      final response = await retryPolicy.execute(() => http.get(Uri.parse("$baseUrl/history/$jobId")).timeout(const Duration(seconds: 10)));
 
       if (response.statusCode != 200) {
         debugPrint("ComfyUIDriver: downloadAsset history fetch failed");
@@ -120,7 +127,7 @@ class ComfyUIDriver {
           debugPrint("ComfyUIDriver: Downloading file from $assetUrl");
 
           // Actually download the file
-          final assetResponse = await http.get(Uri.parse(assetUrl));
+          final assetResponse = await retryPolicy.execute(() => http.get(Uri.parse(assetUrl)).timeout(const Duration(seconds: 60)));
           debugPrint(
             "ComfyUIDriver: Download status ${assetResponse.statusCode}",
           );

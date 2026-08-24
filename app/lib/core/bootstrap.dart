@@ -78,7 +78,10 @@ class Bootstrap {
     imageProvider = providerRegistry.get<ImageProvider>("proxy_image");
     llmProvider = providerRegistry.get<LLMProvider>("proxy_llm");
 
-    projectPipeline = ProjectPipeline(registry: pipelineRegistry);
+    projectPipeline = ProjectPipeline(
+      registry: pipelineRegistry,
+      jobManager: jobManager,
+    );
 
     storyGenerationService = StoryGenerationService(engine: workflowEngine);
     imageGenerationService = ImageGenerationService(engine: workflowEngine);

@@ -1,11 +1,16 @@
 import 'workflow.dart';
 import 'workflow_context.dart';
+import '../cancellation_token.dart';
 
 class WorkflowEngine {
-  Future<WorkflowContext> run(Workflow workflow) async {
+  Future<WorkflowContext> run(
+    Workflow workflow, {
+    CancellationToken? cancellationToken,
+  }) async {
     final context = WorkflowContext();
 
     for (final step in workflow.steps) {
+      cancellationToken?.throwIfCancelled();
       final result = await step.execute(context);
       context.set(step.id, result);
     }
@@ -15,9 +20,11 @@ class WorkflowEngine {
 
   Future<WorkflowContext> runWithContext(
     Workflow workflow,
-    WorkflowContext context,
-  ) async {
+    WorkflowContext context, {
+    CancellationToken? cancellationToken,
+  }) async {
     for (final step in workflow.steps) {
+      cancellationToken?.throwIfCancelled();
       final result = await step.execute(context);
       context.set(step.id, result);
     }
