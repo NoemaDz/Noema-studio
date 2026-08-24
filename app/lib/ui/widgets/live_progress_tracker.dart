@@ -87,7 +87,10 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
               Expanded(
                 child: Text(
                   _getJobTitle(job),
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               Text(
@@ -98,8 +101,14 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
           ),
           const SizedBox(height: 6),
           LinearProgressIndicator(
-            value: job.status == JobStatus.queued || job.status == JobStatus.pending ? null : job.progress,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            value:
+                job.status == JobStatus.queued ||
+                    job.status == JobStatus.pending
+                ? null
+                : job.progress,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
             color: color,
             minHeight: 4,
           ),

@@ -5,11 +5,9 @@ import 'generate_image_step.dart';
 
 class ImageWorkflow extends Workflow {
   ImageWorkflow(ImageProvider provider)
-      : super(
-          id: "image_workflow",
-          name: "Image Workflow",
-          steps: [
-            GenerateImageStep(provider),
-          ],
-        );
+    : super(
+        id: "image_workflow",
+        name: "Image Workflow",
+        steps: [GenerateImageStep(provider)],
+      );
 }

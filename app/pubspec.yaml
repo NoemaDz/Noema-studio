@@ -1,4 +1,4 @@
-name: app
+name: noema_studio
 description: "An AI-native production studio for orchestrating local and cloud AI models across the creative pipeline."
 version: 0.1.0-alpha.1
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

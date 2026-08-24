@@ -14,10 +14,7 @@ class SceneAudioStage implements PipelineStage {
   final WorkflowEngine engine;
   final TTSProvider provider;
 
-  SceneAudioStage({
-    required this.engine,
-    required this.provider,
-  });
+  SceneAudioStage({required this.engine, required this.provider});
 
   @override
   Future<void> run(NoemaProject project) async {
@@ -29,11 +26,11 @@ class SceneAudioStage implements PipelineStage {
         final workflow = AudioWorkflow(provider);
         final context = WorkflowContext();
         context.set("text", scene.narration!);
-        
+
         final result = await engine.runWithContext(workflow, context);
         final job = result.get<Job>("audio")!;
         project.jobs.add(job);
-        
+
         project.audios.add(
           GeneratedAudio(
             sceneId: scene.id,
@@ -47,18 +44,18 @@ class SceneAudioStage implements PipelineStage {
       // Generate Dialogue Audio
       for (final dialogueLine in scene.dialogue) {
         if (dialogueLine.text.trim().isEmpty) continue;
-        
+
         final workflow = AudioWorkflow(provider);
         final context = WorkflowContext();
-        
+
         // TODO: Pass character name to TTS provider to pick voice profile
         context.set("text", dialogueLine.text);
         context.set("characterName", dialogueLine.characterName);
-        
+
         final result = await engine.runWithContext(workflow, context);
         final job = result.get<Job>("audio")!;
         project.jobs.add(job);
-        
+
         project.audios.add(
           GeneratedAudio(
             sceneId: scene.id,
@@ -68,17 +65,18 @@ class SceneAudioStage implements PipelineStage {
           ),
         );
       }
-      
+
       // Fallback: If no narration and no dialogue, generate description
-      if ((scene.narration == null || scene.narration!.isEmpty) && scene.dialogue.isEmpty) {
+      if ((scene.narration == null || scene.narration!.isEmpty) &&
+          scene.dialogue.isEmpty) {
         final workflow = AudioWorkflow(provider);
         final context = WorkflowContext();
         context.set("text", scene.description);
-        
+
         final result = await engine.runWithContext(workflow, context);
         final job = result.get<Job>("audio")!;
         project.jobs.add(job);
-        
+
         project.audios.add(
           GeneratedAudio(
             sceneId: scene.id,

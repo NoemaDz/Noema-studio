@@ -5,9 +5,5 @@ class Workflow {
   final String name;
   final List<WorkflowStep> steps;
 
-  Workflow({
-    required this.id,
-    required this.name,
-    required this.steps,
-  });
+  Workflow({required this.id, required this.name, required this.steps});
 }

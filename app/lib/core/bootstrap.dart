@@ -67,24 +67,20 @@ class Bootstrap {
     imageProvider = providerRegistry.getDefault<ImageProvider>();
     ollamaProvider = providerRegistry.getDefault<LLMProvider>();
 
-    projectPipeline = ProjectPipeline(
-      registry: pipelineRegistry,
-    );
+    projectPipeline = ProjectPipeline(registry: pipelineRegistry);
 
     storyGenerationService = StoryGenerationService(engine: workflowEngine);
     imageGenerationService = ImageGenerationService(engine: workflowEngine);
-    characterExtractionService = CharacterExtractionService(engine: workflowEngine);
+    characterExtractionService = CharacterExtractionService(
+      engine: workflowEngine,
+    );
 
     jobManager = JobManager();
     jobRunner = JobRunner(imageProvider);
     jobEvents = JobEvents();
     projectState = ProjectState();
 
-    jobMonitor = JobMonitor(
-      jobRunner,
-      jobManager,
-      jobEvents,
-    );
+    jobMonitor = JobMonitor(jobRunner, jobManager, jobEvents);
 
     projectService = ProjectService();
     projectPersistenceService = ProjectPersistenceService();

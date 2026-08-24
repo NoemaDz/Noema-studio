@@ -3,14 +3,19 @@ import 'dart:math';
 class FFmpegEffectBuilder {
   /// Builds a filter_complex string for a given effect type and duration.
   /// Generates 1920x1080 output by default (configurable via options).
-  static String buildFilter(String effectName, {int width = 1920, int height = 1080}) {
+  static String buildFilter(
+    String effectName, {
+    int width = 1920,
+    int height = 1080,
+  }) {
     // We first scale/crop the input to match the target aspect ratio,
     // then apply the zoompan effect, and finally scale to exact output size.
 
     final ratio = width / height;
 
     // Helper string to crop image to correct ratio before zoompan
-    final cropFilter = "crop='iw':'iw*(1/$ratio)'"; // Simple center crop assuming landscape. A more robust one might be needed, but this works for generated images.
+    final cropFilter =
+        "crop='iw':'iw*(1/$ratio)'"; // Simple center crop assuming landscape. A more robust one might be needed, but this works for generated images.
 
     switch (effectName.toLowerCase()) {
       case 'zoom_in':

@@ -14,10 +14,7 @@ class OllamaDriver {
         "format": "json",
         "stream": false,
         "prompt": prompt,
-        "options": {
-          "num_predict": 4096,
-          "temperature": 0.7
-        }
+        "options": {"num_predict": 4096, "temperature": 0.7},
       }),
     );
 

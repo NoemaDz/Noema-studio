@@ -27,7 +27,9 @@ class GenerationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 320,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,10 +43,7 @@ class GenerationPanel extends StatelessWidget {
                   SizedBox(width: 8),
                   Text(
                     "Director Agent",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -82,7 +81,9 @@ class GenerationPanel extends StatelessWidget {
             Text(
               statusText,
               style: TextStyle(
-                color: statusText.startsWith("Error") ? Colors.red : Theme.of(context).colorScheme.primary,
+                color: statusText.startsWith("Error")
+                    ? Colors.red
+                    : Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -92,7 +93,9 @@ class GenerationPanel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -102,14 +105,17 @@ class GenerationPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       pipelineStatus,
-                      style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ],
-          
+
           if (jobs.isNotEmpty) ...[
             const SizedBox(height: 16),
             const Divider(),
@@ -120,20 +126,23 @@ class GenerationPanel extends StatelessWidget {
               ),
             ),
           ],
-          
+
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             height: 50,
             child: FilledButton.icon(
               onPressed: isGenerating ? null : onGenerate,
-              icon: isGenerating 
-                ? const SizedBox(
-                    width: 20, 
-                    height: 20, 
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
-                  )
-                : const Icon(Icons.auto_awesome),
+              icon: isGenerating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.auto_awesome),
               label: Text(
                 isGenerating ? "Generating..." : "Generate Video",
                 style: const TextStyle(fontSize: 16),

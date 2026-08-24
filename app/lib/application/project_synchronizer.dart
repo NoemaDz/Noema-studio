@@ -23,7 +23,7 @@ class ProjectSynchronizer {
     events.subscribe((job) async {
       await synchronize(job);
     });
-    
+
     // Initial sync for jobs that are already completed before the monitor starts
     for (final job in project.jobs) {
       if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
@@ -60,14 +60,20 @@ class ProjectSynchronizer {
 
     if (job.type == "image") {
       try {
-        debugPrint("ProjectSynchronizer: Downloading asset for job ${job.id} (type: ${job.type})");
+        debugPrint(
+          "ProjectSynchronizer: Downloading asset for job ${job.id} (type: ${job.type})",
+        );
         final asset = await provider.downloadAsset(job.id);
         debugPrint("ProjectSynchronizer: Downloaded asset: $asset");
         if (asset != null) {
-          debugPrint("ProjectSynchronizer: project.images contains ${project.images.length} images.");
+          debugPrint(
+            "ProjectSynchronizer: project.images contains ${project.images.length} images.",
+          );
           bool found = false;
           for (final image in project.images) {
-            debugPrint("ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}");
+            debugPrint(
+              "ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}",
+            );
             if (image.jobId == job.id) {
               image.asset = asset;
               state.refresh();
@@ -78,8 +84,12 @@ class ProjectSynchronizer {
             }
           }
           if (!found) {
-            debugPrint("ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!");
-            debugPrint("ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}");
+            debugPrint(
+              "ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!",
+            );
+            debugPrint(
+              "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
+            );
           }
         }
       } catch (e) {
@@ -105,20 +115,30 @@ class ProjectSynchronizer {
 
     if (allReady && !hasVideoJob) {
       // Find the VideoCompilationStage from registry
-      final stage = noema.bootstrap.pipelineRegistry.stages.whereType<VideoCompilationStage>().firstOrNull;
+      final stage = noema.bootstrap.pipelineRegistry.stages
+          .whereType<VideoCompilationStage>()
+          .firstOrNull;
       if (stage != null) {
         // Add a pending job to show progress in UI while compiling
-        final pendingJob = Job(id: "compile_pending", type: "video_compile", status: JobStatus.pending, progress: 0.0, result: "");
+        final pendingJob = Job(
+          id: "compile_pending",
+          type: "video_compile",
+          status: JobStatus.pending,
+          progress: 0.0,
+          result: "",
+        );
         project.jobs.add(pendingJob);
         state.refresh();
-        
+
         await stage.run(project);
-        
+
         // Remove the temporary pending job
         project.jobs.removeWhere((j) => j.id == "compile_pending");
-        
+
         // Add the new job to monitor
-        final videoJob = project.jobs.where((j) => j.type == "video_compile").firstOrNull;
+        final videoJob = project.jobs
+            .where((j) => j.type == "video_compile")
+            .firstOrNull;
         if (videoJob != null) {
           // Manually synchronize the completed job to update UI and save project
           synchronize(videoJob);

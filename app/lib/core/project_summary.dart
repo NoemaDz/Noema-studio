@@ -6,22 +6,22 @@ class ProjectSummary {
   ProjectSummary(this.project);
 
   String get title {
-  return project.story.title;
- }
+    return project.story.title;
+  }
 
- int get scenes {
-  return project.statistics.sceneCount;
- }
+  int get scenes {
+    return project.statistics.sceneCount;
+  }
 
- int get characters {
-  return project.statistics.characterCount;
- }
+  int get characters {
+    return project.statistics.characterCount;
+  }
 
- int get images {
-  return project.statistics.imageCount;
- }
+  int get images {
+    return project.statistics.imageCount;
+  }
 
- int get progress {
-  return project.progress.percent;
- }
+  int get progress {
+    return project.progress.percent;
+  }
 }

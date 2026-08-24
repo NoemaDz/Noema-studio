@@ -61,7 +61,7 @@ class _StudioScreenState extends State<StudioScreen> {
         story: import_story.Story(title: "Generating...", scenes: []),
       );
       noema.bootstrap.projectState.setProject(p);
-      
+
       final synchronizer = ProjectSynchronizer(
         project: p,
         provider: noema.bootstrap.imageProvider,
@@ -97,8 +97,10 @@ class _StudioScreenState extends State<StudioScreen> {
           _statusText = "Reading document...";
         });
 
-        final text = await noema.documentIngestionService.importDocument(files.first.path!);
-        
+        final text = await noema.documentIngestionService.importDocument(
+          files.first.path!,
+        );
+
         setState(() {
           _ideaController.text = text;
           _isGenerating = false;
@@ -124,15 +126,21 @@ class _StudioScreenState extends State<StudioScreen> {
   Future<void> _saveProject() async {
     final project = noema.bootstrap.projectState.project;
     if (project == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No project to save.")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("No project to save.")));
       return;
     }
-    
+
     try {
       await noema.saveProject(project);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Project saved successfully.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Project saved successfully.")),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error saving: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error saving: $e")));
     }
   }
 
@@ -145,7 +153,7 @@ class _StudioScreenState extends State<StudioScreen> {
       try {
         final project = await noema.openProject(files.first.path!);
         noema.bootstrap.projectState.setProject(project);
-        
+
         final synchronizer = ProjectSynchronizer(
           project: project,
           provider: noema.bootstrap.imageProvider,
@@ -153,9 +161,10 @@ class _StudioScreenState extends State<StudioScreen> {
         );
         synchronizer.attach(noema.bootstrap.jobEvents);
         noema.bootstrap.jobMonitor.start(project.jobs);
-        
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error loading project: $e")));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error loading project: $e")));
       }
     }
   }
@@ -185,17 +194,26 @@ class _StudioScreenState extends State<StudioScreen> {
           menuChildren: [
             MenuItemButton(
               onPressed: _newProject,
-              shortcut: const SingleActivator(LogicalKeyboardKey.keyN, control: true),
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyN,
+                control: true,
+              ),
               child: const Text('New Project'),
             ),
             MenuItemButton(
               onPressed: _loadProject,
-              shortcut: const SingleActivator(LogicalKeyboardKey.keyO, control: true),
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyO,
+                control: true,
+              ),
               child: const Text('Open Project...'),
             ),
             MenuItemButton(
               onPressed: _saveProject,
-              shortcut: const SingleActivator(LogicalKeyboardKey.keyS, control: true),
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyS,
+                control: true,
+              ),
               child: const Text('Save Project As...'),
             ),
             const Divider(),
@@ -209,10 +227,7 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Settings'),
             ),
             const Divider(),
-            MenuItemButton(
-              onPressed: () {},
-              child: const Text('Exit'),
-            ),
+            MenuItemButton(onPressed: () {}, child: const Text('Exit')),
           ],
           child: const Text('File'),
         ),
@@ -236,10 +251,7 @@ class _StudioScreenState extends State<StudioScreen> {
         ),
         SubmenuButton(
           menuChildren: [
-            MenuItemButton(
-              onPressed: () {},
-              child: const Text('Add Scene'),
-            ),
+            MenuItemButton(onPressed: () {}, child: const Text('Add Scene')),
             MenuItemButton(
               onPressed: () {},
               child: const Text('Add Character'),
@@ -268,14 +280,14 @@ class _StudioScreenState extends State<StudioScreen> {
         children: [
           // 1. Menu Bar
           _buildMenuBar(context),
-          
+
           // 2. Main Workspace
           Expanded(
             child: ListenableBuilder(
               listenable: noema.bootstrap.projectState,
               builder: (context, _) {
                 final project = noema.bootstrap.projectState.project;
-                
+
                 return Row(
                   children: [
                     // Left Sidebar: Controls & Progress
@@ -283,12 +295,13 @@ class _StudioScreenState extends State<StudioScreen> {
                       ideaController: _ideaController,
                       isGenerating: _isGenerating,
                       statusText: _statusText,
-                      pipelineStatus: noema.bootstrap.projectState.pipelineStatus,
+                      pipelineStatus:
+                          noema.bootstrap.projectState.pipelineStatus,
                       jobs: project?.jobs ?? [],
                       onGenerate: _generateProject,
                       onImportStory: _importStory,
                     ),
-                    
+
                     // Right Workspace: Video & Storyboard
                     Expanded(
                       child: Column(
@@ -303,25 +316,30 @@ class _StudioScreenState extends State<StudioScreen> {
                               ),
                             ),
                           ),
-                          
+
                           // Bottom: Storyboard
                           Expanded(
                             flex: 2,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(alpha: 0.1),
                                 border: Border(
-                                  top: BorderSide(color: Theme.of(context).dividerColor),
+                                  top: BorderSide(
+                                    color: Theme.of(context).dividerColor,
+                                  ),
                                 ),
                               ),
-                              child: project != null 
-                                ? StoryboardViewWidget(project: project)
-                                : const Center(
-                                    child: Text(
-                                      "Timeline empty. Generate a project to see scenes.",
-                                      style: TextStyle(color: Colors.grey),
-                                    )
-                                  ),
+                              child: project != null
+                                  ? StoryboardViewWidget(project: project)
+                                  : const Center(
+                                      child: Text(
+                                        "Timeline empty. Generate a project to see scenes.",
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ),
                             ),
                           ),
                         ],

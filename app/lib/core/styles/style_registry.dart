@@ -25,11 +25,9 @@ class StyleRegistry {
   static const Style anime = Style(
     name: "Anime",
 
-    positivePrompt:
-        "anime, masterpiece, vibrant colors, highly detailed",
+    positivePrompt: "anime, masterpiece, vibrant colors, highly detailed",
 
-    negativePrompt:
-        "low quality, blurry, watermark",
+    negativePrompt: "low quality, blurry, watermark",
 
     width: 1024,
     height: 1024,
@@ -45,8 +43,5 @@ class StyleRegistry {
 
   static Style get defaultStyle => cinematic;
 
-  static List<Style> get all => [
-        cinematic,
-        anime,
-      ];
+  static List<Style> get all => [cinematic, anime];
 }

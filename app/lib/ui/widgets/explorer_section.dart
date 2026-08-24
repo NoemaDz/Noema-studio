@@ -17,19 +17,9 @@ class ExplorerSection extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         leading: Icon(icon),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         initiallyExpanded: true,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: child,
-          ),
-        ],
+        children: [Padding(padding: const EdgeInsets.all(12), child: child)],
       ),
     );
   }

@@ -6,14 +6,14 @@ class ProjectStatistics {
   ProjectStatistics(this.project);
 
   int get sceneCount {
-  return project.story.scenes.length;
+    return project.story.scenes.length;
   }
 
   int get characterCount {
-  return project.characters.length;
-  } 
-  
+    return project.characters.length;
+  }
+
   int get imageCount {
-  return project.images.length;
+    return project.images.length;
   }
 }

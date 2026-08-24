@@ -7,30 +7,19 @@ import '../../workflows/story/story_workflow.dart';
 class StoryGenerationService {
   final WorkflowEngine engine;
 
-  StoryGenerationService({
-    required this.engine,
-  });
+  StoryGenerationService({required this.engine});
 
+  Future<String> generateStory(String idea) async {
+    final provider = ProviderRegistry().get<LLMProvider>("ollama");
 
+    final workflow = StoryWorkflow(provider);
 
-  Future<String> generateStory(
-  String idea,
- ) async {
-  final provider =
-      ProviderRegistry().get<LLMProvider>("ollama");
+    final context = WorkflowContext();
 
-  final workflow = StoryWorkflow(provider);
+    context.set("idea", idea);
 
-  final context = WorkflowContext();
+    final result = await engine.runWithContext(workflow, context);
 
-  context.set("idea", idea);
-
-  final result = await engine.runWithContext(
-    workflow,
-    context,
-  );
-
-  return result.get<String>("story")!;
- }
-
+    return result.get<String>("story")!;
+  }
 }

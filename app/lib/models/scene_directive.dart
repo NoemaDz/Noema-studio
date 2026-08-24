@@ -2,10 +2,12 @@ import 'scene.dart';
 
 class SceneDirective {
   final Scene scene;
-  final String imagePrompt;      // The enhanced prompt for ComfyUI
-  final String? voiceoverText;   // The text to convert to speech (dialogue + narration)
-  final String? cameraEffect;    // The effect for FFmpeg (overrides scene default)
-  final Map<String, dynamic> comfyuiOverrides; // Custom workflow overrides (like LoRAs, IPAdapter refs)
+  final String imagePrompt; // The enhanced prompt for ComfyUI
+  final String?
+  voiceoverText; // The text to convert to speech (dialogue + narration)
+  final String? cameraEffect; // The effect for FFmpeg (overrides scene default)
+  final Map<String, dynamic>
+  comfyuiOverrides; // Custom workflow overrides (like LoRAs, IPAdapter refs)
 
   SceneDirective({
     required this.scene,
@@ -21,7 +23,9 @@ class SceneDirective {
       imagePrompt: json["imagePrompt"],
       voiceoverText: json["voiceoverText"],
       cameraEffect: json["cameraEffect"],
-      comfyuiOverrides: Map<String, dynamic>.from(json["comfyuiOverrides"] ?? {}),
+      comfyuiOverrides: Map<String, dynamic>.from(
+        json["comfyuiOverrides"] ?? {},
+      ),
     );
   }
 

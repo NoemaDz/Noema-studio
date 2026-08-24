@@ -4,10 +4,8 @@ import '../../core/workflow/workflow_step.dart';
 
 import '../../builder/character_prompt_builder.dart';
 
-class BuildCharacterPromptsStep
-    extends WorkflowStep<void> {
-  final CharacterPromptBuilder builder =
-      CharacterPromptBuilder();
+class BuildCharacterPromptsStep extends WorkflowStep<void> {
+  final CharacterPromptBuilder builder = CharacterPromptBuilder();
 
   @override
   String get id => "character_prompts";
@@ -16,11 +14,8 @@ class BuildCharacterPromptsStep
   String get name => "Build Character Prompts";
 
   @override
-  Future<void> execute(
-    WorkflowContext context,
-  ) async {
-    final project =
-        context.get<NoemaProject>("project")!;
+  Future<void> execute(WorkflowContext context) async {
+    final project = context.get<NoemaProject>("project")!;
 
     for (final character in project.characters) {
       character.prompt = builder.build(

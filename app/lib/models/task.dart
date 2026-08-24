@@ -5,5 +5,5 @@ enum TaskType {
   generateCharacterImages,
   generateSceneImages,
   buildStoryboard,
- renderVideo,
+  renderVideo,
 }

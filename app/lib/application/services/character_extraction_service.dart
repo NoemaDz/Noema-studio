@@ -10,44 +10,28 @@ import '../../workflows/characters/character_workflow.dart';
 
 import '../../models/character_list.dart';
 
-
-
-
 class CharacterExtractionService {
   final WorkflowEngine engine;
 
-  CharacterExtractionService({
-    required this.engine,
-  });
+  CharacterExtractionService({required this.engine});
 
-  Future<void> extractCharacters(
-  NoemaProject project,
-) async {
-  final provider =
-      ProviderRegistry().get<LLMProvider>("ollama");
+  Future<void> extractCharacters(NoemaProject project) async {
+    final provider = ProviderRegistry().get<LLMProvider>("ollama");
 
-  final workflow = CharacterWorkflow(provider);
+    final workflow = CharacterWorkflow(provider);
 
-  final context = WorkflowContext();
+    final context = WorkflowContext();
 
-  context.set(
-    "story",
-    jsonEncode(project.story.toJson()),
-  );
+    context.set("story", jsonEncode(project.story.toJson()));
 
-  final result = await engine.runWithContext(
-    workflow,
-    context,
-  );
+    final result = await engine.runWithContext(workflow, context);
 
-  final characters = CharacterList.fromJson(
-    jsonDecode(
-      result.get<String>("characters")!,
-    ),
-  );
+    final characters = CharacterList.fromJson(
+      jsonDecode(result.get<String>("characters")!),
+    );
 
-  project.characters
-    ..clear()
-    ..addAll(characters.characters);
-}
+    project.characters
+      ..clear()
+      ..addAll(characters.characters);
+  }
 }

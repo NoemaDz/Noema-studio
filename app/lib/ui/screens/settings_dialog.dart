@@ -10,11 +10,11 @@ class SettingsDialog extends StatefulWidget {
 
 class _SettingsDialogState extends State<SettingsDialog> {
   int _currentStep = 0;
-  
+
   late String _activeLlmProvider;
   late TextEditingController _ollamaUrlController;
   late TextEditingController _llmModelNameController;
-  
+
   late TextEditingController _openAiUrlController;
   late TextEditingController _openAiKeyController;
   late TextEditingController _openAiModelController;
@@ -33,7 +33,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     'pan_left',
     'pan_right',
     'pan_up',
-    'pan_down'
+    'pan_down',
   ];
 
   final List<String> _openAiVoices = [
@@ -42,7 +42,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     'fable',
     'onyx',
     'nova',
-    'shimmer'
+    'shimmer',
   ];
 
   final List<String> _edgeVoices = [
@@ -51,18 +51,20 @@ class _SettingsDialogState extends State<SettingsDialog> {
     'en-GB-SoniaNeural',
     'en-GB-RyanNeural',
     'ar-SA-HamedNeural',
-    'ar-SA-ZariyahNeural'
+    'ar-SA-ZariyahNeural',
   ];
 
   @override
   void initState() {
     super.initState();
     final settings = noema.bootstrap.appSettings;
-    
+
     _activeLlmProvider = settings.activeLlmProvider;
     _ollamaUrlController = TextEditingController(text: settings.ollamaUrl);
-    _llmModelNameController = TextEditingController(text: settings.llmModelName);
-    
+    _llmModelNameController = TextEditingController(
+      text: settings.llmModelName,
+    );
+
     _openAiUrlController = TextEditingController(text: settings.openAiUrl);
     _openAiKeyController = TextEditingController(text: settings.openAiKey);
     _openAiModelController = TextEditingController(text: settings.openAiModel);
@@ -72,7 +74,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     if (!_effects.contains(_selectedEffect)) {
       _selectedEffect = 'random';
     }
-    
+
     _activeTtsProvider = settings.activeTtsProvider;
     _openAiTtsVoice = settings.openAiTtsVoice;
     if (!_openAiVoices.contains(_openAiTtsVoice)) {
@@ -123,9 +125,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
         height: 600, // Fixed height to prevent dialog jumping
         child: Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Colors.deepPurpleAccent,
-            ),
+            colorScheme: Theme.of(
+              context,
+            ).colorScheme.copyWith(primary: Colors.deepPurpleAccent),
           ),
           child: Stepper(
             type: StepperType.vertical,
@@ -166,10 +168,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
             },
             steps: [
               Step(
-                title: const Text('Text Generation Engine (LLM)', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Configure the AI brain for scriptwriting'),
+                title: const Text(
+                  'Text Generation Engine (LLM)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'Configure the AI brain for scriptwriting',
+                ),
                 isActive: _currentStep >= 0,
-                state: _currentStep > 0 ? StepState.complete : StepState.editing,
+                state: _currentStep > 0
+                    ? StepState.complete
+                    : StepState.editing,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -181,11 +190,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'ollama', child: Text('Ollama (Local)')),
-                        DropdownMenuItem(value: 'openai', child: Text('Generic API (OpenAI/Cloud/Local)')),
+                        DropdownMenuItem(
+                          value: 'ollama',
+                          child: Text('Ollama (Local)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'openai',
+                          child: Text('Generic API (OpenAI/Cloud/Local)'),
+                        ),
                       ],
                       onChanged: (value) {
-                        if (value != null) setState(() => _activeLlmProvider = value);
+                        if (value != null)
+                          setState(() => _activeLlmProvider = value);
                       },
                     ),
                     const SizedBox(height: 16),
@@ -240,10 +256,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 ),
               ),
               Step(
-                title: const Text('Voice Generation (TTS)', style: TextStyle(fontWeight: FontWeight.bold)),
+                title: const Text(
+                  'Voice Generation (TTS)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: const Text('Configure voice actors and narration'),
                 isActive: _currentStep >= 1,
-                state: _currentStep > 1 ? StepState.complete : (_currentStep == 1 ? StepState.editing : StepState.indexed),
+                state: _currentStep > 1
+                    ? StepState.complete
+                    : (_currentStep == 1
+                          ? StepState.editing
+                          : StepState.indexed),
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -255,12 +278,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'flutter_tts', child: Text('Local System TTS (Flutter)')),
-                        DropdownMenuItem(value: 'openai_tts', child: Text('OpenAI TTS API')),
-                        DropdownMenuItem(value: 'edge_tts', child: Text('Microsoft Edge TTS (Free)')),
+                        DropdownMenuItem(
+                          value: 'flutter_tts',
+                          child: Text('Local System TTS (Flutter)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'openai_tts',
+                          child: Text('OpenAI TTS API'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'edge_tts',
+                          child: Text('Microsoft Edge TTS (Free)'),
+                        ),
                       ],
                       onChanged: (value) {
-                        if (value != null) setState(() => _activeTtsProvider = value);
+                        if (value != null)
+                          setState(() => _activeTtsProvider = value);
                       },
                     ),
                     if (_activeTtsProvider == 'openai_tts') ...[
@@ -278,7 +311,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value != null) setState(() => _openAiTtsVoice = value);
+                          if (value != null)
+                            setState(() => _openAiTtsVoice = value);
                         },
                       ),
                       if (_activeLlmProvider != 'openai') ...[
@@ -309,7 +343,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value != null) setState(() => _edgeTtsVoice = value);
+                          if (value != null)
+                            setState(() => _edgeTtsVoice = value);
                         },
                       ),
                     ],
@@ -317,10 +352,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 ),
               ),
               Step(
-                title: const Text('Video & Image Engine', style: TextStyle(fontWeight: FontWeight.bold)),
+                title: const Text(
+                  'Video & Image Engine',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: const Text('Configure ComfyUI and FFmpeg'),
                 isActive: _currentStep >= 2,
-                state: _currentStep == 2 ? StepState.editing : StepState.indexed,
+                state: _currentStep == 2
+                    ? StepState.editing
+                    : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -347,7 +387,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        if (value != null) setState(() => _selectedEffect = value);
+                        if (value != null)
+                          setState(() => _selectedEffect = value);
                       },
                     ),
                   ],

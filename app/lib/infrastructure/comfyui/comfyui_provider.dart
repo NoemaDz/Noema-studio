@@ -16,31 +16,22 @@ class ComfyUIProvider extends ImageProvider {
   bool get available => true;
 
   @override
-  Future<Job> submitJob(
-    String prompt,
-    {Map<String, dynamic>? options}
-  ) {
+  Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) {
     return driver.submitJob(prompt, options: options);
   }
 
   @override
-  Future<JobStatus> getJobStatus(
-    String jobId,
-  ) {
+  Future<JobStatus> getJobStatus(String jobId) {
     return driver.getJobStatus(jobId);
   }
 
   @override
-  Future<Asset?> downloadAsset(
-    String jobId,
-  ) {
+  Future<Asset?> downloadAsset(String jobId) {
     return driver.downloadAsset(jobId);
   }
 
   @override
-  Future<void> cancelJob(
-    String jobId,
-  ) {
+  Future<void> cancelJob(String jobId) {
     return driver.cancelJob(jobId);
   }
 }

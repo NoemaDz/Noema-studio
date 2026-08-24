@@ -69,7 +69,7 @@ class AppSettings extends ChangeNotifier {
     required String edgeTtsVoice,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     await prefs.setString(_kOllamaUrl, ollamaUrl);
     await prefs.setString(_kLlmModelName, llmModelName);
     await prefs.setString(_kActiveLlmProvider, activeLlmProvider);
@@ -81,7 +81,7 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
     await prefs.setString(_kOpenAiTtsVoice, openAiTtsVoice);
     await prefs.setString(_kEdgeTtsVoice, edgeTtsVoice);
-    
+
     _ollamaUrl = ollamaUrl;
     _llmModelName = llmModelName;
     _activeLlmProvider = activeLlmProvider;
@@ -93,7 +93,7 @@ class AppSettings extends ChangeNotifier {
     _activeTtsProvider = activeTtsProvider;
     _openAiTtsVoice = openAiTtsVoice;
     _edgeTtsVoice = edgeTtsVoice;
-    
+
     notifyListeners();
   }
 }

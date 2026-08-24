@@ -12,17 +12,17 @@ class JsonExtractor {
         cleanStr = cleanStr.substring(startIndex, endIndex).trim();
       }
     } else if (cleanStr.contains('```')) {
-       final startIndex = cleanStr.indexOf('```') + 3;
-       final endIndex = cleanStr.lastIndexOf('```');
-       if (endIndex > startIndex) {
-         cleanStr = cleanStr.substring(startIndex, endIndex).trim();
-       }
+      final startIndex = cleanStr.indexOf('```') + 3;
+      final endIndex = cleanStr.lastIndexOf('```');
+      if (endIndex > startIndex) {
+        cleanStr = cleanStr.substring(startIndex, endIndex).trim();
+      }
     }
 
     // 2. Find outermost curly braces {} or square brackets []
     final firstBrace = cleanStr.indexOf('{');
     final lastBrace = cleanStr.lastIndexOf('}');
-    
+
     final firstBracket = cleanStr.indexOf('[');
     final lastBracket = cleanStr.lastIndexOf(']');
 
@@ -40,7 +40,7 @@ class JsonExtractor {
 
     if (start != -1 && end != -1 && end >= start) {
       String jsonStr = cleanStr.substring(start, end + 1);
-      
+
       // Auto-close missing brackets for robust parsing
       int openBraces = '{'.allMatches(jsonStr).length;
       int closeBraces = '}'.allMatches(jsonStr).length;
@@ -57,7 +57,7 @@ class JsonExtractor {
       }
       return jsonStr;
     }
-    
+
     return cleanStr;
   }
 }

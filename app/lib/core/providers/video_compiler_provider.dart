@@ -5,7 +5,7 @@ class AudioVideoResource {
   final String imagePath;
   final List<String> audioPaths;
   final String? effect;
-  
+
   AudioVideoResource({
     required this.imagePath,
     required this.audioPaths,
@@ -15,8 +15,8 @@ class AudioVideoResource {
 
 abstract class VideoCompilerProvider extends Provider {
   Future<Job> compileVideo(
-    List<AudioVideoResource> resources, 
-    String outputPath, 
-    {Map<String, dynamic>? options}
-  );
+    List<AudioVideoResource> resources,
+    String outputPath, {
+    Map<String, dynamic>? options,
+  });
 }

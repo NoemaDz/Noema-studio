@@ -6,8 +6,7 @@ import '../../builder/prompt_template_service.dart';
 class ExtractCharactersStep extends WorkflowStep<String> {
   final LLMProvider provider;
 
-  final PromptTemplateService promptService =
-      PromptTemplateService();
+  final PromptTemplateService promptService = PromptTemplateService();
 
   ExtractCharactersStep(this.provider);
 
@@ -18,17 +17,10 @@ class ExtractCharactersStep extends WorkflowStep<String> {
   String get name => "Extract Characters";
 
   @override
-  Future<String> execute(
-    WorkflowContext context,
-  ) async {
+  Future<String> execute(WorkflowContext context) async {
     final story = context.get<String>("story")!;
 
-    final prompt = await promptService.load(
-      "characters",
-      {
-        "story": story,
-      },
-    );
+    final prompt = await promptService.load("characters", {"story": story});
 
     return await provider.generate(prompt);
   }

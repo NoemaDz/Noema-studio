@@ -12,13 +12,11 @@ class AgentPlannerWorkflow extends Workflow {
   final LLMProvider provider;
 
   AgentPlannerWorkflow(this.provider)
-      : super(
-          id: "agent_planner",
-          name: "Agent Planner Workflow",
-          steps: [
-            _AgentPlanningStep(provider),
-          ],
-        );
+    : super(
+        id: "agent_planner",
+        name: "Agent Planner Workflow",
+        steps: [_AgentPlanningStep(provider)],
+      );
 }
 
 class _AgentPlanningStep implements WorkflowStep {
@@ -35,11 +33,11 @@ class _AgentPlanningStep implements WorkflowStep {
   @override
   Future<dynamic> execute(WorkflowContext context) async {
     final idea = context.get<String>("idea")!;
-    
+
     // Simple Chunking Logic (Split by 10,000 characters to stay within context limits safely)
     final chunkSize = 10000;
     final chunks = <String>[];
-    
+
     for (int i = 0; i < idea.length; i += chunkSize) {
       chunks.add(idea.substring(i, min(i + chunkSize, idea.length)));
     }
@@ -48,8 +46,13 @@ class _AgentPlanningStep implements WorkflowStep {
     String storyTitle = "Generated Story";
 
     for (int i = 0; i < chunks.length; i++) {
-      final prompt = AgentPromptTemplates.buildChunkPrompt(chunks[i], i, chunks.length);
-      final fullPrompt = "${AgentPromptTemplates.sceneBreakdownSystem}\n\n$prompt";
+      final prompt = AgentPromptTemplates.buildChunkPrompt(
+        chunks[i],
+        i,
+        chunks.length,
+      );
+      final fullPrompt =
+          "${AgentPromptTemplates.sceneBreakdownSystem}\n\n$prompt";
 
       final response = await provider.generate(fullPrompt);
       print("RAW LLM OUTPUT: $response");
@@ -57,28 +60,31 @@ class _AgentPlanningStep implements WorkflowStep {
       final cleanJson = JsonExtractor.extract(response);
       print("CLEANED JSON: $cleanJson");
       final decoded = _safeDecode(cleanJson);
-      
+
       if (decoded != null) {
         if (decoded.containsKey("title") && i == 0) {
           storyTitle = decoded["title"];
         }
-        
+
         if (decoded.containsKey("scenes")) {
-          allScenes.addAll(List<Map<String, dynamic>>.from(decoded["scenes"].map((s) {
-            // Ensure characterPositions is parsed as Map<String, String>
-            if (s["characterPositions"] != null) {
-              s["characterPositions"] = Map<String, String>.from(s["characterPositions"]);
-            }
-            return s;
-          })));
+          allScenes.addAll(
+            List<Map<String, dynamic>>.from(
+              decoded["scenes"].map((s) {
+                // Ensure characterPositions is parsed as Map<String, String>
+                if (s["characterPositions"] != null) {
+                  s["characterPositions"] = Map<String, String>.from(
+                    s["characterPositions"],
+                  );
+                }
+                return s;
+              }),
+            ),
+          );
         }
       }
     }
 
-    return {
-      "title": storyTitle,
-      "scenes": allScenes,
-    };
+    return {"title": storyTitle, "scenes": allScenes};
   }
 
   Map<String, dynamic>? _safeDecode(String jsonStr) {

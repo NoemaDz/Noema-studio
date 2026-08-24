@@ -7,8 +7,7 @@ import '../../core/noema_project.dart';
 class BuildScenePromptsStep extends WorkflowStep<void> {
   final Style style;
 
-  final ScenePromptBuilder builder =
-      ScenePromptBuilder();
+  final ScenePromptBuilder builder = ScenePromptBuilder();
 
   BuildScenePromptsStep(this.style);
 
@@ -19,11 +18,8 @@ class BuildScenePromptsStep extends WorkflowStep<void> {
   String get name => "Build Scene Prompts";
 
   @override
-  Future<void> execute(
-    WorkflowContext context,
-  ) async {
-    final project =
-        context.get<NoemaProject>("project")!;
+  Future<void> execute(WorkflowContext context) async {
+    final project = context.get<NoemaProject>("project")!;
 
     for (final scene in project.story.scenes) {
       scene.imagePrompt = builder.build(

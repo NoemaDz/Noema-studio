@@ -18,9 +18,10 @@ class JobEvents {
       listener(job);
     }
   }
+
   bool get hasListeners => _listeners.isNotEmpty;
 
- void clear() {
-  _listeners.clear();
- }
+  void clear() {
+    _listeners.clear();
+  }
 }

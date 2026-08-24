@@ -24,7 +24,11 @@ class CompileVideoStep extends WorkflowStep<Job> {
       throw Exception("Missing resources or outputPath for video compilation");
     }
 
-    final job = await provider.compileVideo(resources, outputPath, options: options);
+    final job = await provider.compileVideo(
+      resources,
+      outputPath,
+      options: options,
+    );
 
     return job;
   }

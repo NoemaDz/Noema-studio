@@ -42,22 +42,26 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
       return;
     }
 
-    final isNetwork = widget.videoPath!.startsWith('http://') || widget.videoPath!.startsWith('https://');
+    final isNetwork =
+        widget.videoPath!.startsWith('http://') ||
+        widget.videoPath!.startsWith('https://');
     if (!isNetwork && !File(widget.videoPath!).existsSync()) {
       if (mounted) setState(() {});
       return;
     }
 
     if (isNetwork) {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoPath!));
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoPath!),
+      );
     } else {
       _controller = VideoPlayerController.file(File(widget.videoPath!));
     }
-    
+
     try {
       await _controller!.initialize();
       _controller!.setLooping(true);
-      
+
       if (mounted) {
         setState(() {
           _initialized = true;
@@ -99,7 +103,7 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
             color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -145,17 +149,17 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
           ),
           // Progress Bar
           Positioned(
-             bottom: 0,
-             left: 0,
-             right: 0,
-             child: VideoProgressIndicator(
-               _controller!, 
-               allowScrubbing: true,
-               colors: VideoProgressColors(
-                 playedColor: Theme.of(context).colorScheme.primary,
-                 backgroundColor: Colors.white24,
-               ),
-             ),
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: VideoProgressIndicator(
+              _controller!,
+              allowScrubbing: true,
+              colors: VideoProgressColors(
+                playedColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Colors.white24,
+              ),
+            ),
           ),
         ],
       ),
@@ -163,8 +167,9 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
   }
 
   Widget _buildPlaceholder(String text) {
-    final bool hasError = text == "Loading Video..." && !_initialized && widget.videoPath != null;
-    
+    final bool hasError =
+        text == "Loading Video..." && !_initialized && widget.videoPath != null;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
@@ -175,13 +180,19 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.movie_creation_outlined, size: 64, color: Colors.grey.shade600),
+            Icon(
+              Icons.movie_creation_outlined,
+              size: 64,
+              color: Colors.grey.shade600,
+            ),
             const SizedBox(height: 16),
             Text(
               hasError ? "Video Generated Successfully!" : text,
               style: TextStyle(color: Colors.grey.shade500, fontSize: 18),
             ),
-            if (hasError && widget.videoPath != null && !widget.videoPath!.startsWith('http')) ...[
+            if (hasError &&
+                widget.videoPath != null &&
+                !widget.videoPath!.startsWith('http')) ...[
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () {
@@ -205,7 +216,7 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
                 "Internal player is unsupported on Linux.",
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
-            ]
+            ],
           ],
         ),
       ),

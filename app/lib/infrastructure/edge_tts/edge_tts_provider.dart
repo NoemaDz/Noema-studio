@@ -19,11 +19,13 @@ class EdgeTTSProvider extends TTSProvider {
   Future<Job> generateAudio(String text) async {
     final jobId = "tts_${DateTime.now().millisecondsSinceEpoch}";
     final appDir = await getApplicationSupportDirectory();
-    final outputDir = Directory(p.join(appDir.path, "noema", "output", "audio"));
+    final outputDir = Directory(
+      p.join(appDir.path, "noema", "output", "audio"),
+    );
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }
-    
+
     final fileName = "$jobId.mp3";
     final outputPath = p.join(outputDir.path, fileName);
 
@@ -36,25 +38,35 @@ class EdgeTTSProvider extends TTSProvider {
         'edge-tts', // In PATH
         p.join(home, '.local', 'bin', 'edge-tts'), // pipx or pip --user
         p.join(home, 'myenv', 'bin', 'edge-tts'), // The user's myenv
-        'python3' // fallback to python module
+        'python3', // fallback to python module
       ];
 
       for (final binPath in possiblePaths) {
         try {
           if (binPath == 'python3') {
             print("Trying python3 -m edge_tts...");
-            result = await Process.run(
-              'python3',
-              ['-m', 'edge_tts', '--text', text, '--write-media', outputPath, '--voice', voice],
-            );
+            result = await Process.run('python3', [
+              '-m',
+              'edge_tts',
+              '--text',
+              text,
+              '--write-media',
+              outputPath,
+              '--voice',
+              voice,
+            ]);
           } else {
             print("Trying edge-tts binary at: $binPath");
-            result = await Process.run(
-              binPath,
-              ['--text', text, '--write-media', outputPath, '--voice', voice],
-            );
+            result = await Process.run(binPath, [
+              '--text',
+              text,
+              '--write-media',
+              outputPath,
+              '--voice',
+              voice,
+            ]);
           }
-          
+
           // If the command succeeded, break out of the loop
           if (result.exitCode == 0) {
             break;
@@ -64,7 +76,9 @@ class EdgeTTSProvider extends TTSProvider {
         }
       }
 
-      if (result != null && result.exitCode == 0 && File(outputPath).existsSync()) {
+      if (result != null &&
+          result.exitCode == 0 &&
+          File(outputPath).existsSync()) {
         return Job(
           id: jobId,
           type: "audio",
@@ -90,7 +104,8 @@ class EdgeTTSProvider extends TTSProvider {
         id: jobId,
         type: "audio",
         status: JobStatus.failed,
-        result: "Exception: $e (Please make sure you have run 'pip install edge-tts')",
+        result:
+            "Exception: $e (Please make sure you have run 'pip install edge-tts')",
       );
     }
   }

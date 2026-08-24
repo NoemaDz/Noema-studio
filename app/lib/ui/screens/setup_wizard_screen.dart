@@ -6,7 +6,7 @@ class SetupWizardScreen extends StatefulWidget {
   final VoidCallback onComplete;
 
   const SetupWizardScreen({
-    super.key, 
+    super.key,
     required this.installerService,
     required this.onComplete,
   });
@@ -36,7 +36,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           width: 500,
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Theme.of(context).dividerColor),
           ),
@@ -50,7 +52,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.auto_awesome, size: 64, color: Colors.blueAccent),
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 64,
+                    color: Colors.blueAccent,
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     "AI Engine Setup",
@@ -65,18 +71,34 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   const SizedBox(height: 40),
 
                   if (state == InstallerState.error) ...[
-                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
-                    Text(message, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                    Text(
+                      message,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => widget.installerService.install(),
                       child: const Text("Retry Installation"),
                     ),
                   ] else if (state == InstallerState.completed) ...[
-                    const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
-                    Text(message, style: const TextStyle(color: Colors.green), textAlign: TextAlign.center),
+                    Text(
+                      message,
+                      style: const TextStyle(color: Colors.green),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: widget.onComplete,
@@ -92,7 +114,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     const SizedBox(height: 16),
-                    Text(message, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    Text(
+                      message,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
                   ],
                 ],
               );

@@ -1,35 +1,45 @@
-# Noema Studio - Core Architecture Roadmap
+# Noema Studio - Roadmap
 
-This roadmap defines the prioritized stages for consolidating the core architecture of Noema Studio, ensuring a robust, scalable, and professional foundation before expanding features.
+This document outlines the strategic phases and technical milestones for Noema Studio. As an open-source AI orchestration platform, our goal is to build a robust, extensible core before expanding outward to support every available AI model.
 
-## 1. Project State / Domain Model
-- **Goal:** Define solid, serializable data models.
-- **Details:** Refactor `Project`, `Scene`, `Character`, and `Dialogue` classes. Implement JSON serialization/deserialization to save and load projects locally. Introduce state management (e.g., `Draft`, `Generating`, `Completed`, `Failed`) for each component.
+---
 
-## 2. Dependency-aware Pipeline
-- **Goal:** A robust execution engine.
-- **Details:** Build a pipeline manager that understands task dependencies (e.g., TTS Audio and ComfyUI Image must both complete before FFmpeg Video Compilation can begin). Handle retries, cancellations, and concurrent execution gracefully.
+## Phase 1: Core Foundation (Current)
+*Focus: Stabilize the architecture and prove the End-to-End concept.*
 
-## 3. Agent Planner + Orchestrator
-- **Goal:** Smart idea decomposition.
-- **Details:** Solidify the orchestrator that takes a raw user prompt and breaks it down into structured Scenes, Characters, and Dialogue using LLMs, feeding directly into the Domain Model.
+- [x] Project-centric domain model (`NoemaProject` as aggregate root)
+- [x] Provider Abstraction (V1 interfaces for Image, TTS, LLM)
+- [x] True DAG Pipeline Execution (Parallel scene processing)
+- [x] Job System for background polling (ComfyUI integrations)
+- [x] Basic Local LLM integration (Ollama)
+- [x] Auto-Installer for Local ComfyUI + Nodes
+- [ ] End-to-End Pipeline stability (Idea → LLM → ComfyUI → TTS → MP4)
+- [ ] Centralized `PlatformPaths` for robust cross-platform execution
+- [ ] Basic Unit Tests & CI/CD workflows
 
-## 4. Character / Scene Consistency
-- **Goal:** Visual and narrative continuity.
-- **Details:** Implement logic to pass character reference images (IPAdapter) or seed data between scenes to maintain consistent appearances and styles throughout the generated video.
+## Phase 2: Refinement & Coherence
+*Focus: Ensuring the generated output actually feels like a produced video, not random clips.*
 
-## 5. Provider Capability & Model Selection
-- **Goal:** Abstracted provider interfaces.
-- **Details:** Create a unified interface for different AI providers (Local vs Cloud). Allow dynamic selection of capabilities based on what the user has configured (e.g., fallback to basic image generation if a complex workflow fails).
+- [ ] Character Consistency enforcement (IPAdapter + Reference passing)
+- [ ] Scene Editor / Timeline UI (Allow users to manually edit prompts before generation)
+- [ ] Robust Project Persistence (JSON serialization/deserialization for large projects)
+- [ ] Fail-safe Recovery (Resume failed pipelines from the exact broken node)
 
-## 6. Video Generation
-- **Goal:** Core generation capabilities.
-- **Details:** Integrate Image-to-Video models (like AnimateDiff, SVD, or Cloud APIs). Map generation statuses directly to the Domain Model.
+## Phase 3: The Plugin Ecosystem
+*Focus: Opening the platform to external contributors and commercial APIs.*
 
-## 7. Timeline / Editing
-- **Goal:** Non-linear editing capabilities.
-- **Details:** Build a visual timeline UI where users can drag, drop, trim, and reorder generated clips, audio tracks, and adjust the final composition before rendering.
+- [ ] Formalize `IPlugin` SDK and capabilities
+- [ ] Cloud Providers: OpenAI, Anthropic, ElevenLabs integrations
+- [ ] Video Providers: Runway ML, Sora, Veo integrations
+- [ ] Dynamic Capability Resolution (e.g. `If VRAM < 8GB, route to Cloud Provider`)
 
-## 8. المزيد من Providers (More Providers)
-- **Goal:** Expand ecosystem integrations.
-- **Details:** Once the core pipeline is bulletproof, add plugins for Runway, Sora, ElevenLabs, Kling, etc.
+## Phase 4: Pro Features
+*Focus: Advanced multimedia generation and marketplace.*
+
+- [ ] Lip-syncing integration (Wav2Lip / SadTalker)
+- [ ] Automatic Sound Effects (SFX) and Music Generation based on scene mood
+- [ ] Workflow Marketplace (Share and download custom pipeline stages)
+- [ ] Collaborative Cloud Projects
+
+---
+*Note: This roadmap is a living document and will evolve based on community feedback and open-source contributions.*

@@ -5,11 +5,9 @@ import 'compile_video_step.dart';
 
 class VideoCompilationWorkflow extends Workflow {
   VideoCompilationWorkflow(VideoCompilerProvider provider)
-      : super(
-          id: "video_compilation_workflow",
-          name: "Video Compilation Workflow",
-          steps: [
-            CompileVideoStep(provider),
-          ],
-        );
+    : super(
+        id: "video_compilation_workflow",
+        name: "Video Compilation Workflow",
+        steps: [CompileVideoStep(provider)],
+      );
 }

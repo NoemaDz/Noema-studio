@@ -1,9 +1,4 @@
-enum GenerationState {
-  draft,
-  generating,
-  completed,
-  failed,
-}
+enum GenerationState { draft, generating, completed, failed }
 
 extension GenerationStateExtension on GenerationState {
   String toJson() => name;

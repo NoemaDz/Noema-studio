@@ -8,15 +8,10 @@ import '../../models/job.dart';
 class ImageGenerationService {
   final WorkflowEngine engine;
 
-  ImageGenerationService({
-    required this.engine,
-  });
+  ImageGenerationService({required this.engine});
 
-  Future<Job> generateImage(
-    String prompt,
-  ) async {
-    final provider =
-        ProviderRegistry().get<ImageProvider>("comfyui");
+  Future<Job> generateImage(String prompt) async {
+    final provider = ProviderRegistry().get<ImageProvider>("comfyui");
 
     final workflow = ImageWorkflow(provider);
 
@@ -24,10 +19,7 @@ class ImageGenerationService {
 
     context.set("prompt", prompt);
 
-    final result = await engine.runWithContext(
-      workflow,
-      context,
-    );
+    final result = await engine.runWithContext(workflow, context);
 
     return result.get<Job>("image")!;
   }

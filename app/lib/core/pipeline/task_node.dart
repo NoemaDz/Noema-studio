@@ -5,7 +5,7 @@ class TaskNode {
   final String name;
   final Future<void> Function() execute;
   final List<TaskNode> dependencies;
-  
+
   bool isCompleted = false;
   bool isFailed = false;
   bool isRunning = false;
@@ -17,5 +17,9 @@ class TaskNode {
     this.dependencies = const [],
   });
 
-  bool get canRun => !isCompleted && !isFailed && !isRunning && dependencies.every((dep) => dep.isCompleted);
+  bool get canRun =>
+      !isCompleted &&
+      !isFailed &&
+      !isRunning &&
+      dependencies.every((dep) => dep.isCompleted);
 }

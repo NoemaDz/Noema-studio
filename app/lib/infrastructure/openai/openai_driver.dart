@@ -19,15 +19,13 @@ class OpenAIDriver {
         "messages": [
           {
             "role": "system",
-            "content": "You are a creative story generator. Return ONLY valid JSON."
+            "content":
+                "You are a creative story generator. Return ONLY valid JSON.",
           },
-          {
-            "role": "user",
-            "content": prompt
-          }
+          {"role": "user", "content": prompt},
         ],
         "response_format": {"type": "json_object"},
-        "temperature": 0.7
+        "temperature": 0.7,
       }),
     );
 
@@ -35,7 +33,9 @@ class OpenAIDriver {
       final data = jsonDecode(response.body);
       return data["choices"][0]["message"]["content"];
     } else {
-      throw Exception("Failed to generate story with OpenAI/Generic API: ${response.statusCode} - ${response.body}");
+      throw Exception(
+        "Failed to generate story with OpenAI/Generic API: ${response.statusCode} - ${response.body}",
+      );
     }
   }
 }

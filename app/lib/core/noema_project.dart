@@ -68,9 +68,9 @@ class NoemaProject {
     this.stage = ProjectStage.story,
     this.projectState = GenerationState.draft,
     Style? style,
-  })  : title = title ?? idea,
-        createdAt = createdAt ?? DateTime.now(),
-        style = style ?? StyleRegistry.defaultStyle;
+  }) : title = title ?? idea,
+       createdAt = createdAt ?? DateTime.now(),
+       style = style ?? StyleRegistry.defaultStyle;
 
   // ── Computed Properties ───────────────────────────────────────────────────
 
@@ -84,9 +84,9 @@ class NoemaProject {
 
   void updateImageFromJob(Job job) {
     final image = images.cast<GeneratedImage?>().firstWhere(
-          (e) => e?.jobId == job.id,
-          orElse: () => null,
-        );
+      (e) => e?.jobId == job.id,
+      orElse: () => null,
+    );
     if (image == null) return;
     image.asset = Asset(
       id: job.id,
@@ -97,9 +97,9 @@ class NoemaProject {
 
   void updateAudioFromJob(Job job) {
     final audio = audios.cast<GeneratedAudio?>().firstWhere(
-          (e) => e?.jobId == job.id,
-          orElse: () => null,
-        );
+      (e) => e?.jobId == job.id,
+      orElse: () => null,
+    );
     if (audio == null) return;
     audio.asset = Asset(
       id: job.id,
@@ -159,19 +159,25 @@ class NoemaProject {
 
     if (json['characters'] != null) {
       project.characters.addAll(
-        (json['characters'] as List).map((e) => Character.fromJson(e as Map<String, dynamic>)),
+        (json['characters'] as List).map(
+          (e) => Character.fromJson(e as Map<String, dynamic>),
+        ),
       );
     }
 
     if (json['images'] != null) {
       project.images.addAll(
-        (json['images'] as List).map((e) => GeneratedImage.fromJson(e as Map<String, dynamic>)),
+        (json['images'] as List).map(
+          (e) => GeneratedImage.fromJson(e as Map<String, dynamic>),
+        ),
       );
     }
 
     if (json['audios'] != null) {
       project.audios.addAll(
-        (json['audios'] as List).map((e) => GeneratedAudio.fromJson(e as Map<String, dynamic>)),
+        (json['audios'] as List).map(
+          (e) => GeneratedAudio.fromJson(e as Map<String, dynamic>),
+        ),
       );
     }
 
@@ -179,28 +185,32 @@ class NoemaProject {
 
     if (json['tasks'] != null) {
       project.tasks.addAll(
-        (json['tasks'] as List).map((e) => ProjectTask.fromJson(e as Map<String, dynamic>)),
+        (json['tasks'] as List).map(
+          (e) => ProjectTask.fromJson(e as Map<String, dynamic>),
+        ),
       );
     }
 
     if (json['jobs'] != null) {
       project.jobs.addAll(
-        (json['jobs'] as List).map((e) => Job.fromJson(e as Map<String, dynamic>)),
+        (json['jobs'] as List).map(
+          (e) => Job.fromJson(e as Map<String, dynamic>),
+        ),
       );
     }
 
     if (json['settings'] != null) {
-      project.settings.addAll(Map<String, dynamic>.from(json['settings'] as Map));
+      project.settings.addAll(
+        Map<String, dynamic>.from(json['settings'] as Map),
+      );
     }
 
     if (json['metadata'] != null) {
-      project.metadata.addAll(Map<String, dynamic>.from(json['metadata'] as Map));
+      project.metadata.addAll(
+        Map<String, dynamic>.from(json['metadata'] as Map),
+      );
     }
 
     return project;
   }
 }
-
-
-
-

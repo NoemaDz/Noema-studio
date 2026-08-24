@@ -7,36 +7,23 @@ import '../../workflow/workflow_engine.dart';
 import '../../../workflows/character_images/character_image_workflow.dart';
 
 class CharacterImageStage implements PipelineStage {
-   @override
-   int get priority => 30;
-   
-   final WorkflowEngine engine;
+  @override
+  int get priority => 30;
 
-   final ImageProvider provider;
+  final WorkflowEngine engine;
 
-   CharacterImageStage({
-   required this.engine,
-   required this.provider,
-   });
+  final ImageProvider provider;
 
-    @override
-Future<void> run(
-  NoemaProject project,
-) async {
+  CharacterImageStage({required this.engine, required this.provider});
 
-  final workflow =
-      CharacterImageWorkflow(provider);
+  @override
+  Future<void> run(NoemaProject project) async {
+    final workflow = CharacterImageWorkflow(provider);
 
-  final context = WorkflowContext();
+    final context = WorkflowContext();
 
-  context.set(
-    "project",
-    project,
-  );
+    context.set("project", project);
 
-  await engine.runWithContext(
-    workflow,
-    context,
-  );
-}
+    await engine.runWithContext(workflow, context);
+  }
 }

@@ -19,7 +19,9 @@ class Character {
 
   factory Character.fromJson(Map<String, dynamic> json) {
     return Character(
-      id: json["id"] ?? json["name"], // fallback to name for backward compatibility
+      id:
+          json["id"] ??
+          json["name"], // fallback to name for backward compatibility
       name: json["name"],
       description: json["description"],
       prompt: json["prompt"],

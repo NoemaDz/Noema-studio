@@ -25,34 +25,31 @@ class Style {
     required this.scheduler,
   });
 
+  factory Style.fromJson(Map<String, dynamic> json) {
+    return Style(
+      name: json["name"],
+      positivePrompt: json["positivePrompt"],
+      negativePrompt: json["negativePrompt"],
+      width: json["width"],
+      height: json["height"],
+      steps: json["steps"],
+      cfg: (json["cfg"] as num).toDouble(),
+      sampler: json["sampler"],
+      scheduler: json["scheduler"],
+    );
+  }
 
-  factory Style.fromJson(
-  Map<String, dynamic> json,
- ) {
-  return Style(
-    name: json["name"],
-    positivePrompt: json["positivePrompt"],
-    negativePrompt: json["negativePrompt"],
-    width: json["width"],
-    height: json["height"],
-    steps: json["steps"],
-    cfg: (json["cfg"] as num).toDouble(),
-    sampler: json["sampler"],
-    scheduler: json["scheduler"],
-  );
- }
-
- Map<String, dynamic> toJson() {
-  return {
-    "name": name,
-    "positivePrompt": positivePrompt,
-    "negativePrompt": negativePrompt,
-    "width": width,
-    "height": height,
-    "steps": steps,
-    "cfg": cfg,
-    "sampler": sampler,
-    "scheduler": scheduler,
-  };
- }
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+      "positivePrompt": positivePrompt,
+      "negativePrompt": negativePrompt,
+      "width": width,
+      "height": height,
+      "steps": steps,
+      "cfg": cfg,
+      "sampler": sampler,
+      "scheduler": scheduler,
+    };
+  }
 }

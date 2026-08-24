@@ -12,7 +12,11 @@ class MockVideoCompilerProvider extends VideoCompilerProvider {
   bool get available => true;
 
   @override
-  Future<Job> compileVideo(List<AudioVideoResource> resources, String outputPath, {Map<String, dynamic>? options}) async {
+  Future<Job> compileVideo(
+    List<AudioVideoResource> resources,
+    String outputPath, {
+    Map<String, dynamic>? options,
+  }) async {
     return Job(
       id: "mock_video_${DateTime.now().millisecondsSinceEpoch}",
       type: "video_compile",

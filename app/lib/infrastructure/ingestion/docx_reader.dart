@@ -23,7 +23,7 @@ class DocxReader implements DocumentIngestionProvider {
 
     final bytes = await file.readAsBytes();
     final archive = ZipDecoder().decodeBytes(bytes);
-    
+
     // In a DOCX file, the text is inside word/document.xml
     for (final archiveFile in archive) {
       if (archiveFile.name == 'word/document.xml') {
@@ -32,7 +32,7 @@ class DocxReader implements DocumentIngestionProvider {
         return _stripXmlTags(xmlString);
       }
     }
-    
+
     return "";
   }
 
@@ -41,7 +41,7 @@ class DocxReader implements DocumentIngestionProvider {
     // <w:p> indicates a paragraph in Word ML
     var text = xmlString.replaceAll(RegExp(r'<w:p[^\>]*>'), '\n');
     text = text.replaceAll(RegExp(r'<[^>]*>'), '');
-    
+
     // Clean up excessive newlines
     text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n');
     return text.trim();

@@ -1,7 +1,1 @@
-enum AssetType {
-  image,
-  video,
-  audio,
-  document,
-  animation,
-}
+enum AssetType { image, video, audio, document, animation }

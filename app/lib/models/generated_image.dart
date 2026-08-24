@@ -16,16 +16,12 @@ class GeneratedImage {
     this.asset,
   });
 
-  factory GeneratedImage.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory GeneratedImage.fromJson(Map<String, dynamic> json) {
     return GeneratedImage(
       sceneId: json["sceneId"],
       jobId: json["jobId"],
       prompt: json["prompt"],
-      asset: json["asset"] != null
-          ? Asset.fromJson(json["asset"])
-          : null,
+      asset: json["asset"] != null ? Asset.fromJson(json["asset"]) : null,
     );
   }
 

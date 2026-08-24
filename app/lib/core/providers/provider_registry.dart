@@ -10,12 +10,10 @@ class ProviderRegistry {
   final Map<String, Provider> _providers = {};
 
   void register(Provider provider) {
-    
     _providers[provider.id] = provider;
   }
 
   T get<T extends Provider>(String id) {
-    
     final provider = _providers[id];
 
     if (provider == null) {

@@ -1,9 +1,7 @@
 import '../models/style.dart';
 
 class Styles {
-
   static const pixar = Style(
-
     name: "Pixar",
 
     positivePrompt:
@@ -23,7 +21,5 @@ class Styles {
     sampler: "euler",
 
     scheduler: "normal",
-
   );
-
 }

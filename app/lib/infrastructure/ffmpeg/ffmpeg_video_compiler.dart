@@ -19,28 +19,32 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
   @override
   Future<Job> compileVideo(
-    List<AudioVideoResource> resources, 
-    String outputPath, 
-    {Map<String, dynamic>? options}
-  ) async {
+    List<AudioVideoResource> resources,
+    String outputPath, {
+    Map<String, dynamic>? options,
+  }) async {
     final jobId = "ffmpeg_${DateTime.now().millisecondsSinceEpoch}";
     final ffmpegPath = DependencyManager.instance.ffmpegPath;
 
     if (!available) {
-        return Job(
-            id: jobId,
-            type: "video_compile",
-            status: JobStatus.failed,
-            result: "ffmpeg not available",
-        );
+      return Job(
+        id: jobId,
+        type: "video_compile",
+        status: JobStatus.failed,
+        result: "ffmpeg not available",
+      );
     }
 
     try {
-      final tempDir = Directory(p.join(Directory.systemTemp.path, "noema_compile_$jobId"));
+      final tempDir = Directory(
+        p.join(Directory.systemTemp.path, "noema_compile_$jobId"),
+      );
       if (!tempDir.existsSync()) tempDir.createSync();
 
       // Options
-      final effectType = options?['video_effect'] ?? noema.bootstrap.appSettings.defaultVideoEffect;
+      final effectType =
+          options?['video_effect'] ??
+          noema.bootstrap.appSettings.defaultVideoEffect;
       final width = options?['width'] ?? 1920;
       final height = options?['height'] ?? 1080;
 
@@ -50,19 +54,31 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
       for (int i = 0; i < resources.length; i++) {
         final resource = resources[i];
         final sceneOutputPath = p.join(tempDir.path, "scene_$i.mp4");
-        
+
         final requestedEffect = resource.effect ?? effectType;
-        final actualEffect = requestedEffect == 'random' 
-            ? FFmpegEffectBuilder.getRandomEffect() 
+        final actualEffect = requestedEffect == 'random'
+            ? FFmpegEffectBuilder.getRandomEffect()
             : requestedEffect;
 
         String finalSceneAudio = "";
-        
+
         // Handle multiple audios
         if (resource.audioPaths.isEmpty) {
           // Generate 3 seconds of silent audio as fallback
           finalSceneAudio = p.join(tempDir.path, "silence_$i.m4a");
-          await Process.run(ffmpegPath, ['-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-t', '3', '-q:a', '9', '-acodec', 'aac', finalSceneAudio]);
+          await Process.run(ffmpegPath, [
+            '-f',
+            'lavfi',
+            '-i',
+            'anullsrc=r=44100:cl=stereo',
+            '-t',
+            '3',
+            '-q:a',
+            '9',
+            '-acodec',
+            'aac',
+            finalSceneAudio,
+          ]);
         } else if (resource.audioPaths.length == 1) {
           finalSceneAudio = resource.audioPaths.first;
         } else {
@@ -74,13 +90,24 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
             audioListContent.writeln("file '${audPath.replaceAll('\\', '/')}'");
           }
           audioListFile.writeAsStringSync(audioListContent.toString());
-          
-          await Process.run(ffmpegPath, ['-f', 'concat', '-safe', '0', '-i', audioListFile.path, '-c', 'copy', finalSceneAudio]);
+
+          await Process.run(ffmpegPath, [
+            '-f',
+            'concat',
+            '-safe',
+            '0',
+            '-i',
+            audioListFile.path,
+            '-c',
+            'copy',
+            finalSceneAudio,
+          ]);
         }
 
-        final bool isVideo = resource.imagePath.toLowerCase().endsWith('.mp4') || 
-                             resource.imagePath.toLowerCase().endsWith('.gif') || 
-                             resource.imagePath.toLowerCase().endsWith('.webm');
+        final bool isVideo =
+            resource.imagePath.toLowerCase().endsWith('.mp4') ||
+            resource.imagePath.toLowerCase().endsWith('.gif') ||
+            resource.imagePath.toLowerCase().endsWith('.webm');
 
         List<String> args = [];
 
@@ -98,25 +125,38 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
             '-b:a', '192k',
             '-shortest', // Stop when the shortest stream (now guaranteed to be audio since video is infinite) ends
             '-y',
-            sceneOutputPath
+            sceneOutputPath,
           ];
         } else {
           // It's an image, apply zoompan filter
-          var filter = FFmpegEffectBuilder.buildFilter(actualEffect, width: width, height: height);
+          var filter = FFmpegEffectBuilder.buildFilter(
+            actualEffect,
+            width: width,
+            height: height,
+          );
 
           args = [
-            '-i', resource.imagePath,
-            '-i', finalSceneAudio,
-            '-filter_complex', filter,
-            '-map', '[v]',
-            '-map', '1:a',
-            '-c:v', 'libx264',
-            '-pix_fmt', 'yuv420p',
-            '-c:a', 'aac',
-            '-b:a', '192k',
+            '-i',
+            resource.imagePath,
+            '-i',
+            finalSceneAudio,
+            '-filter_complex',
+            filter,
+            '-map',
+            '[v]',
+            '-map',
+            '1:a',
+            '-c:v',
+            'libx264',
+            '-pix_fmt',
+            'yuv420p',
+            '-c:a',
+            'aac',
+            '-b:a',
+            '192k',
             '-shortest',
             '-y',
-            sceneOutputPath
+            sceneOutputPath,
           ];
         }
 
@@ -152,20 +192,20 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         '-i', listFile.path,
         '-c', 'copy', // Super fast, no re-encoding
         '-y',
-        outputPath
+        outputPath,
       ];
 
       final concatResult = await Process.run(ffmpegPath, concatArgs);
       if (concatResult.exitCode != 0) {
-         print("FFMPEG CONCAT FAILED");
-         print("STDOUT: ${concatResult.stdout}");
-         print("STDERR: ${concatResult.stderr}");
-         return Job(
-            id: jobId,
-            type: "video_compile",
-            status: JobStatus.failed,
-            result: "FFmpeg concat failed: ${concatResult.stderr}",
-          );
+        print("FFMPEG CONCAT FAILED");
+        print("STDOUT: ${concatResult.stdout}");
+        print("STDERR: ${concatResult.stderr}");
+        return Job(
+          id: jobId,
+          type: "video_compile",
+          status: JobStatus.failed,
+          result: "FFmpeg concat failed: ${concatResult.stderr}",
+        );
       }
 
       // Cleanup temp dir
@@ -181,13 +221,12 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         progress: 1.0,
         result: outputPath,
       );
-
     } catch (e) {
       return Job(
-          id: jobId,
-          type: "video_compile",
-          status: JobStatus.failed,
-          result: "Exception: $e",
+        id: jobId,
+        type: "video_compile",
+        status: JobStatus.failed,
+        result: "Exception: $e",
       );
     }
   }

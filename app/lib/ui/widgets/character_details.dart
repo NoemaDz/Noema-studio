@@ -5,10 +5,7 @@ import '../../models/character.dart';
 class CharacterDetails extends StatelessWidget {
   final Character character;
 
-  const CharacterDetails({
-    super.key,
-    required this.character,
-  });
+  const CharacterDetails({super.key, required this.character});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +15,7 @@ class CharacterDetails extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              character.name,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text(character.name, style: Theme.of(context).textTheme.titleLarge),
 
             const SizedBox(height: 12),
 
@@ -31,9 +25,7 @@ class CharacterDetails extends StatelessWidget {
               const SizedBox(height: 16),
               const Text(
                 "Prompt",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(character.prompt!),
@@ -43,9 +35,7 @@ class CharacterDetails extends StatelessWidget {
               const SizedBox(height: 16),
               const Text(
                 "Image",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(character.imagePath!),

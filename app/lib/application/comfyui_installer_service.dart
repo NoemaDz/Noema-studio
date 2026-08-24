@@ -13,7 +13,7 @@ enum InstallerState {
   installingDependencies,
   cloningCustomNodes,
   completed,
-  error
+  error,
 }
 
 class ComfyUIInstallerService extends ChangeNotifier {
@@ -38,13 +38,14 @@ class ComfyUIInstallerService extends ChangeNotifier {
 
   Future<void> checkInstallation() async {
     _update(InstallerState.checking, "Checking ComfyUI installation...", 0.0);
-    
+
     try {
       final appDir = await getApplicationSupportDirectory();
       _installDir = p.join(appDir.path, 'noema', 'comfyui');
-      
+
       final dir = Directory(_installDir!);
-      if (dir.existsSync() && File(p.join(_installDir!, 'main.py')).existsSync()) {
+      if (dir.existsSync() &&
+          File(p.join(_installDir!, 'main.py')).existsSync()) {
         _update(InstallerState.completed, "ComfyUI is already installed.", 1.0);
       } else {
         _update(InstallerState.idle, "ComfyUI is not installed.", 0.0);
@@ -60,7 +61,11 @@ class ComfyUIInstallerService extends ChangeNotifier {
 
     try {
       // 0. Ensure zero-dependency setup (Git, FFmpeg)
-      _update(InstallerState.checkingDependencies, "Ensuring system tools (Git, FFmpeg) are available...", 0.05);
+      _update(
+        InstallerState.checkingDependencies,
+        "Ensuring system tools (Git, FFmpeg) are available...",
+        0.05,
+      );
       await DependencyManager.instance.ensureDependencies((msg) {
         _update(InstallerState.checkingDependencies, msg, 0.05);
       });
@@ -74,37 +79,59 @@ class ComfyUIInstallerService extends ChangeNotifier {
 
       // 1. Clone ComfyUI
       _update(InstallerState.cloningComfyUI, "Cloning ComfyUI engine...", 0.1);
-      final cloneResult = await Process.run(gitPath, ['clone', 'https://github.com/comfyanonymous/ComfyUI.git', '.'], workingDirectory: _installDir);
-      
+      final cloneResult = await Process.run(gitPath, [
+        'clone',
+        'https://github.com/comfyanonymous/ComfyUI.git',
+        '.',
+      ], workingDirectory: _installDir);
+
       if (cloneResult.exitCode != 0) {
         throw Exception("Failed to clone ComfyUI: ${cloneResult.stderr}");
       }
 
       // 2. Install Dependencies (Skipping for now to avoid python env nightmares, assuming portable or manual pip install later)
-      _update(InstallerState.installingDependencies, "Preparing directories...", 0.4);
-      
+      _update(
+        InstallerState.installingDependencies,
+        "Preparing directories...",
+        0.4,
+      );
+
       // 3. Clone Custom Nodes
-      _update(InstallerState.cloningCustomNodes, "Installing required custom nodes...", 0.5);
+      _update(
+        InstallerState.cloningCustomNodes,
+        "Installing required custom nodes...",
+        0.5,
+      );
       final customNodesDir = p.join(_installDir!, 'custom_nodes');
-      
+
       final nodesToClone = [
         "https://github.com/cubiq/ComfyUI_IPAdapter_plus.git",
         "https://github.com/Kosinkadink/ComfyUI-AnimateDiff-Evolved.git",
         "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git",
-        "https://github.com/ltdrdata/ComfyUI-Manager.git"
+        "https://github.com/ltdrdata/ComfyUI-Manager.git",
       ];
 
       double progressStep = 0.4 / nodesToClone.length;
       double currentProgress = 0.5;
 
       for (final repo in nodesToClone) {
-        _update(InstallerState.cloningCustomNodes, "Installing node: ${repo.split('/').last.replaceAll('.git', '')}...", currentProgress);
-        await Process.run(gitPath, ['clone', repo], workingDirectory: customNodesDir);
+        _update(
+          InstallerState.cloningCustomNodes,
+          "Installing node: ${repo.split('/').last.replaceAll('.git', '')}...",
+          currentProgress,
+        );
+        await Process.run(gitPath, [
+          'clone',
+          repo,
+        ], workingDirectory: customNodesDir);
         currentProgress += progressStep;
       }
 
-      _update(InstallerState.completed, "ComfyUI Setup Complete! (Models must be added manually)", 1.0);
-
+      _update(
+        InstallerState.completed,
+        "ComfyUI Setup Complete! (Models must be added manually)",
+        1.0,
+      );
     } catch (e) {
       _update(InstallerState.error, "Installation Failed: $e", 0.0);
     }

@@ -6,7 +6,6 @@ import '../../../workflows/scenes/scene_prompt_workflow.dart';
 import '../../workflow/workflow_context.dart';
 import '../../utils/json_extractor.dart';
 
-
 /// Pipeline Stage: Scene Prompt Generation
 /// Runs the ScenePromptWorkflow to build AI image prompts for each scene.
 /// Uses JsonExtractor to safely parse LLM output even if it contains markdown.
@@ -32,12 +31,17 @@ class ScenePromptStage implements PipelineStage {
       try {
         final promptsMap = jsonDecode(cleanJson) as Map<String, dynamic>;
         final promptsList = promptsMap['prompts'] as List;
-        for (int i = 0; i < promptsList.length && i < project.story.scenes.length; i++) {
+        for (
+          int i = 0;
+          i < promptsList.length && i < project.story.scenes.length;
+          i++
+        ) {
           final promptData = promptsList[i] as Map<String, dynamic>;
           final scene = project.story.scenes[i];
-          scene.imagePrompt = promptData['imagePrompt'] as String?
-              ?? promptData['prompt'] as String?
-              ?? scene.description;
+          scene.imagePrompt =
+              promptData['imagePrompt'] as String? ??
+              promptData['prompt'] as String? ??
+              scene.description;
         }
       } catch (e) {
         // Non-fatal: fallback to scene description as prompt

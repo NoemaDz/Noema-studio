@@ -33,10 +33,8 @@ class ProjectPipeline {
   final PipelineRegistry registry;
   final PipelineEngine engine;
 
-  ProjectPipeline({
-    required this.registry,
-    PipelineEngine? engine,
-  }) : engine = engine ?? PipelineEngine(maxConcurrentTasks: 2);
+  ProjectPipeline({required this.registry, PipelineEngine? engine})
+    : engine = engine ?? PipelineEngine(maxConcurrentTasks: 2);
 
   Future<NoemaProject> generate(
     NoemaProject project, {
@@ -97,10 +95,13 @@ class ProjectPipeline {
         previousGroupJoiners = [joiner];
       }
 
-      await engine.run(allNodes, onTaskUpdate: (task) {
-        final status = _statusLabel(task);
-        onUpdate?.call('Pipeline: ${task.name} — $status');
-      });
+      await engine.run(
+        allNodes,
+        onTaskUpdate: (task) {
+          final status = _statusLabel(task);
+          onUpdate?.call('Pipeline: ${task.name} — $status');
+        },
+      );
     }
 
     // ── Phase 3: Sequential compilation ───────────────────────────────────

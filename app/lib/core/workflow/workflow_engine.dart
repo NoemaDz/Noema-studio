@@ -11,21 +11,17 @@ class WorkflowEngine {
     }
 
     return context;
-
   }
 
- Future<WorkflowContext> runWithContext(
-  Workflow workflow,
-  WorkflowContext context,
- ) async {
-   for (final step in workflow.steps) {
-    final result = await step.execute(context);
-    context.set(step.id, result);
+  Future<WorkflowContext> runWithContext(
+    Workflow workflow,
+    WorkflowContext context,
+  ) async {
+    for (final step in workflow.steps) {
+      final result = await step.execute(context);
+      context.set(step.id, result);
+    }
+
+    return context;
   }
-
-  return context;
- }
-
 }
-
-

@@ -1,10 +1,4 @@
-enum JobStatus {
-  pending,
-  queued,
-  running,
-  completed,
-  failed,
-}
+enum JobStatus { pending, queued, running, completed, failed }
 
 class Job {
   final String id;
@@ -18,41 +12,34 @@ class Job {
 
   Map<String, dynamic> metadata;
 
-Job({
-  required this.id,
-  required this.type,
-  this.status = JobStatus.pending,
-  this.progress = 0,
-  this.result,
-  Map<String, dynamic>? metadata,
-}) : metadata = metadata ?? <String, dynamic>{};
+  Job({
+    required this.id,
+    required this.type,
+    this.status = JobStatus.pending,
+    this.progress = 0,
+    this.result,
+    Map<String, dynamic>? metadata,
+  }) : metadata = metadata ?? <String, dynamic>{};
 
-
-  factory Job.fromJson(
-  Map<String, dynamic> json,
-  ) {
-  return Job(
-    id: json["id"],
-    type: json["type"],
-    status: JobStatus.values.byName(
-      json["status"],
-    ),
-    progress: (json["progress"] as num).toDouble(),
-    result: json["result"],
-    metadata: Map<String, dynamic>.from(
-  json["metadata"] ?? {},
-   ),
-  );
+  factory Job.fromJson(Map<String, dynamic> json) {
+    return Job(
+      id: json["id"],
+      type: json["type"],
+      status: JobStatus.values.byName(json["status"]),
+      progress: (json["progress"] as num).toDouble(),
+      result: json["result"],
+      metadata: Map<String, dynamic>.from(json["metadata"] ?? {}),
+    );
   }
 
   Map<String, dynamic> toJson() {
-  return {
-    "id": id,
-    "type": type,
-    "status": status.name,
-    "progress": progress,
-    "result": result,
-    "metadata": metadata,
-  };
+    return {
+      "id": id,
+      "type": type,
+      "status": status.name,
+      "progress": progress,
+      "result": result,
+      "metadata": metadata,
+    };
   }
 }

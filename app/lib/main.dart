@@ -16,7 +16,7 @@ final noema = Noema();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   noema.init([
     ComfyUIPlugin(),
     OllamaPlugin(),
@@ -67,15 +67,15 @@ class _AIStudioAppState extends State<AIStudioApp> {
         colorSchemeSeed: Colors.indigo,
         fontFamily: 'Segoe UI',
       ),
-      home: _isChecked 
-          ? (_installerService.isInstalled 
-              ? const StudioScreen() 
-              : SetupWizardScreen(
-                  installerService: _installerService,
-                  onComplete: () {
-                    setState(() {}); // Rebuilds and goes to StudioScreen
-                  },
-                ))
+      home: _isChecked
+          ? (_installerService.isInstalled
+                ? const StudioScreen()
+                : SetupWizardScreen(
+                    installerService: _installerService,
+                    onComplete: () {
+                      setState(() {}); // Rebuilds and goes to StudioScreen
+                    },
+                  ))
           : const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }

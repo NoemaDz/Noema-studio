@@ -9,7 +9,7 @@ class DocumentIngestionService {
 
   Future<String> importDocument(String filePath) async {
     final extension = p.extension(filePath).toLowerCase().replaceAll('.', '');
-    
+
     // Find a provider that supports this extension
     for (final provider in registry.all) {
       if (provider is DocumentIngestionProvider && provider.available) {
@@ -18,7 +18,7 @@ class DocumentIngestionService {
         }
       }
     }
-    
+
     throw Exception("No ingestion provider found for extension: .$extension");
   }
 }

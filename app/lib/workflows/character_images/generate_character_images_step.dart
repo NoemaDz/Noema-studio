@@ -5,8 +5,7 @@ import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
 import '../../models/character.dart';
 
-class GenerateCharacterImagesStep
-    extends WorkflowStep<void> {
+class GenerateCharacterImagesStep extends WorkflowStep<void> {
   final ImageProvider provider;
 
   GenerateCharacterImagesStep(this.provider);
@@ -18,23 +17,18 @@ class GenerateCharacterImagesStep
   String get name => "Generate Character Images";
 
   @override
-  Future<void> execute(
-    WorkflowContext context,
-  ) async {
-    final project =
-        context.get<NoemaProject>("project")!;
-    
+  Future<void> execute(WorkflowContext context) async {
+    final project = context.get<NoemaProject>("project")!;
+
     final Map<Character, String> pendingJobs = {};
 
     for (final character in project.characters) {
       if (character.prompt == null) continue;
 
-      final job = await provider.submitJob(
-        character.prompt!,
-      );
-      
+      final job = await provider.submitJob(character.prompt!);
+
       job.metadata["title"] = "Generating Character: ${character.name}";
-      
+
       project.jobs.add(job);
       pendingJobs[character] = job.id;
     }

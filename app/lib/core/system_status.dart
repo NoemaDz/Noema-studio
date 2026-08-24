@@ -3,8 +3,5 @@ class SystemStatus {
 
   final bool comfyUiReady;
 
-  const SystemStatus({
-    required this.ollamaReady,
-    required this.comfyUiReady,
-  });
+  const SystemStatus({required this.ollamaReady, required this.comfyUiReady});
 }

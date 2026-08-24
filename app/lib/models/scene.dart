@@ -14,10 +14,7 @@ class DialogueLine {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      "characterName": characterName,
-      "text": text,
-    };
+    return {"characterName": characterName, "text": text};
   }
 }
 
@@ -31,7 +28,8 @@ class Scene {
   List<DialogueLine> dialogue;
   String? narration;
   List<String> characterNames;
-  Map<String, String> characterPositions; // Name -> Position (left, right, center)
+  Map<String, String>
+  characterPositions; // Name -> Position (left, right, center)
   String? mood;
   String? cameraEffect;
   String? colorGrading;
@@ -69,13 +67,16 @@ class Scene {
       description: json["description"],
       imagePrompt: json["imagePrompt"],
       imagePath: json["imagePath"],
-      dialogue: (json["dialogue"] as List<dynamic>?)
+      dialogue:
+          (json["dialogue"] as List<dynamic>?)
               ?.map((e) => DialogueLine.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       narration: json["narration"],
       characterNames: List<String>.from(json["characterNames"] ?? []),
-      characterPositions: Map<String, String>.from(json["characterPositions"] ?? {}),
+      characterPositions: Map<String, String>.from(
+        json["characterPositions"] ?? {},
+      ),
       mood: json["mood"],
       cameraEffect: json["cameraEffect"],
       colorGrading: json["colorGrading"],

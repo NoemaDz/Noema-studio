@@ -25,8 +25,8 @@ class GenerateImageStep extends WorkflowStep<Job> {
     final options = context.get<Map<String, dynamic>>("options");
     final job = await provider.submitJob(prompt, options: options);
 
-   job.metadata["prompt"] = prompt;
+    job.metadata["prompt"] = prompt;
 
-      return job;
+    return job;
   }
 }

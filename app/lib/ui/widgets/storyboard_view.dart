@@ -24,7 +24,7 @@ class StoryboardViewWidget extends StatelessWidget {
       itemBuilder: (context, index) {
         final scene = project.story.scenes[index];
         final image = _getImageForScene(scene.id);
-        
+
         return Container(
           width: 250,
           margin: const EdgeInsets.only(right: 16),
@@ -36,7 +36,7 @@ class StoryboardViewWidget extends StatelessWidget {
                 color: Colors.black12,
                 blurRadius: 4,
                 offset: const Offset(0, 2),
-              )
+              ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
@@ -48,28 +48,27 @@ class StoryboardViewWidget extends StatelessWidget {
                 flex: 3,
                 child: image != null && image.asset != null
                     ? (image.asset!.path.startsWith("http")
-                        ? Image.network(
-                            image.asset!.path,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.file(
-                            File(image.asset!.path),
-                            fit: BoxFit.cover,
-                          ))
+                          ? Image.network(image.asset!.path, fit: BoxFit.cover)
+                          : Image.file(
+                              File(image.asset!.path),
+                              fit: BoxFit.cover,
+                            ))
                     : scene.imageState == GenerationState.generating
-                        ? Shimmer.fromColors(
-                            baseColor: Colors.grey.shade800,
-                            highlightColor: Colors.grey.shade600,
-                            child: Container(
-                              color: Colors.grey.shade800,
-                            ),
-                          )
-                        : Container(
-                            color: Colors.grey.shade800,
-                            child: const Center(
-                              child: Icon(Icons.image_search, color: Colors.white54, size: 32),
-                            ),
+                    ? Shimmer.fromColors(
+                        baseColor: Colors.grey.shade800,
+                        highlightColor: Colors.grey.shade600,
+                        child: Container(color: Colors.grey.shade800),
+                      )
+                    : Container(
+                        color: Colors.grey.shade800,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_search,
+                            color: Colors.white54,
+                            size: 32,
                           ),
+                        ),
+                      ),
               ),
               // Text Content
               Expanded(
@@ -92,15 +91,25 @@ class StoryboardViewWidget extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                _getImageForScene(scene.id)?.asset != null ? Icons.image : Icons.hourglass_empty,
+                                _getImageForScene(scene.id)?.asset != null
+                                    ? Icons.image
+                                    : Icons.hourglass_empty,
                                 size: 14,
-                                color: _getImageForScene(scene.id)?.asset != null ? Colors.green : Colors.grey,
+                                color:
+                                    _getImageForScene(scene.id)?.asset != null
+                                    ? Colors.green
+                                    : Colors.grey,
                               ),
                               const SizedBox(width: 4),
                               Icon(
-                                _getAudioForScene(scene.id)?.asset != null ? Icons.audiotrack : Icons.hourglass_empty,
+                                _getAudioForScene(scene.id)?.asset != null
+                                    ? Icons.audiotrack
+                                    : Icons.hourglass_empty,
                                 size: 14,
-                                color: _getAudioForScene(scene.id)?.asset != null ? Colors.green : Colors.grey,
+                                color:
+                                    _getAudioForScene(scene.id)?.asset != null
+                                    ? Colors.green
+                                    : Colors.grey,
                               ),
                             ],
                           ),
@@ -118,22 +127,61 @@ class StoryboardViewWidget extends StatelessWidget {
                               ),
                               if (scene.dialogue.isNotEmpty) ...[
                                 const SizedBox(height: 8),
-                                Text("💬 Dialogue:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-                                ...scene.dialogue.map((d) => Text("\${d.characterName}: \${d.text}", style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic))),
+                                Text(
+                                  "💬 Dialogue:",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                                ...scene.dialogue.map(
+                                  (d) => Text(
+                                    "\${d.characterName}: \${d.text}",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
                               ],
-                              if (scene.narration != null && scene.narration!.isNotEmpty) ...[
+                              if (scene.narration != null &&
+                                  scene.narration!.isNotEmpty) ...[
                                 const SizedBox(height: 8),
-                                Text("🎙️ Narration:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary)),
-                                Text(scene.narration!, style: const TextStyle(fontSize: 12)),
+                                Text(
+                                  "🎙️ Narration:",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                                ),
+                                Text(
+                                  scene.narration!,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
                               ],
                               const SizedBox(height: 8),
                               Wrap(
                                 spacing: 4,
                                 runSpacing: 4,
                                 children: [
-                                  if (scene.cameraEffect != null) _buildTag(context, "🎥 ${scene.cameraEffect}"),
-                                  if (scene.mood != null) _buildTag(context, "🎭 ${scene.mood}"),
-                                  if (scene.colorGrading != null) _buildTag(context, "🎨 ${scene.colorGrading}"),
+                                  if (scene.cameraEffect != null)
+                                    _buildTag(
+                                      context,
+                                      "🎥 ${scene.cameraEffect}",
+                                    ),
+                                  if (scene.mood != null)
+                                    _buildTag(context, "🎭 ${scene.mood}"),
+                                  if (scene.colorGrading != null)
+                                    _buildTag(
+                                      context,
+                                      "🎨 ${scene.colorGrading}",
+                                    ),
                                 ],
                               ),
                             ],

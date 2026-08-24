@@ -26,7 +26,7 @@ class PdfReader implements DocumentIngestionProvider {
     final extractor = PdfTextExtractor(document);
     final text = extractor.extractText();
     document.dispose();
-    
+
     return text;
   }
 }

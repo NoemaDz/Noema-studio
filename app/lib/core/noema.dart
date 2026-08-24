@@ -10,69 +10,61 @@ import '/application/services/image_generation_service.dart';
 import '/application/services/character_extraction_service.dart';
 import '/application/services/document_ingestion_service.dart';
 
- class Noema {
+class Noema {
   final Bootstrap bootstrap;
   final WorkflowEngine engine = WorkflowEngine();
-  
-  ProjectGenerationService get projectGenerationService => bootstrap.projectGenerationService;
-  ProjectPersistenceService get projectPersistenceService => bootstrap.projectPersistenceService;
-  StoryGenerationService get storyGenerationService => bootstrap.storyGenerationService;
-  ImageGenerationService get imageGenerationService => bootstrap.imageGenerationService;
-  CharacterExtractionService get characterExtractionService => bootstrap.characterExtractionService;
-  DocumentIngestionService get documentIngestionService => bootstrap.documentIngestionService;
-    
-  Noema({
-    Bootstrap? bootstrap,
-  }) : bootstrap = bootstrap ?? Bootstrap();
+
+  ProjectGenerationService get projectGenerationService =>
+      bootstrap.projectGenerationService;
+  ProjectPersistenceService get projectPersistenceService =>
+      bootstrap.projectPersistenceService;
+  StoryGenerationService get storyGenerationService =>
+      bootstrap.storyGenerationService;
+  ImageGenerationService get imageGenerationService =>
+      bootstrap.imageGenerationService;
+  CharacterExtractionService get characterExtractionService =>
+      bootstrap.characterExtractionService;
+  DocumentIngestionService get documentIngestionService =>
+      bootstrap.documentIngestionService;
+
+  Noema({Bootstrap? bootstrap}) : bootstrap = bootstrap ?? Bootstrap();
 
   void init(List<IPlugin> plugins) {
     bootstrap.initializePlugins(plugins);
   }
 
-  Future<String> generateStory(
-    String idea,
-  ) {
+  Future<String> generateStory(String idea) {
     return storyGenerationService.generateStory(idea);
   }
-  
- //===========================================================
-Future<Job> generateImage(
-  String prompt,
-) {
-  return imageGenerationService.generateImage(prompt);
-}
- //===========================================================
-  Future<NoemaProject> createProject(
-  NoemaProject project,){ 
 
-  return projectGenerationService.createProject(project);
- }
- //==================================================
-  Future<void> extractCharacters(
-  NoemaProject project,
-) {
-  return characterExtractionService
-      .extractCharacters(project);
-}
- //==============================================
-    Future<NoemaProject> generateProject(
-  NoemaProject project,) { 
-  
-  return projectGenerationService.generateProject(project);
+  //===========================================================
+  Future<Job> generateImage(String prompt) {
+    return imageGenerationService.generateImage(prompt);
   }
- //===========================================
- Future<void> saveProject(
-  NoemaProject project,
- ) {
-  return projectPersistenceService.saveProject(project);
- }
- //===========================================
-   Future<NoemaProject> openProject(
-  String path,
- ) {
-  return projectPersistenceService.openProject(path);
- }
- //=========================================
 
-  
+  //===========================================================
+  Future<NoemaProject> createProject(NoemaProject project) {
+    return projectGenerationService.createProject(project);
+  }
+
+  //==================================================
+  Future<void> extractCharacters(NoemaProject project) {
+    return characterExtractionService.extractCharacters(project);
+  }
+
+  //==============================================
+  Future<NoemaProject> generateProject(NoemaProject project) {
+    return projectGenerationService.generateProject(project);
+  }
+
+  //===========================================
+  Future<void> saveProject(NoemaProject project) {
+    return projectPersistenceService.saveProject(project);
+  }
+
+  //===========================================
+  Future<NoemaProject> openProject(String path) {
+    return projectPersistenceService.openProject(path);
+  }
+  //=========================================
 }

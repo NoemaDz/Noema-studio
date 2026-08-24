@@ -5,11 +5,9 @@ import 'generate_audio_step.dart';
 
 class AudioWorkflow extends Workflow {
   AudioWorkflow(TTSProvider provider)
-      : super(
-          id: "audio_workflow",
-          name: "Audio Workflow",
-          steps: [
-            GenerateAudioStep(provider),
-          ],
-        );
+    : super(
+        id: "audio_workflow",
+        name: "Audio Workflow",
+        steps: [GenerateAudioStep(provider)],
+      );
 }

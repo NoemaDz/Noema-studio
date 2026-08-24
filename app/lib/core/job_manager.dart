@@ -18,10 +18,7 @@ class JobManager {
     }
   }
 
-  void updateStatus(
-    String id,
-    JobStatus status,
-  ) {
+  void updateStatus(String id, JobStatus status) {
     final job = find(id);
 
     if (job != null) {
@@ -29,10 +26,7 @@ class JobManager {
     }
   }
 
-  void updateProgress(
-    String id,
-    double progress,
-  ) {
+  void updateProgress(String id, double progress) {
     final job = find(id);
 
     if (job != null) {
@@ -40,10 +34,7 @@ class JobManager {
     }
   }
 
-  void complete(
-    String id,
-    String result,
-  ) {
+  void complete(String id, String result) {
     final job = find(id);
 
     if (job != null) {
@@ -54,18 +45,18 @@ class JobManager {
   }
 
   void remove(String id) {
-  _jobs.removeWhere((job) => job.id == id);
- }
+    _jobs.removeWhere((job) => job.id == id);
+  }
 
   void clear() {
-  _jobs.clear();
- }
+    _jobs.clear();
+  }
 
   List<Job> byStatus(JobStatus status) {
-  return _jobs.where((job) => job.status == status).toList();
- }
+    return _jobs.where((job) => job.status == status).toList();
+  }
 
   bool contains(String id) {
-  return find(id) != null;
- }
+    return find(id) != null;
+  }
 }

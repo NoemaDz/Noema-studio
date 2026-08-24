@@ -21,17 +21,19 @@ class OpenAITTSProvider extends TTSProvider {
   Future<Job> generateAudio(String text) async {
     final jobId = "tts_${DateTime.now().millisecondsSinceEpoch}";
     final appDir = await getApplicationSupportDirectory();
-    final outputDir = Directory(p.join(appDir.path, "noema", "output", "audio"));
+    final outputDir = Directory(
+      p.join(appDir.path, "noema", "output", "audio"),
+    );
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
     }
-    
+
     final fileName = "$jobId.mp3";
     final outputPath = p.join(outputDir.path, fileName);
 
     final apiKey = noema.bootstrap.appSettings.openAiKey;
     final voice = noema.bootstrap.appSettings.openAiTtsVoice;
-    
+
     if (apiKey.isEmpty) {
       return Job(
         id: jobId,
@@ -48,17 +50,13 @@ class OpenAITTSProvider extends TTSProvider {
           'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'model': 'tts-1',
-          'input': text,
-          'voice': voice,
-        }),
+        body: jsonEncode({'model': 'tts-1', 'input': text, 'voice': voice}),
       );
 
       if (response.statusCode == 200) {
         final file = File(outputPath);
         await file.writeAsBytes(response.bodyBytes);
-        
+
         return Job(
           id: jobId,
           type: "audio",

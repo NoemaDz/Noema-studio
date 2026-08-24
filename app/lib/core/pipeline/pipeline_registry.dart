@@ -9,7 +9,7 @@ class PipelineRegistry {
   }
 
   List<PipelineStage> get stages => List.unmodifiable(_stages);
-  
+
   void clear() {
     _stages.clear();
   }

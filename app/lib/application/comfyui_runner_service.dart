@@ -26,18 +26,23 @@ class ComfyUIRunnerService extends ChangeNotifier {
 
   void _startHealthCheck() {
     _healthCheckTimer?.cancel();
-    _healthCheckTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+    _healthCheckTimer = Timer.periodic(const Duration(seconds: 3), (
+      timer,
+    ) async {
       try {
-        final response = await http.get(Uri.parse('http://127.0.0.1:8188/system_stats')).timeout(const Duration(seconds: 10));
+        final response = await http
+            .get(Uri.parse('http://127.0.0.1:8188/system_stats'))
+            .timeout(const Duration(seconds: 10));
         if (response.statusCode == 200) {
           _updateStatus(EngineStatus.ready);
         } else {
           _updateStatus(EngineStatus.starting);
         }
       } catch (e) {
-        if (e.toString().contains('Connection refused') || e.toString().contains('SocketException')) {
+        if (e.toString().contains('Connection refused') ||
+            e.toString().contains('SocketException')) {
           if (_status == EngineStatus.ready) {
-             _updateStatus(EngineStatus.error);
+            _updateStatus(EngineStatus.error);
           }
         }
       }
@@ -45,7 +50,8 @@ class ComfyUIRunnerService extends ChangeNotifier {
   }
 
   Future<void> start() async {
-    if (_status == EngineStatus.ready || _status == EngineStatus.starting) return;
+    if (_status == EngineStatus.ready || _status == EngineStatus.starting)
+      return;
 
     _updateStatus(EngineStatus.starting);
 
@@ -57,17 +63,20 @@ class ComfyUIRunnerService extends ChangeNotifier {
       } catch (_) {}
     } else {
       try {
-        await Process.run('cmd', ['/c', "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a"]);
+        await Process.run('cmd', [
+          '/c',
+          "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a",
+        ]);
       } catch (_) {}
     }
-    
+
     // Give it a brief moment to release the port
     await Future.delayed(const Duration(seconds: 1));
 
     try {
       final appDir = await getApplicationSupportDirectory();
       final installDir = p.join(appDir.path, 'noema', 'comfyui');
-      
+
       final mainPy = File(p.join(installDir, 'main.py'));
       if (!mainPy.existsSync()) {
         debugPrint("ComfyUI main.py not found. Cannot start runner.");
@@ -76,21 +85,22 @@ class ComfyUIRunnerService extends ChangeNotifier {
       }
 
       String pythonExecutable = Platform.isWindows ? 'python' : 'python3';
-      final venvPython = Platform.isWindows 
+      final venvPython = Platform.isWindows
           ? File(p.join(installDir, 'venv', 'Scripts', 'python.exe'))
           : File(p.join(installDir, 'venv', 'bin', 'python'));
-          
+
       if (venvPython.existsSync()) {
         pythonExecutable = venvPython.path;
       }
 
       debugPrint("Starting ComfyUI in background using $pythonExecutable...");
-      
-      _process = await Process.start(
-        pythonExecutable,
-        ['main.py', '--port', '8188', '--cpu'],
-        workingDirectory: installDir,
-      );
+
+      _process = await Process.start(pythonExecutable, [
+        'main.py',
+        '--port',
+        '8188',
+        '--cpu',
+      ], workingDirectory: installDir);
 
       debugPrint("ComfyUI Process Started (PID: ${_process!.pid})");
 
@@ -110,7 +120,6 @@ class ComfyUIRunnerService extends ChangeNotifier {
       });
 
       _startHealthCheck();
-
     } catch (e) {
       debugPrint("Failed to start ComfyUI Runner: $e");
       _updateStatus(EngineStatus.error);
@@ -119,20 +128,26 @@ class ComfyUIRunnerService extends ChangeNotifier {
 
   void stop() {
     _healthCheckTimer?.cancel();
-    
+
     debugPrint("Killing ComfyUI Process...");
     if (_process != null) {
       _process!.kill(ProcessSignal.sigkill);
       _process = null;
     }
-    
+
     // Forcefully kill any orphaned process on port 8188
     if (!Platform.isWindows) {
-      Process.run('sh', ['-c', 'lsof -ti:8188 | xargs kill -9']).catchError((_) => ProcessResult(0, -1, '', ''));
+      Process.run('sh', [
+        '-c',
+        'lsof -ti:8188 | xargs kill -9',
+      ]).catchError((_) => ProcessResult(0, -1, '', ''));
     } else {
-      Process.run('cmd', ['/c', "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a"]).catchError((_) => ProcessResult(0, -1, '', ''));
+      Process.run('cmd', [
+        '/c',
+        "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a",
+      ]).catchError((_) => ProcessResult(0, -1, '', ''));
     }
-    
+
     _updateStatus(EngineStatus.offline);
   }
 }

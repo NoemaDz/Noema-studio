@@ -1,5 +1,3 @@
-
-
 import '../project_synchronizer.dart';
 import '/models/task.dart';
 import '/core/noema_project.dart';
@@ -11,97 +9,85 @@ import '/core/pipeline/project_pipeline.dart';
 import '../../presentation/state/project_state.dart';
 import '../../main.dart'; // To access global noema
 
-
-
 class ProjectGenerationService {
+  final ProjectPipeline projectPipeline;
 
-    final ProjectPipeline projectPipeline;
+  final ProjectService projectService;
 
-    final ProjectService projectService;
+  final JobMonitor jobMonitor;
 
-    final JobMonitor jobMonitor;
+  final ImageProvider imageProvider;
 
-    final ImageProvider imageProvider;
+  final JobEvents jobEvents;
 
-    final JobEvents jobEvents;
+  final ProjectState projectState;
 
-    final ProjectState projectState;
-
-   ProjectGenerationService({
-  required this.projectPipeline,
-  required this.projectService,
-  required this.jobMonitor,
-  required this.imageProvider,
-  required this.jobEvents,
-  required this.projectState,
+  ProjectGenerationService({
+    required this.projectPipeline,
+    required this.projectService,
+    required this.jobMonitor,
+    required this.imageProvider,
+    required this.jobEvents,
+    required this.projectState,
   });
 
-
-    Future<NoemaProject> createProject(
-  NoemaProject project,
- ) async {
+  Future<NoemaProject> createProject(NoemaProject project) async {
     await projectPipeline.generate(
       project,
       onUpdate: (status) {
         projectState.setPipelineStatus(status);
       },
     );
-  await projectService.runTask(
-  project: project,
-  type: TaskType.extractCharacters,
-  action: () async {
-    // Already executed inside ProjectPipeline.
-  },
-  );
-  
-  await projectService.runTask(
-  project: project,
-  type: TaskType.generateCharacterImages,
-  action: () async {
-    // Executed inside ProjectPipeline.
-  },
- );
-  
-  await projectService.runTask(
-  project: project,
-  type: TaskType.buildScenePrompts,
-  action: () async {
-    // Executed inside ProjectPipeline.
-  },
-);
+    await projectService.runTask(
+      project: project,
+      type: TaskType.extractCharacters,
+      action: () async {
+        // Already executed inside ProjectPipeline.
+      },
+    );
 
-  return project;
- }
-  
+    await projectService.runTask(
+      project: project,
+      type: TaskType.generateCharacterImages,
+      action: () async {
+        // Executed inside ProjectPipeline.
+      },
+    );
 
-  Future<NoemaProject> generateProject(
-  NoemaProject project,
-  ) async {
+    await projectService.runTask(
+      project: project,
+      type: TaskType.buildScenePrompts,
+      action: () async {
+        // Executed inside ProjectPipeline.
+      },
+    );
+
+    return project;
+  }
+
+  Future<NoemaProject> generateProject(NoemaProject project) async {
     await createProject(project);
 
     final synchronizer = ProjectSynchronizer(
-    project: project,
-    provider: imageProvider,
-    state: projectState,
+      project: project,
+      provider: imageProvider,
+      state: projectState,
+    );
 
- );
+    synchronizer.attach(jobEvents);
 
-synchronizer.attach(
-  jobEvents,
-);
+    jobMonitor.start(project.jobs);
 
-jobMonitor.start(project.jobs);
+    await projectService.runTask(
+      project: project,
+      type: TaskType.generateSceneImages,
+      action: () async {
+        // Executed inside ProjectPipeline.
+      },
+    );
 
-  await projectService.runTask(
-  project: project,
-  type: TaskType.generateSceneImages,
-  action: () async {
-    // Executed inside ProjectPipeline.
-  },
-  );
-  
-  await noema.saveProject(project);
+    await noema.saveProject(project);
 
-  return project;
+    return project;
   }
 }
