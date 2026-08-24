@@ -37,8 +37,9 @@ class OpenAITTSProvider extends TTSProvider {
     if (apiKey.isEmpty) {
       return Job(
         id: jobId,
+        providerId: id,
         type: "audio",
-        status: JobStatus.failed,
+        status: JobStatus.queued,
         result: "OpenAI API key is missing.",
       );
     }
@@ -59,6 +60,7 @@ class OpenAITTSProvider extends TTSProvider {
 
         return Job(
           id: jobId,
+          providerId: id,
           type: "audio",
           metadata: {"text": text},
           status: JobStatus.completed,
@@ -68,6 +70,7 @@ class OpenAITTSProvider extends TTSProvider {
       } else {
         return Job(
           id: jobId,
+          providerId: id,
           type: "audio",
           status: JobStatus.failed,
           result: "OpenAI TTS failed: ${response.body}",
@@ -76,6 +79,7 @@ class OpenAITTSProvider extends TTSProvider {
     } catch (e) {
       return Job(
         id: jobId,
+        providerId: id,
         type: "audio",
         status: JobStatus.failed,
         result: "Exception: $e",

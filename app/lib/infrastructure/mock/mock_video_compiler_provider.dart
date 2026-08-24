@@ -19,6 +19,7 @@ class MockVideoCompilerProvider extends VideoCompilerProvider {
   }) async {
     return Job(
       id: "mock_video_${DateTime.now().millisecondsSinceEpoch}",
+      providerId: id,
       type: "video_compile",
       metadata: {"outputPath": outputPath},
       status: JobStatus.completed,

@@ -36,9 +36,10 @@ class OpenAIImageProvider extends ImageProvider {
     final jobId = DateTime.now().millisecondsSinceEpoch.toString();
     final job = Job(
       id: jobId,
+      providerId: id,
       type: "image",
-      status: JobStatus.running,
-      progress: 0.0,
+      status: JobStatus.queued,
+      metadata: {"prompt": prompt},
     );
     _jobs[jobId] = job;
 

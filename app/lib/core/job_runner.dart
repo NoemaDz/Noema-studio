@@ -1,17 +1,23 @@
 import '../models/job.dart';
-import 'providers/image_provider.dart';
+import 'providers/provider_registry.dart';
+import 'providers/async_provider.dart';
 
 class JobRunner {
-  final ImageProvider provider;
+  final ProviderRegistry registry;
 
-  JobRunner(this.provider);
+  JobRunner(this.registry);
 
   Future<void> update(Job job) async {
-    final status = await provider.getJobStatus(job.id);
+    if (!registry.has(job.providerId)) {
+      return;
+    }
 
-    job.status = status;
+    final provider = registry.get(job.providerId);
+    if (provider is AsyncProvider) {
+      final status = await provider.getJobStatus(job.id);
+      job.status = status;
 
-    switch (status) {
+      switch (status) {
       case JobStatus.completed:
         job.progress = 1.0;
         break;
@@ -29,8 +35,9 @@ class JobRunner {
         job.progress = 0;
         break;
 
-      case JobStatus.pending:
-        break;
+        case JobStatus.pending:
+          break;
+      }
     }
   }
 }

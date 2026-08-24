@@ -29,6 +29,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     if (!available) {
       return Job(
         id: jobId,
+        providerId: id,
         type: "video_compile",
         status: JobStatus.failed,
         result: "ffmpeg not available",
@@ -167,6 +168,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
           print("STDERR: ${result.stderr}");
           return Job(
             id: jobId,
+            providerId: id,
             type: "video_compile",
             status: JobStatus.failed,
             result: "FFmpeg failed on scene $i: ${result.stderr}",
@@ -202,6 +204,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         print("STDERR: ${concatResult.stderr}");
         return Job(
           id: jobId,
+          providerId: id,
           type: "video_compile",
           status: JobStatus.failed,
           result: "FFmpeg concat failed: ${concatResult.stderr}",
@@ -215,6 +218,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
       return Job(
         id: jobId,
+        providerId: id,
         type: "video_compile",
         metadata: {"outputPath": outputPath},
         status: JobStatus.completed,
@@ -224,6 +228,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     } catch (e) {
       return Job(
         id: jobId,
+        providerId: id,
         type: "video_compile",
         status: JobStatus.failed,
         result: "Exception: $e",

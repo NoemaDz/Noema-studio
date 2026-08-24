@@ -45,11 +45,14 @@ class _AgentPlanningStep implements WorkflowStep {
     List<Map<String, dynamic>> allScenes = [];
     String storyTitle = "Generated Story";
 
+    String narrativeContext = "";
+
     for (int i = 0; i < chunks.length; i++) {
       final prompt = AgentPromptTemplates.buildChunkPrompt(
         chunks[i],
         i,
         chunks.length,
+        narrativeContext: narrativeContext,
       );
       final fullPrompt =
           "${AgentPromptTemplates.sceneBreakdownSystem}\n\n$prompt";
@@ -67,19 +70,23 @@ class _AgentPlanningStep implements WorkflowStep {
         }
 
         if (decoded.containsKey("scenes")) {
-          allScenes.addAll(
-            List<Map<String, dynamic>>.from(
-              decoded["scenes"].map((s) {
-                // Ensure characterPositions is parsed as Map<String, String>
-                if (s["characterPositions"] != null) {
-                  s["characterPositions"] = Map<String, String>.from(
-                    s["characterPositions"],
-                  );
-                }
-                return s;
-              }),
-            ),
+          final chunkScenes = List<Map<String, dynamic>>.from(
+            decoded["scenes"].map((s) {
+              if (s["characterPositions"] != null) {
+                s["characterPositions"] = Map<String, String>.from(
+                  s["characterPositions"],
+                );
+              }
+              return s;
+            }),
           );
+          allScenes.addAll(chunkScenes);
+          
+          // Build narrative context for the next chunk
+          if (chunkScenes.isNotEmpty) {
+            final lastScene = chunkScenes.last;
+            narrativeContext = "Last scene ended with: ${lastScene['description']}. Characters present: ${(lastScene['characterNames'] as List?)?.join(', ') ?? 'None'}. Mood: ${lastScene['mood']}.";
+          }
         }
       }
     }

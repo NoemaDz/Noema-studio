@@ -62,11 +62,16 @@ class ComfyUIDriver {
     ).timeout(const Duration(seconds: 15)));
 
     if (response.statusCode != 200) {
-      throw Exception("ComfyUI API returned \${response.statusCode}");
+      throw Exception("ComfyUI API returned ${response.statusCode}");
     }
 
     final data = jsonDecode(response.body);
-    return Job(id: data["prompt_id"], type: "image", status: JobStatus.queued);
+    return Job(
+      id: data["prompt_id"],
+      providerId: "comfyui",
+      type: "image",
+      status: JobStatus.queued,
+    );
   }
 
   Future<JobStatus> getJobStatus(String jobId) async {
@@ -85,6 +90,11 @@ class ComfyUIDriver {
       if (historyResponse.statusCode == 200) {
         final historyData = jsonDecode(historyResponse.body);
         if (historyData.containsKey(jobId)) {
+          final jobHistory = historyData[jobId];
+          // Check if there is an error in the status object
+          if (jobHistory['status'] != null && jobHistory['status']['status_str'] == 'error') {
+            return JobStatus.failed;
+          }
           return JobStatus.completed;
         }
       }

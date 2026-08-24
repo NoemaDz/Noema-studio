@@ -1,14 +1,7 @@
-import 'provider.dart';
+import 'async_provider.dart';
 
 import '../../models/job.dart';
-import '../../models/asset.dart';
 
-abstract class ImageProvider extends Provider {
+abstract class ImageProvider extends AsyncProvider {
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options});
-
-  Future<JobStatus> getJobStatus(String jobId);
-
-  Future<Asset?> downloadAsset(String jobId);
-
-  Future<void> cancelJob(String jobId);
 }

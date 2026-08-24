@@ -2,6 +2,7 @@ enum JobStatus { pending, queued, running, completed, failed }
 
 class Job {
   final String id;
+  final String providerId;
   final String type;
 
   JobStatus status;
@@ -14,6 +15,7 @@ class Job {
 
   Job({
     required this.id,
+    required this.providerId,
     required this.type,
     this.status = JobStatus.pending,
     this.progress = 0,
@@ -24,6 +26,7 @@ class Job {
   factory Job.fromJson(Map<String, dynamic> json) {
     return Job(
       id: json["id"],
+      providerId: json["providerId"] ?? 'unknown', // Fallback for old projects
       type: json["type"],
       status: JobStatus.values.byName(json["status"]),
       progress: (json["progress"] as num).toDouble(),
@@ -35,6 +38,7 @@ class Job {
   Map<String, dynamic> toJson() {
     return {
       "id": id,
+      "providerId": providerId,
       "type": type,
       "status": status.name,
       "progress": progress,

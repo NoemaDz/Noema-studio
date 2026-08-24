@@ -47,6 +47,7 @@ class FlutterTTSProvider extends TTSProvider {
       if (File(outputPath).existsSync()) {
         return Job(
           id: jobId,
+          providerId: id,
           type: "audio",
           metadata: {"text": text},
           status: JobStatus.completed,
@@ -79,6 +80,7 @@ class FlutterTTSProvider extends TTSProvider {
         if (File(outputPath).existsSync()) {
           return Job(
             id: jobId,
+            providerId: id,
             type: "audio",
             metadata: {"text": text},
             status: JobStatus.completed,
@@ -88,6 +90,7 @@ class FlutterTTSProvider extends TTSProvider {
         } else {
           return Job(
             id: jobId,
+            providerId: id,
             type: "audio",
             status: JobStatus.failed,
             result: "Failed to create audio file even with fallback.",
@@ -117,6 +120,7 @@ class FlutterTTSProvider extends TTSProvider {
       if (File(outputPath).existsSync()) {
         return Job(
           id: jobId,
+          providerId: id,
           type: "audio",
           metadata: {"text": text},
           status: JobStatus.completed,
@@ -127,6 +131,7 @@ class FlutterTTSProvider extends TTSProvider {
 
       return Job(
         id: jobId,
+        providerId: id,
         type: "audio",
         status: JobStatus.failed,
         result: "Exception: $e",

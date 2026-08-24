@@ -84,6 +84,7 @@ class EdgeTTSProvider extends TTSProvider {
           File(outputPath).existsSync()) {
         return Job(
           id: jobId,
+          providerId: id,
           type: "audio",
           metadata: {"text": text},
           status: JobStatus.completed,
@@ -97,6 +98,7 @@ class EdgeTTSProvider extends TTSProvider {
         }
         return Job(
           id: jobId,
+          providerId: id,
           type: "audio",
           status: JobStatus.failed,
           result: "Edge TTS failed. See console for details. (Did you use Arabic text with an English voice?)",
@@ -106,6 +108,7 @@ class EdgeTTSProvider extends TTSProvider {
       print("Edge TTS Exception: $e");
       return Job(
         id: jobId,
+        providerId: id,
         type: "audio",
         status: JobStatus.failed,
         result:

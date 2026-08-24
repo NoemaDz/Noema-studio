@@ -11,6 +11,7 @@ class JobMonitor {
   final JobEvents events;
 
   Timer? _timer;
+  bool _isPolling = false;
 
   JobMonitor(this.runner, this.manager, this.events);
 
@@ -18,19 +19,25 @@ class JobMonitor {
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 2), (_) async {
-      final activeJobs = manager.jobs.toList();
-      for (final job in activeJobs) {
-        if (job.status == JobStatus.completed ||
-            job.status == JobStatus.failed) {
-          continue;
+      if (_isPolling) return;
+      _isPolling = true;
+
+      try {
+        final activeJobs = manager.jobs.toList();
+        for (final job in activeJobs) {
+          if (job.status == JobStatus.completed ||
+              job.status == JobStatus.failed) {
+            continue;
+          }
+          await runner.update(job);
+
+          manager.updateStatus(job.id, job.status);
+          manager.updateProgress(job.id, job.progress);
+
+          events.emit(job);
         }
-        await runner.update(job);
-
-        manager.updateStatus(job.id, job.status);
-
-        manager.updateProgress(job.id, job.progress);
-
-        events.emit(job);
+      } finally {
+        _isPolling = false;
       }
     });
   }

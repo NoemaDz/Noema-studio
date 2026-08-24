@@ -15,6 +15,7 @@ class MockTTSProvider extends TTSProvider {
   Future<Job> generateAudio(String text) async {
     return Job(
       id: "mock_audio_${DateTime.now().millisecondsSinceEpoch}",
+      providerId: id,
       type: "audio",
       metadata: {"text": text},
       status: JobStatus.completed,

@@ -5,7 +5,6 @@ import '../models/job.dart';
 import '../core/job_events.dart';
 import '../presentation/state/project_state.dart';
 import '../../main.dart'; // To access noema global
-import '../core/pipeline/stages/video_compilation_stage.dart';
 
 class ProjectSynchronizer {
   final NoemaProject project;
@@ -56,7 +55,6 @@ class ProjectSynchronizer {
       project.updateAudioFromJob(job);
       state.refresh();
       noema.saveProject(project);
-      _checkAndTriggerVideoCompilation();
       return;
     }
 
@@ -97,73 +95,7 @@ class ProjectSynchronizer {
       } catch (e) {
         debugPrint("ProjectSynchronizer Error: $e");
       }
-      _checkAndTriggerVideoCompilation();
       return;
-    }
-  }
-
-  void _checkAndTriggerVideoCompilation() async {
-    if (project.images.isEmpty || project.audios.isEmpty) return;
-
-    bool allReady = true;
-    for (final img in project.images) {
-      if (img.asset?.path == null) allReady = false;
-    }
-    for (final aud in project.audios) {
-      if (aud.asset?.path == null) allReady = false;
-    }
-
-    final jobs = noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id));
-    bool hasVideoJob = jobs.any((j) => j.type == "video_compile");
-
-    if (allReady && !hasVideoJob) {
-      // Find the VideoCompilationStage from registry
-      final stage = noema.bootstrap.pipelineRegistry.stages
-          .whereType<VideoCompilationStage>()
-          .firstOrNull;
-      if (stage != null) {
-        // Add a pending job to show progress in UI while compiling
-        final pendingJob = Job(
-          id: "compile_pending",
-          type: "video_compile",
-          status: JobStatus.pending,
-          progress: 0.0,
-          result: "",
-        );
-        noema.bootstrap.jobManager.add(pendingJob);
-        project.jobIds.add(pendingJob.id);
-        state.refresh();
-
-        try {
-          await stage.run(project);
-        } catch (e) {
-          debugPrint("ProjectSynchronizer: VideoCompilationStage failed: $e");
-          // Emit a failed job so the UI doesn't hang
-          final errJob = Job(
-            id: "video_compile_error",
-            type: "video_compile",
-            status: JobStatus.failed,
-            progress: 0,
-            result: "Compilation failed: $e",
-          );
-          noema.bootstrap.jobManager.add(errJob);
-          project.jobIds.add(errJob.id);
-          state.refresh();
-        }
-
-        // Remove the temporary pending job
-        noema.bootstrap.jobManager.remove("compile_pending");
-        project.jobIds.remove("compile_pending");
-
-        // Add the new job to monitor
-        final videoJob = noema.bootstrap.jobManager.jobs
-            .where((j) => project.jobIds.contains(j.id) && j.type == "video_compile")
-            .firstOrNull;
-        if (videoJob != null) {
-          // Manually synchronize the completed job to update UI and save project
-          synchronize(videoJob);
-        }
-      }
     }
   }
 }

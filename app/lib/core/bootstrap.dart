@@ -90,7 +90,7 @@ class Bootstrap {
     );
 
 
-    jobRunner = JobRunner(imageProvider);
+    jobRunner = JobRunner(providerRegistry);
     jobEvents = JobEvents();
     projectState = ProjectState();
 

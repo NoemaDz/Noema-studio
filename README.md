@@ -48,7 +48,7 @@ Noema is currently in **Early Alpha**. We believe in transparency for the open-s
 
 ### ✅ Implemented
 - **Project-Centric Architecture:** Robust `NoemaProject` aggregate root for tracking all creative assets.
-- **True DAG Pipeline Engine:** Concurrent, per-scene execution graph for production stages.
+- **True DAG Pipeline Engine:** Stage-level execution graph ensuring tasks process efficiently in correct dependency order.
 - **Agent Planner (Ollama/OpenAI):** AI decomposing ideas into structured stories, scenes, and characters.
 - **Provider Abstraction (V1):** Interface for plugging in `ImageProvider`, `TTSProvider`, `LLMProvider`.
 - **Local Generation (ComfyUI):** Image generation using ComfyUI APIs and Job polling.
@@ -100,7 +100,7 @@ Noema is designed to be highly configurable. Go to `File > Settings` to configur
 - **FFMPEG Default Effect:** Set default fallback camera effects (zoom, pan).
 
 ## 🆕 Recent Updates
-- **DAG Pipeline Engine**: Replaced traditional sequential execution with a powerful Directed Acyclic Graph (DAG) orchestrator (`PipelineEngine`) to process tasks concurrently safely (e.g., generating audio for Scene 2 while Scene 1 renders images), preventing GPU OOM.
+- **DAG Pipeline Engine**: Replaced traditional sequential execution with a powerful Directed Acyclic Graph (DAG) orchestrator (`PipelineEngine`) to process tasks efficiently and securely in parallel at the stage level.
 - **Robust JSON Extraction**: Added `JsonExtractor` to safely parse LLM outputs even if they contain markdown or hallucinations, ensuring the AI agent never crashes the pipeline.
 - **Dynamic Shimmer UI**: Storyboard now features professional Shimmer effects while rendering images, and a live Pipeline Status tracker.
 - **Robust Error Handling**: Added smart fallback mechanisms. If an advanced ComfyUI workflow is missing, Noema gracefully falls back to basic without breaking the pipeline.

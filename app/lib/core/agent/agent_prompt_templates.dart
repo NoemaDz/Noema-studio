@@ -40,12 +40,14 @@ You MUST respond ONLY with valid, parsable JSON. No markdown formatting, no expl
 }
 ''';
 
-  static String buildChunkPrompt(String text, int chunkIndex, int totalChunks) {
-    return '''
-Please process Chapter/Chunk ${chunkIndex + 1} of $totalChunks of the story:
+  static String buildChunkPrompt(String text, int chunkIndex, int totalChunks, {String? narrativeContext}) {
+    String prompt = 'Please process Chapter/Chunk ${chunkIndex + 1} of $totalChunks of the story:\n\n';
+    
+    if (narrativeContext != null && narrativeContext.isNotEmpty) {
+      prompt += 'PREVIOUS CONTEXT (What happened so far):\n$narrativeContext\n\n';
+    }
 
-STORY TEXT:
-$text
-''';
+    prompt += 'STORY TEXT:\n$text\n';
+    return prompt;
   }
 }

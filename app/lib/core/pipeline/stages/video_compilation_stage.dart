@@ -82,7 +82,15 @@ class VideoCompilationStage extends PipelineStage {
     jobManager.add(job);
     project.jobIds.add(job.id);
 
+    while (job.status != JobStatus.completed && job.status != JobStatus.failed) {
+      await Future.delayed(const Duration(seconds: 1));
+    }
+
+    if (job.status == JobStatus.failed) {
+      throw Exception("Video compilation failed: ${job.result}");
+    }
+
     // finalVideoPath will be updated when the job completes, similar to how updateAudioFromJob works.
-    project.finalVideoPath = outputPath;
+    project.finalVideoPath = job.result;
   }
 }
