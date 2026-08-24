@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'core/noema.dart';
 import 'infrastructure/comfyui/comfyui_plugin.dart';
 import 'infrastructure/ollama/ollama_plugin.dart';
@@ -9,6 +10,7 @@ import 'ui/screens/studio_screen.dart';
 
 import 'core/plugins/ingestion_plugin.dart';
 import 'infrastructure/openai/openai_plugin.dart';
+import 'infrastructure/openai/openai_image_plugin.dart';
 import 'application/comfyui_installer_service.dart';
 import 'ui/screens/setup_wizard_screen.dart';
 
@@ -21,6 +23,7 @@ void main() async {
     ComfyUIPlugin(),
     OllamaPlugin(),
     OpenAIPlugin(),
+    OpenAIImagePlugin(),
     FlutterTTSPlugin(),
     FFmpegPlugin(),
     IngestionPlugin(),
@@ -64,8 +67,15 @@ class _AIStudioAppState extends State<AIStudioApp> {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        colorSchemeSeed: Colors.indigo,
-        fontFamily: 'Segoe UI',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C63FF),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF0F111A), // Deep dark blueish grey
+          surfaceContainerHighest: const Color(0xFF1E2130), // Slightly lighter
+          primary: const Color(0xFF6C63FF), // Vibrant purple
+          secondary: const Color(0xFF00E5FF), // Neon cyan
+        ),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),
       home: _isChecked
           ? (_installerService.isInstalled

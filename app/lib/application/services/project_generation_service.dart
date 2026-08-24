@@ -31,8 +31,8 @@ class ProjectGenerationService {
     required this.projectState,
   });
 
-  Future<NoemaProject> createProject(NoemaProject project) async {
-    await projectPipeline.generate(
+  Future<NoemaProject> generatePlanning(NoemaProject project) async {
+    await projectPipeline.generatePlanning(
       project,
       onUpdate: (status) {
         projectState.setPipelineStatus(status);
@@ -41,53 +41,43 @@ class ProjectGenerationService {
     await projectService.runTask(
       project: project,
       type: TaskType.extractCharacters,
-      action: () async {
-        // Already executed inside ProjectPipeline.
-      },
+      action: () async {},
     );
-
     await projectService.runTask(
       project: project,
       type: TaskType.generateCharacterImages,
-      action: () async {
-        // Executed inside ProjectPipeline.
-      },
+      action: () async {},
     );
-
     await projectService.runTask(
       project: project,
       type: TaskType.buildScenePrompts,
-      action: () async {
-        // Executed inside ProjectPipeline.
-      },
+      action: () async {},
     );
-
     return project;
   }
 
-  Future<NoemaProject> generateProject(NoemaProject project) async {
-    await createProject(project);
-
+  Future<NoemaProject> generateProduction(NoemaProject project) async {
     final synchronizer = ProjectSynchronizer(
       project: project,
       provider: imageProvider,
       state: projectState,
     );
-
     synchronizer.attach(jobEvents);
-
     jobMonitor.start(project.jobs);
+
+    await projectPipeline.generateProduction(
+      project,
+      onUpdate: (status) {
+        projectState.setPipelineStatus(status);
+      },
+    );
 
     await projectService.runTask(
       project: project,
       type: TaskType.generateSceneImages,
-      action: () async {
-        // Executed inside ProjectPipeline.
-      },
+      action: () async {},
     );
-
     await noema.saveProject(project);
-
     return project;
   }
 }

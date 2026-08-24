@@ -43,8 +43,9 @@ class Noema {
   }
 
   //===========================================================
-  Future<NoemaProject> createProject(NoemaProject project) {
-    return projectGenerationService.createProject(project);
+  Future<NoemaProject> generateProject(NoemaProject project) async {
+    await projectGenerationService.generatePlanning(project);
+    return projectGenerationService.generateProduction(project);
   }
 
   //==================================================
@@ -53,8 +54,12 @@ class Noema {
   }
 
   //==============================================
-  Future<NoemaProject> generateProject(NoemaProject project) {
-    return projectGenerationService.generateProject(project);
+  Future<NoemaProject> generatePlanning(NoemaProject project) {
+    return projectGenerationService.generatePlanning(project);
+  }
+
+  Future<NoemaProject> generateProduction(NoemaProject project) {
+    return projectGenerationService.generateProduction(project);
   }
 
   //===========================================
@@ -66,5 +71,6 @@ class Noema {
   Future<NoemaProject> openProject(String path) {
     return projectPersistenceService.openProject(path);
   }
+
   //=========================================
 }

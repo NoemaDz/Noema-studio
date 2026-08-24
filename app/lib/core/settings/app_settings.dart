@@ -9,6 +9,7 @@ class AppSettings extends ChangeNotifier {
   static const _kOpenAiKey = 'openai_key';
   static const _kOpenAiModel = 'openai_model';
   static const _kComfyUIUrl = 'comfyui_url';
+  static const _kActiveImageProvider = 'active_image_provider';
   static const _kDefaultVideoEffect = 'default_video_effect';
 
   static const _kActiveTtsProvider = 'active_tts_provider';
@@ -22,6 +23,7 @@ class AppSettings extends ChangeNotifier {
   String _openAiKey = '';
   String _openAiModel = 'gpt-4o';
   String _comfyUIUrl = 'http://127.0.0.1:8188';
+  String _activeImageProvider = 'comfyui';
   String _defaultVideoEffect = 'zoom_in';
   String _activeTtsProvider = 'flutter_tts';
   String _openAiTtsVoice = 'alloy';
@@ -34,6 +36,7 @@ class AppSettings extends ChangeNotifier {
   String get openAiKey => _openAiKey;
   String get openAiModel => _openAiModel;
   String get comfyUIUrl => _comfyUIUrl;
+  String get activeImageProvider => _activeImageProvider;
   String get defaultVideoEffect => _defaultVideoEffect;
   String get activeTtsProvider => _activeTtsProvider;
   String get openAiTtsVoice => _openAiTtsVoice;
@@ -48,6 +51,7 @@ class AppSettings extends ChangeNotifier {
     _openAiKey = prefs.getString(_kOpenAiKey) ?? '';
     _openAiModel = prefs.getString(_kOpenAiModel) ?? 'gpt-4o';
     _comfyUIUrl = prefs.getString(_kComfyUIUrl) ?? 'http://127.0.0.1:8188';
+    _activeImageProvider = prefs.getString(_kActiveImageProvider) ?? 'comfyui';
     _defaultVideoEffect = prefs.getString(_kDefaultVideoEffect) ?? 'zoom_in';
     _activeTtsProvider = prefs.getString(_kActiveTtsProvider) ?? 'flutter_tts';
     _openAiTtsVoice = prefs.getString(_kOpenAiTtsVoice) ?? 'alloy';
@@ -63,6 +67,7 @@ class AppSettings extends ChangeNotifier {
     required String openAiKey,
     required String openAiModel,
     required String comfyUIUrl,
+    required String activeImageProvider,
     required String defaultVideoEffect,
     required String activeTtsProvider,
     required String openAiTtsVoice,
@@ -77,6 +82,7 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kOpenAiKey, openAiKey);
     await prefs.setString(_kOpenAiModel, openAiModel);
     await prefs.setString(_kComfyUIUrl, comfyUIUrl);
+    await prefs.setString(_kActiveImageProvider, activeImageProvider);
     await prefs.setString(_kDefaultVideoEffect, defaultVideoEffect);
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
     await prefs.setString(_kOpenAiTtsVoice, openAiTtsVoice);
@@ -89,6 +95,7 @@ class AppSettings extends ChangeNotifier {
     _openAiKey = openAiKey;
     _openAiModel = openAiModel;
     _comfyUIUrl = comfyUIUrl;
+    _activeImageProvider = activeImageProvider;
     _defaultVideoEffect = defaultVideoEffect;
     _activeTtsProvider = activeTtsProvider;
     _openAiTtsVoice = openAiTtsVoice;

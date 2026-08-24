@@ -20,6 +20,7 @@ class ProjectSynchronizer {
   });
 
   void attach(JobEvents events) {
+    events.clear(); // Prevent duplicate listeners when regenerating
     events.subscribe((job) async {
       await synchronize(job);
     });
@@ -130,7 +131,20 @@ class ProjectSynchronizer {
         project.jobs.add(pendingJob);
         state.refresh();
 
-        await stage.run(project);
+        try {
+          await stage.run(project);
+        } catch (e) {
+          debugPrint("ProjectSynchronizer: VideoCompilationStage failed: $e");
+          // Emit a failed job so the UI doesn't hang
+          project.jobs.add(Job(
+            id: "video_compile_error",
+            type: "video_compile",
+            status: JobStatus.failed,
+            progress: 0,
+            result: "Compilation failed: $e",
+          ));
+          state.refresh();
+        }
 
         // Remove the temporary pending job
         project.jobs.removeWhere((j) => j.id == "compile_pending");

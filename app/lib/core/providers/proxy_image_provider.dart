@@ -1,0 +1,48 @@
+import '../plugins/plugin_context.dart';
+import 'image_provider.dart';
+import '../../models/job.dart';
+import '../../models/asset.dart';
+import '../../main.dart'; // to access noema global
+
+class ProxyImageProvider extends ImageProvider {
+  final PluginContext context;
+
+  ProxyImageProvider(this.context);
+
+  @override
+  String get id => "proxy_image";
+
+  @override
+  String get name => "Proxy Image Provider";
+
+  @override
+  bool get available => true;
+
+  ImageProvider get _activeProvider {
+    final activeId = noema.bootstrap.appSettings.activeImageProvider;
+    return context.providers.all.whereType<ImageProvider>().firstWhere(
+      (p) => p.id == activeId && p.id != "proxy_image",
+      orElse: () => context.providers.all.whereType<ImageProvider>().firstWhere((p) => p.id != "proxy_image"),
+    );
+  }
+
+  @override
+  Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) {
+    return _activeProvider.submitJob(prompt, options: options);
+  }
+
+  @override
+  Future<JobStatus> getJobStatus(String jobId) {
+    return _activeProvider.getJobStatus(jobId);
+  }
+
+  @override
+  Future<Asset?> downloadAsset(String jobId) {
+    return _activeProvider.downloadAsset(jobId);
+  }
+
+  @override
+  Future<void> cancelJob(String jobId) {
+    return _activeProvider.cancelJob(jobId);
+  }
+}

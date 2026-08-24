@@ -100,17 +100,46 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
             ],
           ),
           const SizedBox(height: 6),
-          LinearProgressIndicator(
-            value:
-                job.status == JobStatus.queued ||
-                    job.status == JobStatus.pending
-                ? null
-                : job.progress,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest,
-            color: color,
-            minHeight: 4,
+          const SizedBox(height: 8),
+          Container(
+            height: 6,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: job.status == JobStatus.queued || job.status == JobStatus.pending
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      backgroundColor: Colors.transparent,
+                      color: color.withValues(alpha: 0.5),
+                    ),
+                  )
+                : TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: job.progress),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) {
+                      return FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: value.clamp(0.0, 1.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.6),
+                                blurRadius: 6,
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

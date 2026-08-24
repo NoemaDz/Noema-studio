@@ -20,6 +20,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late TextEditingController _openAiModelController;
 
   late TextEditingController _comfyUIUrlController;
+  late String _activeImageProvider;
   late String _selectedEffect;
 
   late String _activeTtsProvider;
@@ -70,6 +71,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _openAiModelController = TextEditingController(text: settings.openAiModel);
 
     _comfyUIUrlController = TextEditingController(text: settings.comfyUIUrl);
+    _activeImageProvider = settings.activeImageProvider;
     _selectedEffect = settings.defaultVideoEffect;
     if (!_effects.contains(_selectedEffect)) {
       _selectedEffect = 'random';
@@ -99,6 +101,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
   }
 
   void _save() {
+    if ((_activeLlmProvider == 'openai' ||
+         _activeTtsProvider == 'openai_tts' ||
+         _activeImageProvider == 'openai_image') &&
+        _openAiKeyController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter your OpenAI API key before saving.")),
+      );
+      return;
+    }
+
     noema.bootstrap.appSettings.saveSettings(
       ollamaUrl: _ollamaUrlController.text,
       llmModelName: _llmModelNameController.text,
@@ -107,6 +119,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
       openAiKey: _openAiKeyController.text,
       openAiModel: _openAiModelController.text,
       comfyUIUrl: _comfyUIUrlController.text,
+      activeImageProvider: _activeImageProvider,
       defaultVideoEffect: _selectedEffect,
       activeTtsProvider: _activeTtsProvider,
       openAiTtsVoice: _openAiTtsVoice,
@@ -369,15 +382,53 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: _comfyUIUrlController,
+                    DropdownButtonFormField<String>(
+                      initialValue: _activeImageProvider,
                       decoration: const InputDecoration(
-                        labelText: "ComfyUI Base URL",
+                        labelText: "Active Image Generator",
                         border: OutlineInputBorder(),
-                        hintText: "http://127.0.0.1:8188",
                       ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'comfyui',
+                          child: Text('ComfyUI (Local)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'openai_image',
+                          child: Text('OpenAI DALL-E 3 (Cloud)'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _activeImageProvider = value);
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
+                    if (_activeImageProvider == 'comfyui') ...[
+                      TextField(
+                        controller: _comfyUIUrlController,
+                        decoration: const InputDecoration(
+                          labelText: "ComfyUI Base URL",
+                          border: OutlineInputBorder(),
+                          hintText: "http://127.0.0.1:8188",
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      if (_activeLlmProvider != 'openai' && _activeTtsProvider != 'openai_tts') ...[
+                        TextField(
+                          controller: _openAiKeyController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: "OpenAI API Key (Required for DALL-E 3)",
+                            border: OutlineInputBorder(),
+                            hintText: "sk-...",
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ]
+                    ],
                     DropdownButtonFormField<String>(
                       initialValue: _selectedEffect,
                       decoration: const InputDecoration(

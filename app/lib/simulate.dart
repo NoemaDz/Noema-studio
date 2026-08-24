@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:noema_studio/infrastructure/comfyui/comfyui_plugin.dart';
 import 'package:noema_studio/infrastructure/ollama/ollama_plugin.dart';
 import 'package:noema_studio/infrastructure/openai/openai_plugin.dart';
+import 'package:noema_studio/infrastructure/openai/openai_image_plugin.dart';
 import 'package:noema_studio/infrastructure/tts/flutter_tts_plugin.dart';
 import 'package:noema_studio/infrastructure/ffmpeg/ffmpeg_plugin.dart';
 import 'package:noema_studio/core/plugins/core_pipeline_plugin.dart';
@@ -21,6 +22,7 @@ void main() async {
     ComfyUIPlugin(),
     OllamaPlugin(),
     OpenAIPlugin(),
+    OpenAIImagePlugin(),
     FlutterTTSPlugin(),
     FFmpegPlugin(),
     IngestionPlugin(),

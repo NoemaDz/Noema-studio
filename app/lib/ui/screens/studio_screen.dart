@@ -9,7 +9,10 @@ import '../../core/noema_project.dart';
 import '../widgets/video_preview.dart';
 import '../widgets/storyboard_view.dart';
 import '../../models/story.dart' as import_story;
+import '../../models/generation_state.dart';
 import '../widgets/generation_panel.dart';
+import '../widgets/scene_editor_view.dart';
+import '../widgets/glass_container.dart';
 import 'settings_dialog.dart';
 
 class StudioScreen extends StatefulWidget {
@@ -49,9 +52,17 @@ class _StudioScreenState extends State<StudioScreen> {
   Future<void> _generateProject() async {
     if (_ideaController.text.trim().isEmpty) return;
 
+    final settings = noema.bootstrap.appSettings;
+    if (settings.activeLlmProvider == 'openai' && settings.openAiKey.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("OpenAI API Key is missing. Please add it in Settings.")),
+      );
+      return;
+    }
+
     setState(() {
       _isGenerating = true;
-      _statusText = "Starting pipeline...";
+      _statusText = "Starting planning phase...";
     });
 
     try {
@@ -62,6 +73,44 @@ class _StudioScreenState extends State<StudioScreen> {
       );
       noema.bootstrap.projectState.setProject(p);
 
+      await noema.generatePlanning(p);
+
+      setState(() {
+        _statusText = "Planning complete. Please review scenes.";
+        _isGenerating = false;
+      });
+    } catch (e) {
+      setState(() {
+        _statusText = "Error: $e";
+        _isGenerating = false;
+      });
+    }
+  }
+
+  Future<void> _continueToProduction() async {
+    final p = noema.bootstrap.projectState.project;
+    if (p == null) return;
+
+    final settings = noema.bootstrap.appSettings;
+    if (settings.activeImageProvider == 'openai_image' && settings.openAiKey.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("OpenAI API Key is required for DALL-E. Please add it in Settings.")),
+      );
+      return;
+    }
+    if (settings.activeTtsProvider == 'openai_tts' && settings.openAiKey.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("OpenAI API Key is required for OpenAI TTS. Please add it in Settings.")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isGenerating = true;
+      _statusText = "Starting production phase...";
+    });
+
+    try {
       final synchronizer = ProjectSynchronizer(
         project: p,
         provider: noema.bootstrap.imageProvider,
@@ -70,7 +119,7 @@ class _StudioScreenState extends State<StudioScreen> {
       synchronizer.attach(noema.bootstrap.jobEvents);
       noema.bootstrap.jobMonitor.start(p.jobs);
 
-      await noema.generateProject(p);
+      await noema.generateProduction(p);
 
       setState(() {
         _statusText = "Pipeline started. Processing in background...";
@@ -186,13 +235,7 @@ class _StudioScreenState extends State<StudioScreen> {
   Widget _buildMenuBar(BuildContext context) {
     return MenuBar(
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            '🎬 Noema Studio',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-        ),
+
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
@@ -282,7 +325,12 @@ class _StudioScreenState extends State<StudioScreen> {
       body: Column(
         children: [
           // 1. Menu Bar
-          _buildMenuBar(context),
+          GlassContainer(
+            blurRadius: 20,
+            opacity: 0.1,
+            border: const Border(bottom: BorderSide(color: Colors.white10, width: 1)),
+            child: _buildMenuBar(context),
+          ),
 
           // 2. Main Workspace
           Expanded(
@@ -307,46 +355,53 @@ class _StudioScreenState extends State<StudioScreen> {
 
                     // Right Workspace: Video & Storyboard
                     Expanded(
-                      child: Column(
-                        children: [
-                          // Top: Video Player
-                          Expanded(
-                            flex: 3,
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: VideoPreviewWidget(
-                                videoPath: project?.finalVideoPath,
-                              ),
-                            ),
-                          ),
-
-                          // Bottom: Storyboard
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest
-                                    .withValues(alpha: 0.1),
-                                border: Border(
-                                  top: BorderSide(
-                                    color: Theme.of(context).dividerColor,
+                      child: project?.projectState == GenerationState.reviewing
+                          ? SceneEditorView(
+                              project: project!,
+                              onContinue: _continueToProduction,
+                            )
+                          : Column(
+                              children: [
+                                // Top: Video Player
+                                Expanded(
+                                  flex: 3,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: VideoPreviewWidget(
+                                      videoPath: project?.finalVideoPath,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              child: project != null
-                                  ? StoryboardViewWidget(project: project)
-                                  : const Center(
-                                      child: Text(
-                                        "Timeline empty. Generate a project to see scenes.",
-                                        style: TextStyle(color: Colors.grey),
+
+                                // Bottom: Storyboard
+                                Expanded(
+                                  flex: 2,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
+                                          .withValues(alpha: 0.1),
+                                      border: Border(
+                                        top: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
                                       ),
                                     ),
+                                    child: project != null
+                                        ? StoryboardViewWidget(project: project)
+                                        : const Center(
+                                            child: Text(
+                                              "Timeline empty. Generate a project to see scenes.",
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 );
@@ -358,3 +413,6 @@ class _StudioScreenState extends State<StudioScreen> {
     );
   }
 }
+
+
+

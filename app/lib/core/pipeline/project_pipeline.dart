@@ -4,6 +4,7 @@ import 'pipeline_registry.dart';
 import 'task_node.dart';
 import 'pipeline_engine.dart';
 import 'contracts/pipeline_stage.dart';
+import '../../models/job.dart';
 
 /// Converts registered [PipelineStage]s into a true DAG of [TaskNode]s
 /// and executes them via [PipelineEngine].
@@ -36,17 +37,15 @@ class ProjectPipeline {
   ProjectPipeline({required this.registry, PipelineEngine? engine})
     : engine = engine ?? PipelineEngine(maxConcurrentTasks: 2);
 
-  Future<NoemaProject> generate(
+  /// Runs the initial planning phases (Story, Characters, Scene Prompts).
+  /// This stops before any heavy generation happens.
+  Future<NoemaProject> generatePlanning(
     NoemaProject project, {
     void Function(String status)? onUpdate,
   }) async {
-    // ── Classify stages by priority ────────────────────────────────────────
-    // priority < 50  → planning (must run sequentially before we know scenes)
-    // 50 ≤ priority < 70 → per-scene production (image + audio, run in parallel)
-    // priority ≥ 70  → final compilation (sequential, after all scenes done)
     final planningStages = _stagesInRange(0, 50);
-    final sceneStages = _stagesInRange(50, 70);
-    final compilationStages = _stagesInRange(70, 999);
+
+    project.projectState = GenerationState.planning;
 
     // ── Phase 1: Sequential planning ──────────────────────────────────────
     for (final stage in planningStages) {
@@ -55,6 +54,34 @@ class ProjectPipeline {
       await stage.run(project);
       onUpdate?.call('[$name] done ✓');
     }
+
+    // Move to review state
+    project.projectState = GenerationState.reviewing;
+    return project;
+  }
+
+  /// Runs the production phases (Images, Audio, Video Compilation).
+  /// This should be called AFTER the user has reviewed and manually edited the planning results.
+  Future<NoemaProject> generateProduction(
+    NoemaProject project, {
+    void Function(String status)? onUpdate,
+  }) async {
+    final sceneStages = _stagesInRange(50, 70);
+    final compilationStages = _stagesInRange(70, 999);
+
+    project.projectState = GenerationState.generating;
+
+    // Clear previous media if regenerating (only clear those that are not completed)
+    project.images.removeWhere((img) {
+      final scene = project.story.scenes.where((s) => s.id == img.sceneId).firstOrNull;
+      return scene == null || scene.imageState != GenerationState.completed || scene.imagePath == null;
+    });
+    project.audios.removeWhere((aud) {
+      final scene = project.story.scenes.where((s) => s.id == aud.sceneId).firstOrNull;
+      return scene == null || scene.audioState != GenerationState.completed;
+    });
+    // Keep pending jobs clean
+    project.jobs.removeWhere((j) => j.status == JobStatus.pending || j.status == JobStatus.running || j.status == JobStatus.failed);
 
     // ── Phase 2: Per-scene parallel DAG ───────────────────────────────────
     if (sceneStages.isNotEmpty && project.story.scenes.isNotEmpty) {

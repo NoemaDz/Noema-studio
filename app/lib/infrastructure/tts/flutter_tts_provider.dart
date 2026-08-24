@@ -59,13 +59,24 @@ class FlutterTTSProvider extends TTSProvider {
         );
         // Fallback: Generate a 3-second silent audio file using ffmpeg
         try {
-          await Process.run(
-          'ffmpeg',
-          ['-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-t', '3', '-q:a', '9', '-acodec', 'aac', '-y', outputPath],
-          );
+          await Process.run('ffmpeg', [
+            '-f',
+            'lavfi',
+            '-i',
+            'anullsrc=r=44100:cl=stereo',
+            '-t',
+            '3',
+            '-q:a',
+            '9',
+            '-acodec',
+            'aac',
+            '-y',
+            outputPath,
+          ]);
         } catch (e) {
-            print("Fallback ffmpeg failed: $e");
-        } if (File(outputPath).existsSync()) {
+          print("Fallback ffmpeg failed: $e");
+        }
+        if (File(outputPath).existsSync()) {
           return Job(
             id: jobId,
             type: "audio",

@@ -41,6 +41,8 @@ class EdgeTTSProvider extends TTSProvider {
         'python3', // fallback to python module
       ];
 
+      final List<String> errors = [];
+
       for (final binPath in possiblePaths) {
         try {
           if (binPath == 'python3') {
@@ -67,12 +69,13 @@ class EdgeTTSProvider extends TTSProvider {
             ]);
           }
 
-          // If the command succeeded, break out of the loop
           if (result.exitCode == 0) {
-            break;
+            break; // Success!
+          } else {
+            errors.add('[$binPath] exitCode: ${result.exitCode}, stderr: ${result.stderr}');
           }
         } catch (e) {
-          // Ignore ProcessException (command not found) and try the next one
+          errors.add('[$binPath] exception: $e');
         }
       }
 
@@ -88,14 +91,15 @@ class EdgeTTSProvider extends TTSProvider {
           result: outputPath,
         );
       } else {
-        print("Edge TTS failed with exit code: ${result?.exitCode}");
-        print("stdout: ${result?.stdout}");
-        print("stderr: ${result?.stderr}");
+        print("Edge TTS failed all attempts.");
+        for (var err in errors) {
+          print(err);
+        }
         return Job(
           id: jobId,
           type: "audio",
           status: JobStatus.failed,
-          result: "Edge TTS failed: ${result?.stderr}",
+          result: "Edge TTS failed. See console for details. (Did you use Arabic text with an English voice?)",
         );
       }
     } catch (e) {

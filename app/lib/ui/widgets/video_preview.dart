@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:path/path.dart' as p;
 
 class VideoPreviewWidget extends StatefulWidget {
   final String? videoPath;
@@ -212,9 +213,38 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
                 ),
               ),
               const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    final home = Platform.environment['HOME'] ?? '';
+                    final desktop = p.join(home, 'Desktop');
+                    final fileName = p.basename(widget.videoPath!);
+                    final dest = p.join(desktop, fileName);
+                    File(widget.videoPath!).copySync(dest);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Video saved to Desktop: $fileName")),
+                    );
+                    if (Platform.isLinux) {
+                      Process.run('xdg-open', [dest]);
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Failed to save: $e")),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.download),
+                label: const Text("Save to Desktop & Open"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
               Text(
-                "Internal player is unsupported on Linux.",
+                "Snap environment may block external players. Try saving to Desktop first.",
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                textAlign: TextAlign.center,
               ),
             ],
           ],

@@ -1,4 +1,7 @@
 import 'providers/provider_registry.dart';
+import 'providers/proxy_llm_provider.dart';
+import 'providers/proxy_tts_provider.dart';
+import 'providers/proxy_image_provider.dart';
 import 'providers/image_provider.dart';
 import 'providers/llm_provider.dart';
 import 'plugins/plugin_manager.dart';
@@ -26,9 +29,10 @@ class Bootstrap {
   late final ProviderRegistry providerRegistry;
   late final PipelineRegistry pipelineRegistry;
   late final WorkflowEngine workflowEngine;
+  late final PluginContext pluginContext;
 
   late final ImageProvider imageProvider;
-  late final LLMProvider ollamaProvider;
+  late final LLMProvider llmProvider;
 
   late final ProjectPipeline projectPipeline;
   late final JobRunner jobRunner;
@@ -52,7 +56,7 @@ class Bootstrap {
     workflowEngine = WorkflowEngine();
     appSettings = AppSettings();
 
-    final pluginContext = PluginContext(
+    pluginContext = PluginContext(
       providers: providerRegistry,
       pipelines: pipelineRegistry,
       engine: workflowEngine,
@@ -62,10 +66,14 @@ class Bootstrap {
   }
 
   void initializePlugins(List<IPlugin> plugins) {
+    providerRegistry.register(ProxyTTSProvider(pluginContext));
+    providerRegistry.register(ProxyImageProvider(pluginContext));
+    providerRegistry.register(ProxyLLMProvider(pluginContext));
+
     pluginManager.loadPlugins(plugins);
 
-    imageProvider = providerRegistry.getDefault<ImageProvider>();
-    ollamaProvider = providerRegistry.getDefault<LLMProvider>();
+    imageProvider = providerRegistry.get<ImageProvider>("proxy_image");
+    llmProvider = providerRegistry.get<LLMProvider>("proxy_llm");
 
     projectPipeline = ProjectPipeline(registry: pipelineRegistry);
 

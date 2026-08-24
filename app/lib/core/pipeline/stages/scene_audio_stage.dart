@@ -6,6 +6,9 @@ import '../../providers/tts_provider.dart';
 import '../../../workflows/audio/audio_workflow.dart';
 import '../../../models/generated_audio.dart';
 import '../../../models/job.dart';
+import '../../../models/scene.dart';
+import '../../../models/asset.dart';
+import '../../../models/asset_type.dart';
 
 class SceneAudioStage extends PipelineStage {
   @override
@@ -19,73 +22,83 @@ class SceneAudioStage extends PipelineStage {
   @override
   Future<void> run(NoemaProject project) async {
     project.audios.clear();
-
     for (final scene in project.story.scenes) {
-      // Generate Narration if present
-      if (scene.narration != null && scene.narration!.isNotEmpty) {
-        final workflow = AudioWorkflow(provider);
-        final context = WorkflowContext();
-        context.set("text", scene.narration!);
+      await runForScene(project, scene);
+    }
+  }
 
-        final result = await engine.runWithContext(workflow, context);
-        final job = result.get<Job>("audio")!;
-        project.jobs.add(job);
+  @override
+  Future<void> runForScene(NoemaProject project, Scene scene) async {
+    // Generate Narration if present
+    if (scene.narration != null && scene.narration!.isNotEmpty) {
+      final workflow = AudioWorkflow(provider);
+      final context = WorkflowContext();
+      context.set("text", scene.narration!);
 
-        project.audios.add(
-          GeneratedAudio(
-            sceneId: scene.id,
-            characterName: "Narrator",
-            jobId: job.id,
-            text: scene.narration!,
-          ),
-        );
+      final result = await engine.runWithContext(workflow, context);
+      final job = result.get<Job>("audio")!;
+      project.jobs.add(job);
+
+      final audio = GeneratedAudio(
+        sceneId: scene.id,
+        characterName: "Narrator",
+        jobId: job.id,
+        text: scene.narration!,
+      );
+      if (job.status == JobStatus.completed && job.result != null) {
+        audio.asset = Asset(id: job.id, path: job.result!, type: AssetType.audio);
       }
+      project.audios.add(audio);
+    }
 
-      // Generate Dialogue Audio
-      for (final dialogueLine in scene.dialogue) {
-        if (dialogueLine.text.trim().isEmpty) continue;
+    // Generate Dialogue Audio
+    for (final dialogueLine in scene.dialogue) {
+      if (dialogueLine.text.trim().isEmpty) continue;
 
-        final workflow = AudioWorkflow(provider);
-        final context = WorkflowContext();
+      final workflow = AudioWorkflow(provider);
+      final context = WorkflowContext();
 
-        // TODO: Pass character name to TTS provider to pick voice profile
-        context.set("text", dialogueLine.text);
-        context.set("characterName", dialogueLine.characterName);
+      // TODO: Pass character name to TTS provider to pick voice profile
+      context.set("text", dialogueLine.text);
+      context.set("characterName", dialogueLine.characterName);
 
-        final result = await engine.runWithContext(workflow, context);
-        final job = result.get<Job>("audio")!;
-        project.jobs.add(job);
+      final result = await engine.runWithContext(workflow, context);
+      final job = result.get<Job>("audio")!;
+      project.jobs.add(job);
 
-        project.audios.add(
-          GeneratedAudio(
-            sceneId: scene.id,
-            characterName: dialogueLine.characterName,
-            jobId: job.id,
-            text: dialogueLine.text,
-          ),
-        );
+      final audio = GeneratedAudio(
+        sceneId: scene.id,
+        characterName: dialogueLine.characterName,
+        jobId: job.id,
+        text: dialogueLine.text,
+      );
+      if (job.status == JobStatus.completed && job.result != null) {
+        audio.asset = Asset(id: job.id, path: job.result!, type: AssetType.audio);
       }
+      project.audios.add(audio);
+    }
 
-      // Fallback: If no narration and no dialogue, generate description
-      if ((scene.narration == null || scene.narration!.isEmpty) &&
-          scene.dialogue.isEmpty) {
-        final workflow = AudioWorkflow(provider);
-        final context = WorkflowContext();
-        context.set("text", scene.description);
+    // Fallback: If no narration and no dialogue, generate description
+    if ((scene.narration == null || scene.narration!.isEmpty) &&
+        scene.dialogue.isEmpty) {
+      final workflow = AudioWorkflow(provider);
+      final context = WorkflowContext();
+      context.set("text", scene.description);
 
-        final result = await engine.runWithContext(workflow, context);
-        final job = result.get<Job>("audio")!;
-        project.jobs.add(job);
+      final result = await engine.runWithContext(workflow, context);
+      final job = result.get<Job>("audio")!;
+      project.jobs.add(job);
 
-        project.audios.add(
-          GeneratedAudio(
-            sceneId: scene.id,
-            characterName: "Narrator",
-            jobId: job.id,
-            text: scene.description,
-          ),
-        );
+      final audio = GeneratedAudio(
+        sceneId: scene.id,
+        characterName: "Narrator",
+        jobId: job.id,
+        text: scene.description,
+      );
+      if (job.status == JobStatus.completed && job.result != null) {
+        audio.asset = Asset(id: job.id, path: job.result!, type: AssetType.audio);
       }
+      project.audios.add(audio);
     }
   }
 }
