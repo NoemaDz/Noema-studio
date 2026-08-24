@@ -9,6 +9,7 @@ import '../../models/job.dart';
 import 'package:flutter/services.dart';
 import '../../models/asset.dart';
 import '../../models/asset_type.dart';
+import 'comfyui_workflow_adapter.dart';
 
 class ComfyUIDriver {
   final PluginContext context;
@@ -38,41 +39,23 @@ class ComfyUIDriver {
     }
 
     final Map<String, dynamic> json = jsonDecode(workflow);
+    final adapter = ComfyUIWorkflowAdapter(json);
 
-    // Default Prompt Injection
-    if (json.containsKey("3")) {
-      json["3"]["inputs"]["text"] = prompt;
-    }
+    // Semantic Injection
+    adapter.setPrompt(prompt);
 
-    // IP-Adapter Character Injection Logic
-    // This expects the ip_adapter_api.json to have specific nodes set up.
-    // Example:
-    // Node 100+: LoadImage (for character references)
-    // Node 200+: IPAdapterApply (for applying the reference to the model)
-    // Node 300+: SolidMask (for regional prompting)
     if (useIpAdapter) {
-      for (int i = 0; i < characters.length; i++) {
-        final charData = characters[i] as Map<String, dynamic>;
-        // We assume the user has set up the JSON with LoadImage nodes starting at ID 100
-        final imageNodeId = (100 + i).toString();
-
-        if (json.containsKey(imageNodeId) &&
-            json[imageNodeId]["class_type"] == "LoadImage") {
-          // Strip out the baseUrl/view?filename= part and keep just the filename
-          final String fullPath = charData["imagePath"];
-          final Uri uri = Uri.parse(fullPath);
-          final String filename =
-              uri.queryParameters["filename"] ?? "image.png";
-
-          json[imageNodeId]["inputs"]["image"] = filename;
-        }
-      }
+      adapter.setCharacterImages(characters);
+    }
+    
+    if (options != null) {
+      adapter.applyOptions(options);
     }
 
     final response = await http.post(
       Uri.parse("$baseUrl/prompt"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"prompt": json}),
+      body: jsonEncode({"prompt": adapter.toJson()}),
     );
 
     final data = jsonDecode(response.body);
