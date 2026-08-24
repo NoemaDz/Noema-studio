@@ -52,9 +52,13 @@ class ComfyUIRunnerService extends ChangeNotifier {
     // 1. Forcefully kill any orphaned process on port 8188 before starting
     debugPrint("Cleaning up any existing ComfyUI instances...");
     if (!Platform.isWindows) {
-      await Process.run('sh', ['-c', 'lsof -ti:8188 | xargs kill -9']).catchError((_) => null);
+      try {
+        await Process.run('sh', ['-c', 'lsof -ti:8188 | xargs kill -9']);
+      } catch (_) {}
     } else {
-      await Process.run('cmd', ['/c', "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a"]).catchError((_) => null);
+      try {
+        await Process.run('cmd', ['/c', "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a"]);
+      } catch (_) {}
     }
     
     // Give it a brief moment to release the port
@@ -124,9 +128,9 @@ class ComfyUIRunnerService extends ChangeNotifier {
     
     // Forcefully kill any orphaned process on port 8188
     if (!Platform.isWindows) {
-      Process.run('sh', ['-c', 'lsof -ti:8188 | xargs kill -9']).catchError((_) => null);
+      Process.run('sh', ['-c', 'lsof -ti:8188 | xargs kill -9']).catchError((_) => ProcessResult(0, -1, '', ''));
     } else {
-      Process.run('cmd', ['/c', "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a"]).catchError((_) => null);
+      Process.run('cmd', ['/c', "FOR /F \"tokens=5\" %a in ('netstat -ano ^| findstr :8188') do taskkill /f /pid %a"]).catchError((_) => ProcessResult(0, -1, '', ''));
     }
     
     _updateStatus(EngineStatus.offline);

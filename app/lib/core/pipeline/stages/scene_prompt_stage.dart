@@ -3,6 +3,8 @@ import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
 import '../../../workflows/scenes/scene_prompt_workflow.dart';
 import '../../workflow/workflow_context.dart';
+import '../../utils/json_extractor.dart';
+import 'dart:convert';
 
 class ScenePromptStage implements PipelineStage {
   @override
@@ -35,5 +37,17 @@ Future<void> run(
     workflow,
     context,
   );
+
+  if (context.contains("prompts")) {
+    final rawResponse = context.get<String>("prompts")!;
+    final cleanJson = JsonExtractor.extract(rawResponse);
+    try {
+      final promptsMap = jsonDecode(cleanJson) as Map<String, dynamic>;
+      final parsedList = promptsMap["prompts"] as List;
+      // ... assume ScenePromptStage continues processing parsedList here
+    } catch (e) {
+      print("Failed to parse scene prompts: $e");
+    }
+  }
 }
 }

@@ -283,6 +283,7 @@ class _StudioScreenState extends State<StudioScreen> {
                       ideaController: _ideaController,
                       isGenerating: _isGenerating,
                       statusText: _statusText,
+                      pipelineStatus: noema.bootstrap.projectState.pipelineStatus,
                       jobs: project?.jobs ?? [],
                       onGenerate: _generateProject,
                       onImportStory: _importStory,

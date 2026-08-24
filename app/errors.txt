@@ -1,0 +1,60 @@
+Analyzing app...
+
+  error - lib/ui/widgets/storyboard_view.dart:59:59 - There's no constant named 'processing' in 'GenerationState'. Try correcting the name to the name of an existing constant, or defining a constant named 'processing'. - undefined_enum_constant
+warning - lib/application/comfyui_runner_service.dart:55:90 - A value of type 'Null' can't be returned by the 'onError' handler because it must be assignable to 'FutureOr<ProcessResult>'. - invalid_return_type_for_catch_error
+warning - lib/application/comfyui_runner_service.dart:57:144 - A value of type 'Null' can't be returned by the 'onError' handler because it must be assignable to 'FutureOr<ProcessResult>'. - invalid_return_type_for_catch_error
+warning - lib/application/comfyui_runner_service.dart:127:84 - A value of type 'Null' can't be returned by the 'onError' handler because it must be assignable to 'FutureOr<ProcessResult>'. - invalid_return_type_for_catch_error
+warning - lib/application/comfyui_runner_service.dart:129:138 - A value of type 'Null' can't be returned by the 'onError' handler because it must be assignable to 'FutureOr<ProcessResult>'. - invalid_return_type_for_catch_error
+warning - lib/application/services/project_generation_service.dart:43:11 - The value of the local variable 'populatedProject' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - lib/application/services/project_generation_service.dart:81:11 - The value of the local variable 'populatedProject' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - lib/core/pipeline/stages/scene_prompt_stage.dart:6:8 - Unused import: '../../utils/json_extractor.dart'. Try removing the import directive. - unused_import
+warning - lib/core/pipeline/stages/scene_prompt_stage.dart:35:9 - The value of the local variable 'runResult' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - lib/infrastructure/tts/flutter_tts_provider.dart:57:15 - The value of the local variable 'process' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - test_comfy.dart:7:11 - The value of the local variable 'res' isn't used. Try removing the variable or using it. - unused_local_variable
+   info - generate_pdf.dart:19:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/core/pipeline/stages/character_stage.dart:62:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/edge_tts/edge_tts_provider.dart:45:13 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/edge_tts/edge_tts_provider.dart:51:13 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/edge_tts/edge_tts_provider.dart:77:9 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/edge_tts/edge_tts_provider.dart:78:9 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/edge_tts/edge_tts_provider.dart:79:9 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/edge_tts/edge_tts_provider.dart:88:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/ffmpeg/ffmpeg_video_compiler.dart:125:11 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/ffmpeg/ffmpeg_video_compiler.dart:126:11 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/ffmpeg/ffmpeg_video_compiler.dart:127:11 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/ffmpeg/ffmpeg_video_compiler.dart:160:10 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/ffmpeg/ffmpeg_video_compiler.dart:161:10 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/ffmpeg/ffmpeg_video_compiler.dart:162:10 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/tts/flutter_tts_provider.dart:55:9 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/infrastructure/tts/flutter_tts_provider.dart:82:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:33:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:34:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:38:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:40:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:48:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:64:13 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:73:10 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:84:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:87:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:89:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:91:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:92:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/simulate.dart:94:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/ui/screens/studio_screen.dart:133:28 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - lib/ui/screens/studio_screen.dart:135:28 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - lib/ui/screens/studio_screen.dart:158:30 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - lib/ui/widgets/video_preview.dart:73:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/workflows/agent/agent_planner_workflow.dart:55:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/workflows/agent/agent_planner_workflow.dart:58:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:35:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:36:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:40:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:44:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:53:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:54:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:58:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test/simulation_test.dart:60:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_comfy.dart:8:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_comfy.dart:10:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+
+56 issues found.

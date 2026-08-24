@@ -7,6 +7,7 @@ class GenerationPanel extends StatelessWidget {
   final TextEditingController ideaController;
   final bool isGenerating;
   final String statusText;
+  final String pipelineStatus;
   final List<Job> jobs;
   final VoidCallback onGenerate;
   final VoidCallback onImportStory;
@@ -16,6 +17,7 @@ class GenerationPanel extends StatelessWidget {
     required this.ideaController,
     required this.isGenerating,
     required this.statusText,
+    required this.pipelineStatus,
     required this.jobs,
     required this.onGenerate,
     required this.onImportStory,
@@ -82,6 +84,28 @@ class GenerationPanel extends StatelessWidget {
               style: TextStyle(
                 color: statusText.startsWith("Error") ? Colors.red : Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+          if (pipelineStatus.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.settings_suggest, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      pipelineStatus,
+                      style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

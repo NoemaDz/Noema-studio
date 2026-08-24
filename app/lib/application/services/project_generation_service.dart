@@ -40,10 +40,12 @@ class ProjectGenerationService {
     Future<NoemaProject> createProject(
   NoemaProject project,
  ) async {
-    final populatedProject =
     await projectPipeline.generate(
-  project,
-  );
+      project,
+      onUpdate: (status) {
+        projectState.setPipelineStatus(status);
+      },
+    );
   await projectService.runTask(
   project: project,
   type: TaskType.extractCharacters,
@@ -75,7 +77,7 @@ class ProjectGenerationService {
   Future<NoemaProject> generateProject(
   NoemaProject project,
   ) async {
-    final populatedProject = await createProject(project);
+    await createProject(project);
 
     final synchronizer = ProjectSynchronizer(
     project: project,

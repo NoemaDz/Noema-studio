@@ -78,9 +78,11 @@ Noema is designed to be highly configurable. Go to `File > Settings` to configur
 - **FFMPEG Default Effect:** Set default fallback camera effects (zoom, pan).
 
 ## 🆕 Recent Updates
-- **Robust Error Handling**: Added smart fallback mechanisms. If an advanced ComfyUI workflow (like `ip_adapter_api.json`) is missing, Noema gracefully falls back to basic `text_to_image_api.json` without breaking the pipeline.
-- **Enhanced UI Feedback**: Live Progress Tracker now shows dynamic, context-aware job titles (e.g., "Generating Character: John"), and pipeline errors are surfaced immediately in the UI instead of failing silently.
-- **Security Patches**: Fixed potential path traversal vulnerabilities in asset downloading.
+- **DAG Pipeline Engine**: Replaced traditional sequential execution with a powerful Directed Acyclic Graph (DAG) orchestrator (`PipelineEngine`) to process tasks concurrently safely (e.g., generating audio for Scene 2 while Scene 1 renders images), preventing GPU OOM.
+- **Robust JSON Extraction**: Added `JsonExtractor` to safely parse LLM outputs even if they contain markdown or hallucinations, ensuring the AI agent never crashes the pipeline.
+- **Dynamic Shimmer UI**: Storyboard now features professional Shimmer effects while rendering images, and a live Pipeline Status tracker.
+- **Robust Error Handling**: Added smart fallback mechanisms. If an advanced ComfyUI workflow is missing, Noema gracefully falls back to basic without breaking the pipeline.
+- **Enhanced UI Feedback**: Live Progress Tracker now shows dynamic, context-aware job titles, and pipeline errors are surfaced immediately.
 
 ## 🤝 Contributing
 Want to build a new plugin to support Runway ML? Or a new Stage for Lip-Syncing? We welcome contributions!

@@ -6,9 +6,17 @@ class ProjectState extends ChangeNotifier {
   NoemaProject? _project;
 
   NoemaProject? get project => _project;
+  
+  String _pipelineStatus = "";
+  String get pipelineStatus => _pipelineStatus;
 
   void setProject(NoemaProject? project) {
     _project = project;
+    notifyListeners();
+  }
+  
+  void setPipelineStatus(String status) {
+    _pipelineStatus = status;
     notifyListeners();
   }
 

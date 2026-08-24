@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/noema_project.dart';
 import '../../models/generated_image.dart';
 import '../../models/generated_audio.dart';
+import '../../models/generation_state.dart';
+import 'package:shimmer/shimmer.dart';
 
 class StoryboardViewWidget extends StatelessWidget {
   final NoemaProject project;
@@ -54,12 +56,20 @@ class StoryboardViewWidget extends StatelessWidget {
                             File(image.asset!.path),
                             fit: BoxFit.cover,
                           ))
-                    : Container(
-                        color: Colors.grey.shade800,
-                        child: const Center(
-                          child: Icon(Icons.image_search, color: Colors.white54, size: 32),
-                        ),
-                      ),
+                    : scene.imageState == GenerationState.generating
+                        ? Shimmer.fromColors(
+                            baseColor: Colors.grey.shade800,
+                            highlightColor: Colors.grey.shade600,
+                            child: Container(
+                              color: Colors.grey.shade800,
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey.shade800,
+                            child: const Center(
+                              child: Icon(Icons.image_search, color: Colors.white54, size: 32),
+                            ),
+                          ),
               ),
               // Text Content
               Expanded(

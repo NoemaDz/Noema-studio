@@ -3,6 +3,7 @@ import '../../core/workflow/workflow_step.dart';
 import '../../core/workflow/workflow_context.dart';
 import '../../core/providers/llm_provider.dart';
 import '../../core/agent/agent_prompt_templates.dart';
+import '../../core/utils/json_extractor.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -53,7 +54,7 @@ class _AgentPlanningStep implements WorkflowStep {
       final response = await provider.generate(fullPrompt);
       print("RAW LLM OUTPUT: $response");
 
-      final cleanJson = _extractJson(response);
+      final cleanJson = JsonExtractor.extract(response);
       print("CLEANED JSON: $cleanJson");
       final decoded = _safeDecode(cleanJson);
       
@@ -78,30 +79,6 @@ class _AgentPlanningStep implements WorkflowStep {
       "title": storyTitle,
       "scenes": allScenes,
     };
-  }
-
-  String _extractJson(String response) {
-    int startIndex = response.indexOf('{');
-    int endIndex = response.lastIndexOf('}');
-    if (startIndex != -1) {
-      String jsonStr = response.substring(startIndex, endIndex != -1 && endIndex >= startIndex ? endIndex + 1 : response.length);
-      // Auto-close missing brackets for robust parsing
-      int openBraces = '{'.allMatches(jsonStr).length;
-      int closeBraces = '}'.allMatches(jsonStr).length;
-      int openBrackets = '['.allMatches(jsonStr).length;
-      int closeBrackets = ']'.allMatches(jsonStr).length;
-
-      while (closeBrackets < openBrackets) {
-        jsonStr += ']';
-        closeBrackets++;
-      }
-      while (closeBraces < openBraces) {
-        jsonStr += '}';
-        closeBraces++;
-      }
-      return jsonStr;
-    }
-    return response.trim();
   }
 
   Map<String, dynamic>? _safeDecode(String jsonStr) {

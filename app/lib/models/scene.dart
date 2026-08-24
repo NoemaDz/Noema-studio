@@ -1,3 +1,5 @@
+import 'generation_state.dart';
+
 class DialogueLine {
   final String? characterName;
   final String text;
@@ -37,6 +39,10 @@ class Scene {
   int? estimatedDurationSeconds;
   Map<String, dynamic> extras;
 
+  GenerationState imageState;
+  GenerationState audioState;
+  GenerationState videoState;
+
   Scene({
     required this.id,
     required this.description,
@@ -52,6 +58,9 @@ class Scene {
     this.transition,
     this.estimatedDurationSeconds,
     Map<String, dynamic>? extras,
+    this.imageState = GenerationState.draft,
+    this.audioState = GenerationState.draft,
+    this.videoState = GenerationState.draft,
   }) : extras = extras ?? {};
 
   factory Scene.fromJson(Map<String, dynamic> json) {
@@ -73,6 +82,9 @@ class Scene {
       transition: json["transition"],
       estimatedDurationSeconds: json["estimatedDurationSeconds"],
       extras: Map<String, dynamic>.from(json["extras"] ?? {}),
+      imageState: GenerationStateExtension.fromJson(json["imageState"]),
+      audioState: GenerationStateExtension.fromJson(json["audioState"]),
+      videoState: GenerationStateExtension.fromJson(json["videoState"]),
     );
   }
 
@@ -92,6 +104,9 @@ class Scene {
       "transition": transition,
       "estimatedDurationSeconds": estimatedDurationSeconds,
       "extras": extras,
+      "imageState": imageState.toJson(),
+      "audioState": audioState.toJson(),
+      "videoState": videoState.toJson(),
     };
   }
 }

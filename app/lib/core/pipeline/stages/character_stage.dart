@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../providers/llm_provider.dart';
 import '../../workflow/workflow_context.dart';
 import '../../workflow/workflow_engine.dart';
+import '../../utils/json_extractor.dart';
 
 import '../../../models/character_list.dart';
 import '../../../workflows/characters/character_workflow.dart';
@@ -47,7 +48,7 @@ class CharacterStage implements PipelineStage {
     );
 
     final rawResponse = result.get<String>("characters")!;
-    final cleanJson = _extractJson(rawResponse);
+    final cleanJson = JsonExtractor.extract(rawResponse);
 
     try {
       final characters = CharacterList.fromJson(
@@ -58,16 +59,7 @@ class CharacterStage implements PipelineStage {
         ..clear()
         ..addAll(characters.characters);
     } catch (e) {
-      print("Warning: Failed to parse characters: \$e");
+      print("Warning: Failed to parse characters: $e");
     }
-  }
-
-  String _extractJson(String response) {
-    final startIndex = response.indexOf('{');
-    final endIndex = response.lastIndexOf('}');
-    if (startIndex != -1 && endIndex != -1 && endIndex >= startIndex) {
-      return response.substring(startIndex, endIndex + 1);
-    }
-    return response.trim();
   }
 }
