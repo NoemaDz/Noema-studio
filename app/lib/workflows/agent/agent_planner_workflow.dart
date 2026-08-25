@@ -81,11 +81,12 @@ class _AgentPlanningStep implements WorkflowStep {
             }),
           );
           allScenes.addAll(chunkScenes);
-          
+
           // Build narrative context for the next chunk
           if (chunkScenes.isNotEmpty) {
             final lastScene = chunkScenes.last;
-            narrativeContext = "Last scene ended with: ${lastScene['description']}. Characters present: ${(lastScene['characterNames'] as List?)?.join(', ') ?? 'None'}. Mood: ${lastScene['mood']}.";
+            narrativeContext =
+                "Last scene ended with: ${lastScene['description']}. Characters present: ${(lastScene['characterNames'] as List?)?.join(', ') ?? 'None'}. Mood: ${lastScene['mood']}.";
           }
         }
       }

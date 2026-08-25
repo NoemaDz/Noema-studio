@@ -21,7 +21,9 @@ class ProxyImageProvider extends ImageProvider {
     final activeId = context.appSettings.activeImageProvider;
     return context.providers.all.whereType<ImageProvider>().firstWhere(
       (p) => p.id == activeId && p.id != "proxy_image",
-      orElse: () => context.providers.all.whereType<ImageProvider>().firstWhere((p) => p.id != "proxy_image"),
+      orElse: () => context.providers.all.whereType<ImageProvider>().firstWhere(
+        (p) => p.id != "proxy_image",
+      ),
     );
   }
 

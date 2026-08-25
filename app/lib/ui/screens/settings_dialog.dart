@@ -102,11 +102,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   void _save() {
     if ((_activeLlmProvider == 'openai' ||
-         _activeTtsProvider == 'openai_tts' ||
-         _activeImageProvider == 'openai_image') &&
+            _activeTtsProvider == 'openai_tts' ||
+            _activeImageProvider == 'openai_image') &&
         _openAiKeyController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter your OpenAI API key before saving.")),
+        const SnackBar(
+          content: Text("Please enter your OpenAI API key before saving."),
+        ),
       );
       return;
     }
@@ -416,7 +418,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       ),
                       const SizedBox(height: 16),
                     ] else ...[
-                      if (_activeLlmProvider != 'openai' && _activeTtsProvider != 'openai_tts') ...[
+                      if (_activeLlmProvider != 'openai' &&
+                          _activeTtsProvider != 'openai_tts') ...[
                         TextField(
                           controller: _openAiKeyController,
                           obscureText: true,
@@ -427,7 +430,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                      ]
+                      ],
                     ],
                     DropdownButtonFormField<String>(
                       initialValue: _selectedEffect,

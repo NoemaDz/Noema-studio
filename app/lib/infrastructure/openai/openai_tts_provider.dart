@@ -45,14 +45,16 @@ class OpenAITTSProvider extends TTSProvider {
     }
 
     try {
-      final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/audio/speech'),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'model': 'tts-1', 'input': text, 'voice': voice}),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('https://api.openai.com/v1/audio/speech'),
+            headers: {
+              'Authorization': 'Bearer $apiKey',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'model': 'tts-1', 'input': text, 'voice': voice}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final file = File(outputPath);

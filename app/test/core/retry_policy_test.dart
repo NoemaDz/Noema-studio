@@ -6,7 +6,10 @@ void main() {
   group('RetryPolicy Tests', () {
     test('retries on TimeoutException', () async {
       int attempts = 0;
-      final policy = const RetryPolicy(maxRetries: 2, initialDelay: Duration(milliseconds: 10));
+      final policy = const RetryPolicy(
+        maxRetries: 2,
+        initialDelay: Duration(milliseconds: 10),
+      );
 
       try {
         await policy.execute(() async {
@@ -21,7 +24,10 @@ void main() {
 
     test('does not retry on unhandled Exceptions by default', () async {
       int attempts = 0;
-      final policy = const RetryPolicy(maxRetries: 2, initialDelay: Duration(milliseconds: 10));
+      final policy = const RetryPolicy(
+        maxRetries: 2,
+        initialDelay: Duration(milliseconds: 10),
+      );
 
       try {
         await policy.execute(() async {
@@ -36,7 +42,10 @@ void main() {
 
     test('retries on 502 Bad Gateway', () async {
       int attempts = 0;
-      final policy = const RetryPolicy(maxRetries: 1, initialDelay: Duration(milliseconds: 10));
+      final policy = const RetryPolicy(
+        maxRetries: 1,
+        initialDelay: Duration(milliseconds: 10),
+      );
 
       try {
         await policy.execute(() async {

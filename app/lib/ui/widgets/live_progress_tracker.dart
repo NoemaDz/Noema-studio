@@ -108,7 +108,9 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(3),
             ),
-            child: job.status == JobStatus.queued || job.status == JobStatus.pending
+            child:
+                job.status == JobStatus.queued ||
+                    job.status == JobStatus.pending
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(

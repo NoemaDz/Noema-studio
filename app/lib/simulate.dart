@@ -62,8 +62,10 @@ void main() async {
     // In our quick CLI script, we must loop to keep the process alive
     int emptyJobsCounter = 0;
     while (project.finalVideoPath == null) {
-      final projectJobs = noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id)).toList();
-      
+      final projectJobs = noema.bootstrap.jobManager.jobs
+          .where((j) => project.jobIds.contains(j.id))
+          .toList();
+
       if (projectJobs.isEmpty) {
         emptyJobsCounter++;
         if (emptyJobsCounter > 5) {

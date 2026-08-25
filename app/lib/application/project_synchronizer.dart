@@ -25,7 +25,9 @@ class ProjectSynchronizer {
     });
 
     // Initial sync for jobs that are already completed before the monitor starts
-    final jobs = noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id));
+    final jobs = noema.bootstrap.jobManager.jobs.where(
+      (j) => project.jobIds.contains(j.id),
+    );
     for (final job in jobs) {
       if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
         synchronize(job);

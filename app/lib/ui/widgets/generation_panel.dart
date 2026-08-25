@@ -143,12 +143,15 @@ class GenerationPanel extends StatelessWidget {
               noema.bootstrap.appSettings,
             ]),
             builder: (context, _) {
-              final activeProvider = noema.bootstrap.appSettings.activeImageProvider;
+              final activeProvider =
+                  noema.bootstrap.appSettings.activeImageProvider;
               Color dotColor = Colors.grey;
               String text = "Offline";
 
               if (activeProvider == 'openai_image') {
-                final hasKey = noema.bootstrap.appSettings.openAiKey.trim().isNotEmpty;
+                final hasKey = noema.bootstrap.appSettings.openAiKey
+                    .trim()
+                    .isNotEmpty;
                 if (hasKey) {
                   dotColor = Colors.green;
                   text = "Cloud Engine Ready";
@@ -217,7 +220,8 @@ class _AnimatedGenerateButton extends StatefulWidget {
   });
 
   @override
-  State<_AnimatedGenerateButton> createState() => _AnimatedGenerateButtonState();
+  State<_AnimatedGenerateButton> createState() =>
+      _AnimatedGenerateButtonState();
 }
 
 class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
@@ -232,9 +236,10 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
-    _glowAnimation = Tween<double>(begin: 4.0, end: 12.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _glowAnimation = Tween<double>(
+      begin: 4.0,
+      end: 12.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     if (widget.isGenerating) {
       _controller.repeat(reverse: true);
@@ -273,10 +278,12 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
             boxShadow: widget.isGenerating
                 ? [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.5),
                       blurRadius: _glowAnimation.value,
                       spreadRadius: _glowAnimation.value / 2,
-                    )
+                    ),
                   ]
                 : null,
           ),
@@ -307,4 +314,3 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
     );
   }
 }
-

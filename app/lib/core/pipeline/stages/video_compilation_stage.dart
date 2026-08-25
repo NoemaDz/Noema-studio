@@ -82,7 +82,8 @@ class VideoCompilationStage extends PipelineStage {
     jobManager.add(job);
     project.jobIds.add(job.id);
 
-    while (job.status != JobStatus.completed && job.status != JobStatus.failed) {
+    while (job.status != JobStatus.completed &&
+        job.status != JobStatus.failed) {
       await Future.delayed(const Duration(seconds: 1));
     }
 

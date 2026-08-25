@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noema_studio/core/noema.dart';
 import 'package:noema_studio/core/noema_project.dart';
@@ -39,7 +38,8 @@ void main() {
       print("Ingesting PDF: $pdfPath...");
 
       // Simulate Document Ingestion (bypassed to avoid Syncfusion PDF hang in test environment)
-      final text = "This is a short simulated story about a brave knight fighting a dragon in a dark cave. The knight's name is Arthur. The dragon is fierce.";
+      final text =
+          "This is a short simulated story about a brave knight fighting a dragon in a dark cave. The knight's name is Arthur. The dragon is fierce.";
       print("Extracted simulated text length: ${text.length}");
 
       // Attempt to generate a project using the extracted text

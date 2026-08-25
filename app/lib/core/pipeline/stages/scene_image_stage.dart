@@ -77,12 +77,15 @@ class SceneImageStage extends PipelineStage {
         debugPrint('SceneImageStage: Scene ${scene.id} job queued ✓');
 
         // Wait for job to complete
-        while (job.status != JobStatus.completed && job.status != JobStatus.failed) {
+        while (job.status != JobStatus.completed &&
+            job.status != JobStatus.failed) {
           await Future.delayed(const Duration(seconds: 1));
         }
 
         if (job.status == JobStatus.failed) {
-          throw Exception("Image generation failed for scene ${scene.id}: ${job.result}");
+          throw Exception(
+            "Image generation failed for scene ${scene.id}: ${job.result}",
+          );
         }
       }
     } catch (e) {

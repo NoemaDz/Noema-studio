@@ -114,16 +114,22 @@ class _SceneEditorCardState extends State<_SceneEditorCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
-        transform: Matrix4.diagonal3Values(_isHovered ? 1.02 : 1.0, _isHovered ? 1.02 : 1.0, 1.0),
+        transform: Matrix4.diagonal3Values(
+          _isHovered ? 1.02 : 1.0,
+          _isHovered ? 1.02 : 1.0,
+          1.0,
+        ),
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.2),
                     blurRadius: 15,
                     spreadRadius: 2,
-                  )
+                  ),
                 ]
               : null,
           borderRadius: BorderRadius.circular(16),
@@ -139,15 +145,20 @@ class _SceneEditorCardState extends State<_SceneEditorCard> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       'Scene ${widget.scene.id}',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
@@ -157,19 +168,29 @@ class _SceneEditorCardState extends State<_SceneEditorCard> {
               const SizedBox(height: 12),
               const Text(
                 'Original Description:',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 4),
-              Text(widget.scene.description, style: const TextStyle(height: 1.4)),
+              Text(
+                widget.scene.description,
+                style: const TextStyle(height: 1.4),
+              ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _imagePromptController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   labelText: 'Image Prompt (Sent to ComfyUI)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.5),
                 ),
                 onChanged: (value) {
                   widget.scene.imagePrompt = value;
@@ -182,9 +203,13 @@ class _SceneEditorCardState extends State<_SceneEditorCard> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: 'Audio Narration (Sent to TTS)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.5),
                 ),
                 onChanged: (value) {
                   widget.scene.narration = value;

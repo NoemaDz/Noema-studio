@@ -16,7 +16,11 @@ class RetryPolicy {
   bool _defaultShouldRetry(Exception e) {
     if (e is TimeoutException || e is SocketException) return true;
     final msg = e.toString();
-    if (msg.contains("500") || msg.contains("502") || msg.contains("503") || msg.contains("504")) return true;
+    if (msg.contains("500") ||
+        msg.contains("502") ||
+        msg.contains("503") ||
+        msg.contains("504"))
+      return true;
     return false; // Don't retry on 400s or logic errors
   }
 
@@ -41,9 +45,13 @@ class RetryPolicy {
           rethrow;
         }
 
-        debugPrint('RetryPolicy: Action failed with $e. Retrying in ${delay.inSeconds}s (Attempt $attempt/$maxRetries)...');
+        debugPrint(
+          'RetryPolicy: Action failed with $e. Retrying in ${delay.inSeconds}s (Attempt $attempt/$maxRetries)...',
+        );
         await Future.delayed(delay);
-        delay = Duration(milliseconds: (delay.inMilliseconds * backoffFactor).toInt());
+        delay = Duration(
+          milliseconds: (delay.inMilliseconds * backoffFactor).toInt(),
+        );
       }
     }
   }

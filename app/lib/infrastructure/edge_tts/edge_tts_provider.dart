@@ -72,7 +72,9 @@ class EdgeTTSProvider extends TTSProvider {
           if (result.exitCode == 0) {
             break; // Success!
           } else {
-            errors.add('[$binPath] exitCode: ${result.exitCode}, stderr: ${result.stderr}');
+            errors.add(
+              '[$binPath] exitCode: ${result.exitCode}, stderr: ${result.stderr}',
+            );
           }
         } catch (e) {
           errors.add('[$binPath] exception: $e');
@@ -101,7 +103,8 @@ class EdgeTTSProvider extends TTSProvider {
           providerId: id,
           type: "audio",
           status: JobStatus.failed,
-          result: "Edge TTS failed. See console for details. (Did you use Arabic text with an English voice?)",
+          result:
+              "Edge TTS failed. See console for details. (Did you use Arabic text with an English voice?)",
         );
       }
     } catch (e) {

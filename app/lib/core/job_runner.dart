@@ -18,22 +18,22 @@ class JobRunner {
       job.status = status;
 
       switch (status) {
-      case JobStatus.completed:
-        job.progress = 1.0;
-        break;
+        case JobStatus.completed:
+          job.progress = 1.0;
+          break;
 
-      case JobStatus.running:
-        // We will no longer artificially increment progress. 
-        // In the future, this should fetch real progress from the provider.
-        break;
+        case JobStatus.running:
+          // We will no longer artificially increment progress.
+          // In the future, this should fetch real progress from the provider.
+          break;
 
-      case JobStatus.queued:
-        job.progress = 0.05;
-        break;
+        case JobStatus.queued:
+          job.progress = 0.05;
+          break;
 
-      case JobStatus.failed:
-        job.progress = 0;
-        break;
+        case JobStatus.failed:
+          job.progress = 0;
+          break;
 
         case JobStatus.pending:
           break;

@@ -28,7 +28,7 @@ class OpenAIImageProvider extends ImageProvider {
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) async {
     final apiKey = context.appSettings.openAiKey;
     final url = context.appSettings.openAiUrl;
-    
+
     if (apiKey.isEmpty) {
       throw Exception("OpenAI API key is missing");
     }
@@ -49,7 +49,12 @@ class OpenAIImageProvider extends ImageProvider {
     return job;
   }
 
-  Future<void> _generateImage(String jobId, String prompt, String apiKey, String url) async {
+  Future<void> _generateImage(
+    String jobId,
+    String prompt,
+    String apiKey,
+    String url,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse("$url/images/generations"),
@@ -62,14 +67,14 @@ class OpenAIImageProvider extends ImageProvider {
           "prompt": prompt,
           "n": 1,
           "size": "1024x1024",
-          "response_format": "url"
+          "response_format": "url",
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final imageUrl = data["data"][0]["url"];
-        
+
         final job = _jobs[jobId]!;
         job.status = JobStatus.completed;
         job.progress = 1.0;
@@ -77,7 +82,8 @@ class OpenAIImageProvider extends ImageProvider {
       } else {
         final job = _jobs[jobId]!;
         job.status = JobStatus.failed;
-        job.metadata["error"] = "OpenAI Error: ${response.statusCode} - ${response.body}";
+        job.metadata["error"] =
+            "OpenAI Error: ${response.statusCode} - ${response.body}";
       }
     } catch (e) {
       final job = _jobs[jobId]!;
@@ -112,12 +118,8 @@ class OpenAIImageProvider extends ImageProvider {
         final outputDir = PlatformPaths.instance.getJobOutputPath(jobId);
         final file = File(p.join(outputDir, "dalle3_image.png"));
         await file.writeAsBytes(response.bodyBytes);
-        
-        return Asset(
-          id: jobId,
-          type: AssetType.image,
-          path: file.path,
-        );
+
+        return Asset(id: jobId, type: AssetType.image, path: file.path);
       }
     } catch (e) {
       print("Failed to download OpenAI image: $e");

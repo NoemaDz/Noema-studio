@@ -1,5 +1,3 @@
-
-
 class ComfyUIWorkflowAdapter {
   final Map<String, dynamic> workflow;
 
@@ -23,7 +21,12 @@ class ComfyUIWorkflowAdapter {
 
   /// Helper to set an input value for a node matching a specific `class_type`.
   /// Updates all matching nodes unless `firstOnly` is true.
-  bool setInputByClass(String classType, String inputKey, dynamic value, {bool firstOnly = true}) {
+  bool setInputByClass(
+    String classType,
+    String inputKey,
+    dynamic value, {
+    bool firstOnly = true,
+  }) {
     bool found = false;
     for (final node in workflow.values) {
       if (node is Map<String, dynamic> && node['class_type'] == classType) {
@@ -41,9 +44,10 @@ class ComfyUIWorkflowAdapter {
   void setPrompt(String prompt) {
     // 1. Try semantic title first
     if (setInputByTitle('Positive Prompt', 'text', prompt)) return;
-    
+
     // 2. Backward compatibility for older text_to_image_api.json
-    if (workflow.containsKey('3') && workflow['3']['class_type'] == 'CLIPTextEncode') {
+    if (workflow.containsKey('3') &&
+        workflow['3']['class_type'] == 'CLIPTextEncode') {
       workflow['3']['inputs']['text'] = prompt;
       return;
     }
@@ -67,7 +71,8 @@ class ComfyUIWorkflowAdapter {
 
       // 2. Backward compatibility: nodes starting at ID 100+i
       final legacyId = (100 + i).toString();
-      if (workflow.containsKey(legacyId) && workflow[legacyId]['class_type'] == 'LoadImage') {
+      if (workflow.containsKey(legacyId) &&
+          workflow[legacyId]['class_type'] == 'LoadImage') {
         workflow[legacyId]['inputs']['image'] = filename;
       }
     }
@@ -80,11 +85,12 @@ class ComfyUIWorkflowAdapter {
         setInputByClass('KSampler', 'seed', options['seed'], firstOnly: true);
       }
     }
-    
+
     if (options.containsKey('width') || options.containsKey('height')) {
       // Find EmptyLatentImage
       for (final node in workflow.values) {
-        if (node is Map<String, dynamic> && node['class_type'] == 'EmptyLatentImage') {
+        if (node is Map<String, dynamic> &&
+            node['class_type'] == 'EmptyLatentImage') {
           if (options.containsKey('width')) {
             node['inputs']['width'] = options['width'];
           }

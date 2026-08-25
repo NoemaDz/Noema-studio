@@ -82,7 +82,11 @@ class _StoryboardCardState extends State<_StoryboardCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
-        transform: Matrix4.diagonal3Values(_isHovered ? 1.02 : 1.0, _isHovered ? 1.02 : 1.0, 1.0),
+        transform: Matrix4.diagonal3Values(
+          _isHovered ? 1.02 : 1.0,
+          _isHovered ? 1.02 : 1.0,
+          1.0,
+        ),
         width: 250,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
@@ -90,17 +94,19 @@ class _StoryboardCardState extends State<_StoryboardCard> {
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withValues(alpha: 0.2),
                     blurRadius: 15,
                     spreadRadius: 2,
-                  )
+                  ),
                 ]
               : [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
         ),
         child: GlassContainer(
@@ -114,10 +120,15 @@ class _StoryboardCardState extends State<_StoryboardCard> {
               Expanded(
                 flex: 3,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: widget.image != null && widget.image!.asset != null
                       ? (widget.image!.asset!.path.startsWith("http")
-                            ? Image.network(widget.image!.asset!.path, fit: BoxFit.cover)
+                            ? Image.network(
+                                widget.image!.asset!.path,
+                                fit: BoxFit.cover,
+                              )
                             : Image.file(
                                 File(widget.image!.asset!.path),
                                 fit: BoxFit.cover,
@@ -152,9 +163,14 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -173,8 +189,7 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                                     ? Icons.image
                                     : Icons.hourglass_empty,
                                 size: 14,
-                                color:
-                                    widget.image?.asset != null
+                                color: widget.image?.asset != null
                                     ? Colors.green
                                     : Colors.grey,
                               ),
@@ -184,8 +199,7 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                                     ? Icons.audiotrack
                                     : Icons.hourglass_empty,
                                 size: 14,
-                                color:
-                                    widget.audio?.asset != null
+                                color: widget.audio?.asset != null
                                     ? Colors.green
                                     : Colors.grey,
                               ),
@@ -201,7 +215,10 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                             children: [
                               Text(
                                 widget.scene.description,
-                                style: const TextStyle(fontSize: 13, height: 1.3),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.3,
+                                ),
                               ),
                               if (widget.scene.dialogue.isNotEmpty) ...[
                                 const SizedBox(height: 8),
@@ -254,7 +271,10 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                                       "🎥 ${widget.scene.cameraEffect}",
                                     ),
                                   if (widget.scene.mood != null)
-                                    _buildTag(context, "🎭 ${widget.scene.mood}"),
+                                    _buildTag(
+                                      context,
+                                      "🎭 ${widget.scene.mood}",
+                                    ),
                                   if (widget.scene.colorGrading != null)
                                     _buildTag(
                                       context,

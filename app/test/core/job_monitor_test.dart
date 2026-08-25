@@ -12,13 +12,13 @@ void main() {
       final runner = JobRunner(registry);
       final manager = JobManager();
       final events = JobEvents();
-      
+
       final monitor = JobMonitor(runner, manager, events);
-      
-      // We can't easily test the private _isPolling flag directly, 
+
+      // We can't easily test the private _isPolling flag directly,
       // but we can ensure the logic compiles and the structure exists.
       expect(monitor, isNotNull);
-      
+
       monitor.start();
       monitor.stop();
     });

@@ -14,7 +14,7 @@ import 'comfyui_workflow_adapter.dart';
 
 class ComfyUIDriver {
   final PluginContext context;
-  
+
   ComfyUIDriver(this.context);
 
   String get baseUrl => context.appSettings.comfyUIUrl;
@@ -48,18 +48,22 @@ class ComfyUIDriver {
     if (useIpAdapter) {
       adapter.setCharacterImages(characters);
     }
-    
+
     if (options != null) {
       adapter.applyOptions(options);
     }
 
     final retryPolicy = const RetryPolicy(maxRetries: 3);
 
-    final response = await retryPolicy.execute(() => http.post(
-      Uri.parse("$baseUrl/prompt"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"prompt": adapter.toJson()}),
-    ).timeout(const Duration(seconds: 15)));
+    final response = await retryPolicy.execute(
+      () => http
+          .post(
+            Uri.parse("$baseUrl/prompt"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"prompt": adapter.toJson()}),
+          )
+          .timeout(const Duration(seconds: 15)),
+    );
 
     if (response.statusCode != 200) {
       throw Exception("ComfyUI API returned ${response.statusCode}");
@@ -76,23 +80,28 @@ class ComfyUIDriver {
 
   Future<JobStatus> getJobStatus(String jobId) async {
     try {
-      final queueResponse = await http.get(Uri.parse("$baseUrl/queue")).timeout(const Duration(seconds: 5));
+      final queueResponse = await http
+          .get(Uri.parse("$baseUrl/queue"))
+          .timeout(const Duration(seconds: 5));
       if (queueResponse.statusCode == 200) {
         final queueData = jsonDecode(queueResponse.body);
         final running = queueData["queue_running"] as List;
         final pending = queueData["queue_pending"] as List;
-        
+
         if (running.any((q) => q[1] == jobId)) return JobStatus.running;
         if (pending.any((q) => q[1] == jobId)) return JobStatus.queued;
       }
-      
-      final historyResponse = await http.get(Uri.parse("$baseUrl/history/$jobId")).timeout(const Duration(seconds: 5));
+
+      final historyResponse = await http
+          .get(Uri.parse("$baseUrl/history/$jobId"))
+          .timeout(const Duration(seconds: 5));
       if (historyResponse.statusCode == 200) {
         final historyData = jsonDecode(historyResponse.body);
         if (historyData.containsKey(jobId)) {
           final jobHistory = historyData[jobId];
           // Check if there is an error in the status object
-          if (jobHistory['status'] != null && jobHistory['status']['status_str'] == 'error') {
+          if (jobHistory['status'] != null &&
+              jobHistory['status']['status_str'] == 'error') {
             return JobStatus.failed;
           }
           return JobStatus.completed;
@@ -101,14 +110,18 @@ class ComfyUIDriver {
     } catch (e) {
       debugPrint("ComfyUIDriver Error in getJobStatus: $e");
     }
-    
+
     return JobStatus.failed;
   }
 
   Future<Asset?> downloadAsset(String jobId) async {
     try {
       final retryPolicy = const RetryPolicy(maxRetries: 3);
-      final response = await retryPolicy.execute(() => http.get(Uri.parse("$baseUrl/history/$jobId")).timeout(const Duration(seconds: 10)));
+      final response = await retryPolicy.execute(
+        () => http
+            .get(Uri.parse("$baseUrl/history/$jobId"))
+            .timeout(const Duration(seconds: 10)),
+      );
 
       if (response.statusCode != 200) {
         debugPrint("ComfyUIDriver: downloadAsset history fetch failed");
@@ -137,7 +150,11 @@ class ComfyUIDriver {
           debugPrint("ComfyUIDriver: Downloading file from $assetUrl");
 
           // Actually download the file
-          final assetResponse = await retryPolicy.execute(() => http.get(Uri.parse(assetUrl)).timeout(const Duration(seconds: 60)));
+          final assetResponse = await retryPolicy.execute(
+            () => http
+                .get(Uri.parse(assetUrl))
+                .timeout(const Duration(seconds: 60)),
+          );
           debugPrint(
             "ComfyUIDriver: Download status ${assetResponse.statusCode}",
           );

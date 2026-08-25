@@ -82,19 +82,28 @@ class ProjectPipeline {
 
     // Clear previous media if regenerating (only clear those that are not completed)
     project.images.removeWhere((img) {
-      final scene = project.story.scenes.where((s) => s.id == img.sceneId).firstOrNull;
-      return scene == null || scene.imageState != GenerationState.completed || scene.imagePath == null;
+      final scene = project.story.scenes
+          .where((s) => s.id == img.sceneId)
+          .firstOrNull;
+      return scene == null ||
+          scene.imageState != GenerationState.completed ||
+          scene.imagePath == null;
     });
     project.audios.removeWhere((aud) {
-      final scene = project.story.scenes.where((s) => s.id == aud.sceneId).firstOrNull;
+      final scene = project.story.scenes
+          .where((s) => s.id == aud.sceneId)
+          .firstOrNull;
       return scene == null || scene.audioState != GenerationState.completed;
     });
     // Keep pending jobs clean
     final jobsToRemove = jobManager.jobs
-        .where((j) => project.jobIds.contains(j.id) &&
-            (j.status == JobStatus.pending ||
-             j.status == JobStatus.running ||
-             j.status == JobStatus.failed))
+        .where(
+          (j) =>
+              project.jobIds.contains(j.id) &&
+              (j.status == JobStatus.pending ||
+                  j.status == JobStatus.running ||
+                  j.status == JobStatus.failed),
+        )
         .map((j) => j.id)
         .toList();
 

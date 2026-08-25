@@ -46,7 +46,9 @@ class PipelineEngine {
 
     for (final task in tasks) {
       if (isCyclic(task)) {
-        throw Exception("Cyclic dependency detected in Pipeline DAG involving \${task.id}");
+        throw Exception(
+          "Cyclic dependency detected in Pipeline DAG involving \${task.id}",
+        );
       }
     }
   }
@@ -57,14 +59,15 @@ class PipelineEngine {
     CancellationToken? cancellationToken,
   }) async {
     validateGraph(tasks);
-    
+
     final completer = Completer<void>();
     int runningTasksCount = 0;
     bool hasFailedTask = false;
 
     void checkAndRun() {
       if (cancellationToken?.isCancelled == true) {
-        if (!completer.isCompleted) completer.completeError(CancelledException());
+        if (!completer.isCompleted)
+          completer.completeError(CancelledException());
         return;
       }
 

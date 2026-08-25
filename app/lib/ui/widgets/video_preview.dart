@@ -222,7 +222,9 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
                     final dest = p.join(desktop, fileName);
                     File(widget.videoPath!).copySync(dest);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Video saved to Desktop: $fileName")),
+                      SnackBar(
+                        content: Text("Video saved to Desktop: $fileName"),
+                      ),
                     );
                     if (Platform.isLinux) {
                       Process.run('xdg-open', [dest]);

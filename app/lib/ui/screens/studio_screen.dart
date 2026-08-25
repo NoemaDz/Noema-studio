@@ -53,9 +53,14 @@ class _StudioScreenState extends State<StudioScreen> {
     if (_ideaController.text.trim().isEmpty) return;
 
     final settings = noema.bootstrap.appSettings;
-    if (settings.activeLlmProvider == 'openai' && settings.openAiKey.trim().isEmpty) {
+    if (settings.activeLlmProvider == 'openai' &&
+        settings.openAiKey.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("OpenAI API Key is missing. Please add it in Settings.")),
+        const SnackBar(
+          content: Text(
+            "OpenAI API Key is missing. Please add it in Settings.",
+          ),
+        ),
       );
       return;
     }
@@ -92,15 +97,25 @@ class _StudioScreenState extends State<StudioScreen> {
     if (p == null) return;
 
     final settings = noema.bootstrap.appSettings;
-    if (settings.activeImageProvider == 'openai_image' && settings.openAiKey.trim().isEmpty) {
+    if (settings.activeImageProvider == 'openai_image' &&
+        settings.openAiKey.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("OpenAI API Key is required for DALL-E. Please add it in Settings.")),
+        const SnackBar(
+          content: Text(
+            "OpenAI API Key is required for DALL-E. Please add it in Settings.",
+          ),
+        ),
       );
       return;
     }
-    if (settings.activeTtsProvider == 'openai_tts' && settings.openAiKey.trim().isEmpty) {
+    if (settings.activeTtsProvider == 'openai_tts' &&
+        settings.openAiKey.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("OpenAI API Key is required for OpenAI TTS. Please add it in Settings.")),
+        const SnackBar(
+          content: Text(
+            "OpenAI API Key is required for OpenAI TTS. Please add it in Settings.",
+          ),
+        ),
       );
       return;
     }
@@ -235,7 +250,6 @@ class _StudioScreenState extends State<StudioScreen> {
   Widget _buildMenuBar(BuildContext context) {
     return MenuBar(
       children: [
-
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
@@ -328,7 +342,9 @@ class _StudioScreenState extends State<StudioScreen> {
           GlassContainer(
             blurRadius: 20,
             opacity: 0.1,
-            border: const Border(bottom: BorderSide(color: Colors.white10, width: 1)),
+            border: const Border(
+              bottom: BorderSide(color: Colors.white10, width: 1),
+            ),
             child: _buildMenuBar(context),
           ),
 
@@ -348,7 +364,11 @@ class _StudioScreenState extends State<StudioScreen> {
                       statusText: _statusText,
                       pipelineStatus:
                           noema.bootstrap.projectState.pipelineStatus,
-                      jobs: project != null ? noema.bootstrap.jobManager.jobs.where((j) => project.jobIds.contains(j.id)).toList() : [],
+                      jobs: project != null
+                          ? noema.bootstrap.jobManager.jobs
+                                .where((j) => project.jobIds.contains(j.id))
+                                .toList()
+                          : [],
                       onGenerate: _generateProject,
                       onImportStory: _importStory,
                     ),
@@ -413,6 +433,3 @@ class _StudioScreenState extends State<StudioScreen> {
     );
   }
 }
-
-
-

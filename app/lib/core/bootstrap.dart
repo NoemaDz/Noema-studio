@@ -89,7 +89,6 @@ class Bootstrap {
       engine: workflowEngine,
     );
 
-
     jobRunner = JobRunner(providerRegistry);
     jobEvents = JobEvents();
     projectState = ProjectState();
