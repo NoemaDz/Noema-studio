@@ -130,6 +130,8 @@ class _StudioScreenState extends State<StudioScreen> {
         project: p,
         registry: noema.bootstrap.providerRegistry,
         state: noema.bootstrap.projectState,
+        jobManager: noema.bootstrap.jobManager,
+        saveProject: noema.saveProject,
       );
       synchronizer.attach(noema.bootstrap.jobEvents);
       noema.bootstrap.jobMonitor.start();
@@ -224,6 +226,8 @@ class _StudioScreenState extends State<StudioScreen> {
           project: project,
           registry: noema.bootstrap.providerRegistry,
           state: noema.bootstrap.projectState,
+          jobManager: noema.bootstrap.jobManager,
+          saveProject: noema.saveProject,
         );
         synchronizer.attach(noema.bootstrap.jobEvents);
         noema.bootstrap.jobMonitor.start();

@@ -56,6 +56,8 @@ void main() async {
       project: project,
       registry: noema.bootstrap.providerRegistry,
       state: noema.bootstrap.projectState,
+      jobManager: noema.bootstrap.jobManager,
+      saveProject: noema.saveProject,
     );
     synchronizer.attach(noema.bootstrap.jobEvents);
 

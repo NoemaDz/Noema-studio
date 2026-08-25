@@ -61,6 +61,8 @@ class ProjectGenerationService {
       project: project,
       registry: noema.bootstrap.providerRegistry,
       state: projectState,
+      jobManager: noema.bootstrap.jobManager,
+      saveProject: noema.saveProject,
     );
     synchronizer.attach(jobEvents);
     jobMonitor.start();

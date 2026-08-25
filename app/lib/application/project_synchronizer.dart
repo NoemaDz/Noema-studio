@@ -5,18 +5,22 @@ import '../core/providers/async_provider.dart';
 import '../models/job.dart';
 import '../core/job_events.dart';
 import '../presentation/state/project_state.dart';
-import '../../main.dart'; // To access noema global
+import '../core/job_manager.dart';
 
 class ProjectSynchronizer {
   final NoemaProject project;
 
   final ProviderRegistry registry;
   final ProjectState state;
+  final JobManager jobManager;
+  final void Function(NoemaProject) saveProject;
 
   ProjectSynchronizer({
     required this.project,
     required this.registry,
     required this.state,
+    required this.jobManager,
+    required this.saveProject,
   });
 
   void attach(JobEvents events) {
@@ -26,9 +30,7 @@ class ProjectSynchronizer {
     });
 
     // Initial sync for jobs that are already completed before the monitor starts
-    final jobs = noema.bootstrap.jobManager.jobs.where(
-      (j) => project.jobIds.contains(j.id),
-    );
+    final jobs = jobManager.jobs.where((j) => project.jobIds.contains(j.id));
     for (final job in jobs) {
       if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
         synchronize(job);
@@ -46,7 +48,7 @@ class ProjectSynchronizer {
     if (job.status == JobStatus.completed && job.type == "video_compile") {
       project.finalVideoPath = job.result;
       state.refresh();
-      noema.saveProject(project);
+      saveProject(project);
       return;
     }
 
@@ -57,7 +59,7 @@ class ProjectSynchronizer {
     if (job.type == "audio") {
       project.updateAudioFromJob(job);
       state.refresh();
-      noema.saveProject(project);
+      saveProject(project);
       return;
     }
 
@@ -78,7 +80,7 @@ class ProjectSynchronizer {
               if (image.jobId == job.id) {
                 image.asset = asset;
                 state.refresh();
-                noema.saveProject(project);
+                saveProject(project);
                 debugPrint("ProjectSynchronizer: Assigned asset to image!");
                 found = true;
                 break;
