@@ -37,16 +37,13 @@ void main() {
       print("--- [SIMULATION START] ---");
       print("Ingesting PDF: $pdfPath...");
 
-      // Simulate Document Ingestion (bypassed to avoid Syncfusion PDF hang in test environment)
-      final text =
-          "This is a short simulated story about a brave knight fighting a dragon in a dark cave. The knight's name is Arthur. The dragon is fierce.";
+      // Simulate Document Ingestion (bypassed to avoid Syncfusion PDF hang)
+      final text = "This is a short simulated story about a brave knight.";
       print("Extracted simulated text length: ${text.length}");
 
       // Attempt to generate a project using the extracted text
       // Depending on what AI models are running, this might take time.
-      print(
-        "Generating project (this may take a few minutes if local models are active)...",
-      );
+      print("Generating project (this may take a few minutes)...");
 
       try {
         final p = NoemaProject(
@@ -60,9 +57,7 @@ void main() {
 
         expect(project, isNotNull);
       } catch (e) {
-        print(
-          "Project generation failed (likely due to missing external dependencies like Ollama/ComfyUI/FFmpeg during testing): $e",
-        );
+        print("Project generation failed (missing dependencies): $e");
       } finally {
         noema.bootstrap.jobMonitor.stop();
       }
