@@ -15,10 +15,11 @@ class OllamaDriver {
             "format": "json",
             "stream": false,
             "prompt": prompt,
+            "keep_alive": 0,
             "options": {"num_predict": 4096, "temperature": 0.7},
           }),
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(minutes: 15));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

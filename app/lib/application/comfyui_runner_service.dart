@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 enum EngineStatus { offline, starting, ready, error }
 
@@ -96,12 +97,39 @@ class ComfyUIRunnerService extends ChangeNotifier {
 
       debugPrint("Starting ComfyUI in background using $pythonExecutable...");
 
-      _process = await Process.start(pythonExecutable, [
-        'main.py',
-        '--port',
-        '8188',
-        '--cpu',
-      ], workingDirectory: installDir);
+      final hwInfo = await HardwareService().detectHardware();
+      final List<String> args = ['main.py', '--port', '8188'];
+      
+      if (!hwInfo.isUnknown) {
+        if (hwInfo.vramMB <= 6144) {
+          // Low VRAM (<= 6GB): aggressive compression but NO FP8 UNet to preserve quality
+          args.addAll([
+            '--lowvram',
+            '--fp8_e4m3fn-text-enc',
+            '--disable-dynamic-vram',
+          ]);
+        } else if (hwInfo.vramMB <= 8192) {
+          // Medium VRAM (8GB)
+          args.addAll([
+            '--lowvram',
+            '--fp8_e4m3fn-text-enc',
+          ]);
+        } else {
+          // High VRAM (12GB+)
+          args.addAll([
+            '--highvram',
+          ]);
+        }
+      } else {
+        // Fallback for unknown hardware
+        args.addAll([
+            '--lowvram',
+            '--fp8_e4m3fn-text-enc',
+            '--disable-dynamic-vram',
+        ]);
+      }
+
+      _process = await Process.start(pythonExecutable, args, workingDirectory: installDir);
 
       debugPrint("ComfyUI Process Started (PID: ${_process!.pid})");
 

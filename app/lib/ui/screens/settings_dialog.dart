@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../main.dart'; // To access global noema
+import 'package:noema_studio/core/settings/app_settings.dart';
+import 'package:noema_studio/main.dart';
+import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 class SettingsDialog extends StatefulWidget {
   const SettingsDialog({super.key});
@@ -26,7 +28,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late String _activeTtsProvider;
   late String _openAiTtsVoice;
   late String _edgeTtsVoice;
-  late bool _useDetailer;
+  late PerformanceProfile _performanceMode;
+  late bool _autoDetectHardware;
+  HardwareInfo? _detectedHardware;
   late String _imageResolution;
 
   final List<String> _resolutions = [
@@ -98,10 +102,24 @@ class _SettingsDialogState extends State<SettingsDialog> {
       _edgeTtsVoice = 'en-US-AriaNeural';
     }
 
-    _useDetailer = settings.useDetailer;
+    _performanceMode = settings.performanceMode;
+    _autoDetectHardware = settings.autoDetectHardware;
+    _detectHardware();
     _imageResolution = settings.imageResolution;
     if (!_resolutions.contains(_imageResolution)) {
       _imageResolution = '768x512';
+    }
+  }
+
+  Future<void> _detectHardware() async {
+    final info = await HardwareService().detectHardware();
+    if (mounted) {
+      setState(() {
+        _detectedHardware = info;
+        if (_autoDetectHardware && !info.isUnknown) {
+          _performanceMode = info.recommendedProfile;
+        }
+      });
     }
   }
 
@@ -142,7 +160,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
       activeTtsProvider: _activeTtsProvider,
       openAiTtsVoice: _openAiTtsVoice,
       edgeTtsVoice: _edgeTtsVoice,
-      useDetailer: _useDetailer,
+      performanceMode: _performanceMode,
+      autoDetectHardware: _autoDetectHardware,
       imageResolution: _imageResolution,
     );
     Navigator.of(context).pop();
@@ -489,56 +508,73 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   children: [
                     const SizedBox(height: 16),
 
-                    // ── Detailer toggle ───────────────────────────────────
+                    // ── Performance Mode ─────────────────────────────────
                     Container(
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _useDetailer
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.transparent,
-                          width: 1.5,
-                        ),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.face_retouching_natural,
-                            color: _useDetailer
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.grey,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'FaceDetailer + PersonDetailer',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                Text(
-                                  _useDetailer
-                                      ? 'تحسين الوجه والجسم في كل مشهد (أبطأ، جودة أعلى)'
-                                      : 'سرعة أكبر، بدون تحسين تفاصيل',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade400,
+                          if (_detectedHardware != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.memory, size: 16, color: Theme.of(context).colorScheme.primary),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _detectedHardware!.isUnknown 
+                                      ? 'Hardware: Unknown' 
+                                      : 'Hardware: ${_detectedHardware!.gpuName} (${_detectedHardware!.vramMB} MB)',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                          Row(
+                            children: [
+                              const Text('Auto-Detect Profile'),
+                              const Spacer(),
+                              Switch(
+                                value: _autoDetectHardware,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _autoDetectHardware = val;
+                                    if (val && _detectedHardware != null && !_detectedHardware!.isUnknown) {
+                                      _performanceMode = _detectedHardware!.recommendedProfile;
+                                    }
+                                  });
+                                },
+                              ),
+                            ],
                           ),
-                          Switch(
-                            value: _useDetailer,
-                            onChanged: (v) => setState(() => _useDetailer = v),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<PerformanceProfile>(
+                            initialValue: _performanceMode,
+                            decoration: const InputDecoration(
+                              labelText: 'Performance Profile',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: PerformanceProfile.fast,
+                                child: Text('Fast (Low VRAM - No Detailers)'),
+                              ),
+                              DropdownMenuItem(
+                                value: PerformanceProfile.balanced,
+                                child: Text('Balanced (Medium VRAM - Face Detailer Only)'),
+                              ),
+                              DropdownMenuItem(
+                                value: PerformanceProfile.ultra,
+                                child: Text('Ultra (High VRAM - Face & Person Detailers)'),
+                              ),
+                            ],
+                            onChanged: _autoDetectHardware ? null : (val) {
+                              if (val != null) setState(() => _performanceMode = val);
+                            },
                           ),
                         ],
                       ),

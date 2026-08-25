@@ -73,10 +73,9 @@ class ComfyUIDriver {
       adapter.setCharacterImages(uploadedCharacters);
     }
 
-    // Apply or disable Detailer based on settings
-    final useDetailer = context.appSettings.useDetailer;
-    if (!useDetailer && useIpAdapter) {
-      adapter.disableDetailer();
+    // Apply hardware-based performance profile
+    if (useIpAdapter) {
+      adapter.applyPerformanceProfile(context.appSettings.performanceMode);
     }
 
     if (options != null) {

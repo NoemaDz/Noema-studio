@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 class AppSettings extends ChangeNotifier {
   static const _kOllamaUrl = 'ollama_url';
@@ -15,7 +16,8 @@ class AppSettings extends ChangeNotifier {
   static const _kActiveTtsProvider = 'active_tts_provider';
   static const _kOpenAiTtsVoice = 'openai_tts_voice';
   static const _kEdgeTtsVoice = 'edge_tts_voice';
-  static const _kUseDetailer = 'use_detailer';
+  static const _kPerformanceMode = 'performance_mode';
+  static const _kAutoDetectHardware = 'auto_detect_hardware';
   static const _kImageResolution = 'image_resolution';
 
   String _ollamaUrl = 'http://localhost:11434';
@@ -30,7 +32,8 @@ class AppSettings extends ChangeNotifier {
   String _activeTtsProvider = 'flutter_tts';
   String _openAiTtsVoice = 'alloy';
   String _edgeTtsVoice = 'en-US-AriaNeural';
-  bool _useDetailer = true; // FaceDetailer + PersonDetailer
+  PerformanceProfile _performanceMode = PerformanceProfile.balanced;
+  bool _autoDetectHardware = true;
   String _imageResolution = '768x512'; // wide landscape
 
   String get ollamaUrl => _ollamaUrl;
@@ -45,7 +48,8 @@ class AppSettings extends ChangeNotifier {
   String get activeTtsProvider => _activeTtsProvider;
   String get openAiTtsVoice => _openAiTtsVoice;
   String get edgeTtsVoice => _edgeTtsVoice;
-  bool get useDetailer => _useDetailer;
+  PerformanceProfile get performanceMode => _performanceMode;
+  bool get autoDetectHardware => _autoDetectHardware;
   String get imageResolution => _imageResolution;
 
   Future<void> loadSettings() async {
@@ -62,7 +66,13 @@ class AppSettings extends ChangeNotifier {
     _activeTtsProvider = prefs.getString(_kActiveTtsProvider) ?? 'flutter_tts';
     _openAiTtsVoice = prefs.getString(_kOpenAiTtsVoice) ?? 'alloy';
     _edgeTtsVoice = prefs.getString(_kEdgeTtsVoice) ?? 'en-US-AriaNeural';
-    _useDetailer = prefs.getBool(_kUseDetailer) ?? true;
+    
+    final perfStr = prefs.getString(_kPerformanceMode) ?? 'balanced';
+    _performanceMode = PerformanceProfile.values.firstWhere(
+      (e) => e.toString().split('.').last == perfStr,
+      orElse: () => PerformanceProfile.balanced,
+    );
+    _autoDetectHardware = prefs.getBool(_kAutoDetectHardware) ?? true;
     _imageResolution = prefs.getString(_kImageResolution) ?? '768x512';
     notifyListeners();
   }
@@ -80,7 +90,8 @@ class AppSettings extends ChangeNotifier {
     required String activeTtsProvider,
     required String openAiTtsVoice,
     required String edgeTtsVoice,
-    required bool useDetailer,
+    required PerformanceProfile performanceMode,
+    required bool autoDetectHardware,
     required String imageResolution,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -97,7 +108,8 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
     await prefs.setString(_kOpenAiTtsVoice, openAiTtsVoice);
     await prefs.setString(_kEdgeTtsVoice, edgeTtsVoice);
-    await prefs.setBool(_kUseDetailer, useDetailer);
+    await prefs.setString(_kPerformanceMode, performanceMode.toString().split('.').last);
+    await prefs.setBool(_kAutoDetectHardware, autoDetectHardware);
     await prefs.setString(_kImageResolution, imageResolution);
 
     _ollamaUrl = ollamaUrl;
@@ -112,7 +124,8 @@ class AppSettings extends ChangeNotifier {
     _activeTtsProvider = activeTtsProvider;
     _openAiTtsVoice = openAiTtsVoice;
     _edgeTtsVoice = edgeTtsVoice;
-    _useDetailer = useDetailer;
+    _performanceMode = performanceMode;
+    _autoDetectHardware = autoDetectHardware;
     _imageResolution = imageResolution;
 
     notifyListeners();

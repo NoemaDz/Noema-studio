@@ -1,4 +1,5 @@
 import 'package:path/path.dart' as p;
+import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 class ComfyUIWorkflowAdapter {
   final Map<String, dynamic> workflow;
@@ -131,38 +132,73 @@ class ComfyUIWorkflowAdapter {
     }
   }
 
-  /// Remove Detailer nodes (FaceDetailer, PersonDetailer, detectors)
-  /// and redirect SaveImage directly to VAEDecode output.
-  void disableDetailer() {
-    // Find the VAEDecode node — its output goes to FaceDetailer.
-    // We need SaveImage (node 7) to point to VAEDecode instead.
+  /// Apply hardware-based performance profile
+  void applyPerformanceProfile(PerformanceProfile profile) {
+    if (profile == PerformanceProfile.ultra) {
+      // Keep everything (FaceDetailer and PersonDetailer)
+      return;
+    }
+
     String? vaeDecodeNodeId;
     String? saveImageNodeId;
+    String? faceDetailerNodeId;
+    String? personDetailerNodeId;
 
     for (final entry in workflow.entries) {
       final node = entry.value;
       if (node is! Map<String, dynamic>) continue;
-      if (node['class_type'] == 'VAEDecode') {
-        vaeDecodeNodeId = entry.key;
-      }
-      if (node['class_type'] == 'SaveImage') {
-        saveImageNodeId = entry.key;
+      
+      final classType = node['class_type'] as String? ?? '';
+      final title = (node['_meta'] as Map?)?['title'] as String? ?? '';
+
+      if (classType == 'VAEDecode') vaeDecodeNodeId = entry.key;
+      if (classType == 'SaveImage') saveImageNodeId = entry.key;
+      
+      if (classType == 'FaceDetailer') {
+        if (title == 'PersonDetailer') {
+          personDetailerNodeId = entry.key;
+        } else {
+          faceDetailerNodeId = entry.key;
+        }
       }
     }
 
-    if (saveImageNodeId != null && vaeDecodeNodeId != null) {
-      // Redirect SaveImage.images → [vaeDecodeNodeId, 0]
-      workflow[saveImageNodeId]['inputs']['images'] = [vaeDecodeNodeId, 0];
+    if (profile == PerformanceProfile.fast) {
+      // Remove both detailers, connect VAEDecode -> SaveImage
+      if (saveImageNodeId != null && vaeDecodeNodeId != null) {
+        workflow[saveImageNodeId]['inputs']['images'] = [vaeDecodeNodeId, 0];
+      }
+      _removeNodesByClass('FaceDetailer');
+      _removeNodesByClass('UltralyticsDetectorProvider');
+    } else if (profile == PerformanceProfile.balanced) {
+      // Remove only PersonDetailer, connect FaceDetailer -> SaveImage
+      if (saveImageNodeId != null && faceDetailerNodeId != null) {
+        workflow[saveImageNodeId]['inputs']['images'] = [faceDetailerNodeId, 0];
+      }
+      if (personDetailerNodeId != null) {
+        workflow.remove(personDetailerNodeId);
+      }
+      // Remove the Person detector (title == 'Person Detector (Segm)')
+      final toRemove = <String>[];
+      for (final entry in workflow.entries) {
+        final node = entry.value;
+        if (node is! Map<String, dynamic>) continue;
+        if ((node['_meta'] as Map?)?['title'] == 'Person Detector (Segm)') {
+          toRemove.add(entry.key);
+        }
+      }
+      for (final key in toRemove) {
+        workflow.remove(key);
+      }
     }
+  }
 
-    // Remove detailer-related nodes by class_type
+  void _removeNodesByClass(String classType) {
     final toRemove = <String>[];
     for (final entry in workflow.entries) {
       final node = entry.value;
       if (node is! Map<String, dynamic>) continue;
-      final classType = node['class_type'] as String? ?? '';
-      if (classType == 'FaceDetailer' ||
-          classType == 'UltralyticsDetectorProvider') {
+      if (node['class_type'] == classType) {
         toRemove.add(entry.key);
       }
     }
