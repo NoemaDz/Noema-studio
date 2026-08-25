@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../models/job.dart';
 import '../../main.dart';
 
@@ -12,6 +13,7 @@ class LiveProgressTracker extends StatefulWidget {
 }
 
 class _LiveProgressTrackerState extends State<LiveProgressTracker> {
+  StreamSubscription? _subscription;
   void _onJobUpdate(Job job) {
     if (mounted) {
       setState(() {});
@@ -21,12 +23,12 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
   @override
   void initState() {
     super.initState();
-    noema.bootstrap.jobEvents.subscribe(_onJobUpdate);
+    _subscription = noema.bootstrap.jobEvents.stream.listen(_onJobUpdate);
   }
 
   @override
   void dispose() {
-    noema.bootstrap.jobEvents.unsubscribe(_onJobUpdate);
+    _subscription?.cancel();
     super.dispose();
   }
 

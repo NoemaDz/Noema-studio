@@ -7,7 +7,8 @@ import '/core/providers/image_provider.dart';
 import '/core/job_events.dart';
 import '/core/pipeline/project_pipeline.dart';
 import '../../presentation/state/project_state.dart';
-import '../../main.dart'; // To access global noema
+import '../../core/providers/provider_registry.dart';
+import '../../core/job_manager.dart';
 
 class ProjectGenerationService {
   final ProjectPipeline projectPipeline;
@@ -22,6 +23,10 @@ class ProjectGenerationService {
 
   final ProjectState projectState;
 
+  final ProviderRegistry providerRegistry;
+  final JobManager jobManager;
+  final Future<void> Function(NoemaProject) saveProject;
+
   ProjectGenerationService({
     required this.projectPipeline,
     required this.projectService,
@@ -29,6 +34,9 @@ class ProjectGenerationService {
     required this.imageProvider,
     required this.jobEvents,
     required this.projectState,
+    required this.providerRegistry,
+    required this.jobManager,
+    required this.saveProject,
   });
 
   Future<NoemaProject> generatePlanning(NoemaProject project) async {
@@ -59,12 +67,12 @@ class ProjectGenerationService {
   Future<NoemaProject> generateProduction(NoemaProject project) async {
     final synchronizer = ProjectSynchronizer(
       project: project,
-      registry: noema.bootstrap.providerRegistry,
+      registry: providerRegistry,
       state: projectState,
-      jobManager: noema.bootstrap.jobManager,
-      saveProject: noema.saveProject,
+      jobManager: jobManager,
+      saveProject: saveProject,
     );
-    synchronizer.attach(jobEvents);
+    await synchronizer.attach(jobEvents);
     jobMonitor.start();
 
     await projectPipeline.generateProduction(
@@ -79,7 +87,7 @@ class ProjectGenerationService {
       type: TaskType.generateSceneImages,
       action: () async {},
     );
-    await noema.saveProject(project);
+    await saveProject(project);
     return project;
   }
 }

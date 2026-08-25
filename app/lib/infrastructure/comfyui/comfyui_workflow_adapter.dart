@@ -147,13 +147,13 @@ class ComfyUIWorkflowAdapter {
     for (final entry in workflow.entries) {
       final node = entry.value;
       if (node is! Map<String, dynamic>) continue;
-      
+
       final classType = node['class_type'] as String? ?? '';
       final title = (node['_meta'] as Map?)?['title'] as String? ?? '';
 
       if (classType == 'VAEDecode') vaeDecodeNodeId = entry.key;
       if (classType == 'SaveImage') saveImageNodeId = entry.key;
-      
+
       if (classType == 'FaceDetailer') {
         if (title == 'PersonDetailer') {
           personDetailerNodeId = entry.key;

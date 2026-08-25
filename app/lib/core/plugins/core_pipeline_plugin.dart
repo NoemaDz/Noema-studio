@@ -8,6 +8,8 @@ import '../pipeline/stages/agent_planner_stage.dart';
 import '../pipeline/stages/character_stage.dart';
 import '../pipeline/stages/character_image_stage.dart';
 import '../pipeline/stages/scene_image_stage.dart';
+import '../pipeline/stages/scene_video_stage.dart';
+import '../providers/video_provider.dart';
 import '../pipeline/stages/scene_audio_stage.dart';
 import '../pipeline/stages/video_compilation_stage.dart';
 import '../providers/proxy_tts_provider.dart' as import_proxy_tts;
@@ -76,6 +78,16 @@ class CorePipelinePlugin implements IPlugin {
         engine: context.engine,
         provider: imageProvider,
         jobManager: context.jobManager,
+      ),
+    );
+
+    final i2vProvider = context.providers.get<VideoProvider>('proxy_video');
+    context.pipelines.register(
+      SceneVideoStage(
+        engine: context.engine,
+        provider: i2vProvider,
+        jobManager: context.jobManager,
+        appSettings: context.appSettings,
       ),
     );
 

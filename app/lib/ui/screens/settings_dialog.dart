@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:noema_studio/core/settings/app_settings.dart';
 import 'package:noema_studio/main.dart';
 import 'package:noema_studio/core/hardware/hardware_service.dart';
 
@@ -32,6 +31,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late bool _autoDetectHardware;
   HardwareInfo? _detectedHardware;
   late String _imageResolution;
+  late bool _enableVideoGeneration;
 
   final List<String> _resolutions = [
     '512x512',
@@ -109,6 +109,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     if (!_resolutions.contains(_imageResolution)) {
       _imageResolution = '768x512';
     }
+    _enableVideoGeneration = settings.enableVideoGeneration;
   }
 
   Future<void> _detectHardware() async {
@@ -163,8 +164,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
       performanceMode: _performanceMode,
       autoDetectHardware: _autoDetectHardware,
       imageResolution: _imageResolution,
+      enableVideoGeneration: _enableVideoGeneration,
     );
-    Navigator.of(context).pop();
+
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -512,7 +517,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -523,13 +530,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Row(
                                 children: [
-                                  Icon(Icons.memory, size: 16, color: Theme.of(context).colorScheme.primary),
+                                  Icon(
+                                    Icons.memory,
+                                    size: 16,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _detectedHardware!.isUnknown 
-                                      ? 'Hardware: Unknown' 
-                                      : 'Hardware: ${_detectedHardware!.gpuName} (${_detectedHardware!.vramMB} MB)',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                    _detectedHardware!.isUnknown
+                                        ? 'Hardware: Unknown'
+                                        : 'Hardware: ${_detectedHardware!.gpuName} (${_detectedHardware!.vramMB} MB)',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -543,8 +559,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 onChanged: (val) {
                                   setState(() {
                                     _autoDetectHardware = val;
-                                    if (val && _detectedHardware != null && !_detectedHardware!.isUnknown) {
-                                      _performanceMode = _detectedHardware!.recommendedProfile;
+                                    if (val &&
+                                        _detectedHardware != null &&
+                                        !_detectedHardware!.isUnknown) {
+                                      _performanceMode =
+                                          _detectedHardware!.recommendedProfile;
                                     }
                                   });
                                 },
@@ -565,19 +584,41 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               ),
                               DropdownMenuItem(
                                 value: PerformanceProfile.balanced,
-                                child: Text('Balanced (Medium VRAM - Face Detailer Only)'),
+                                child: Text(
+                                  'Balanced (Medium VRAM - Face Detailer Only)',
+                                ),
                               ),
                               DropdownMenuItem(
                                 value: PerformanceProfile.ultra,
-                                child: Text('Ultra (High VRAM - Face & Person Detailers)'),
+                                child: Text(
+                                  'Ultra (High VRAM - Face & Person Detailers)',
+                                ),
                               ),
                             ],
-                            onChanged: _autoDetectHardware ? null : (val) {
-                              if (val != null) setState(() => _performanceMode = val);
-                            },
+                            onChanged: _autoDetectHardware
+                                ? null
+                                : (val) {
+                                    if (val != null)
+                                      setState(() => _performanceMode = val);
+                                  },
                           ),
                         ],
                       ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Video Generation Toggle ─────────────────────────────
+                    SwitchListTile(
+                      title: const Text('Enable AI Video Generation (I2V)'),
+                      subtitle: const Text(
+                        'Generates animated video clips instead of static images. Slower, but creates real videos.',
+                      ),
+                      value: _enableVideoGeneration,
+                      onChanged: (val) {
+                        setState(() => _enableVideoGeneration = val);
+                      },
+                      contentPadding: EdgeInsets.zero,
                     ),
 
                     const SizedBox(height: 16),

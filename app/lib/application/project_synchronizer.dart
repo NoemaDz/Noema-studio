@@ -6,6 +6,7 @@ import '../models/job.dart';
 import '../core/job_events.dart';
 import '../presentation/state/project_state.dart';
 import '../core/job_manager.dart';
+import 'dart:async';
 
 class ProjectSynchronizer {
   final NoemaProject project;
@@ -23,17 +24,24 @@ class ProjectSynchronizer {
     required this.saveProject,
   });
 
-  void attach(JobEvents events) {
-    events.clear(); // Prevent duplicate listeners when regenerating
-    events.subscribe((job) async {
-      await synchronize(job);
-    });
+  StreamSubscription? _subscription;
+
+  Future<void> attach(JobEvents events) async {
+    _subscription?.cancel();
+
+    // Use asyncMap to process one event at a time sequentially
+    _subscription = events.stream
+        .asyncMap((job) async {
+          await synchronize(job);
+          return job;
+        })
+        .listen((_) {});
 
     // Initial sync for jobs that are already completed before the monitor starts
     final jobs = jobManager.jobs.where((j) => project.jobIds.contains(j.id));
     for (final job in jobs) {
       if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
-        synchronize(job);
+        await synchronize(job);
       }
     }
   }
@@ -92,6 +100,35 @@ class ProjectSynchronizer {
               );
               debugPrint(
                 "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
+              );
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint("ProjectSynchronizer Error: $e");
+      }
+      return;
+    }
+
+    if (job.type == "video") {
+      try {
+        final provider = registry.get(job.providerId);
+        if (provider is AsyncProvider) {
+          final asset = await provider.downloadAsset(job.id);
+          if (asset != null) {
+            bool found = false;
+            for (final video in project.videos) {
+              if (video.jobId == job.id) {
+                video.asset = asset;
+                state.refresh();
+                saveProject(project);
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              debugPrint(
+                "ProjectSynchronizer: WARNING - No video found with jobId ${job.id}!",
               );
             }
           }

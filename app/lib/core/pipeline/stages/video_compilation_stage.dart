@@ -27,12 +27,23 @@ class VideoCompilationStage extends PipelineStage {
   Future<void> run(NoemaProject project) async {
     final resources = <AudioVideoResource>[];
 
-    // Gather images and audios for each scene
+    // Gather images/videos and audios for each scene
     for (final scene in project.story.scenes) {
-      final image = project.images.firstWhere(
-        (img) => img.sceneId == scene.id,
-        orElse: () => throw Exception("Missing image for scene ${scene.id}"),
+      final video = project.videos.cast<dynamic>().firstWhere(
+        (vid) => vid.sceneId == scene.id,
+        orElse: () => null,
       );
+
+      final image = project.images.cast<dynamic>().firstWhere(
+        (img) => img.sceneId == scene.id,
+        orElse: () => null,
+      );
+
+      final mediaPath = video?.asset?.path ?? image?.asset?.path;
+
+      if (mediaPath == null) {
+        throw Exception("Missing image/video for scene ${scene.id}");
+      }
 
       final audios = project.audios
           .where((aud) => aud.sceneId == scene.id)
@@ -44,18 +55,13 @@ class VideoCompilationStage extends PipelineStage {
           .map((aud) => aud.asset!.path)
           .toList();
 
-      if (image.asset?.path != null) {
-        resources.add(
-          AudioVideoResource(
-            imagePath: image.asset!.path,
-            audioPaths: validAudioPaths,
-            effect: scene.cameraEffect,
-          ),
-        );
-      } else {
-        // If assets aren't populated yet, we cannot compile.
-        // Wait for jobs to finish in real execution.
-      }
+      resources.add(
+        AudioVideoResource(
+          imagePath: mediaPath,
+          audioPaths: validAudioPaths,
+          effect: scene.cameraEffect,
+        ),
+      );
     }
 
     if (resources.isEmpty) {
@@ -82,10 +88,7 @@ class VideoCompilationStage extends PipelineStage {
     jobManager.add(job);
     project.jobIds.add(job.id);
 
-    while (job.status != JobStatus.completed &&
-        job.status != JobStatus.failed) {
-      await Future.delayed(const Duration(seconds: 1));
-    }
+    await jobManager.waitForCompletion(job.id, token: cancellationToken);
 
     if (job.status == JobStatus.failed) {
       throw Exception("Video compilation failed: ${job.result}");

@@ -1,6 +1,7 @@
 import '../../core/plugins/plugin_interface.dart';
 import '../../core/plugins/plugin_context.dart';
 import 'comfyui_provider.dart';
+import 'comfyui_video_provider.dart';
 
 class ComfyUIPlugin implements IPlugin {
   @override
@@ -12,5 +13,6 @@ class ComfyUIPlugin implements IPlugin {
   @override
   void register(PluginContext context) {
     context.providers.register(ComfyUIProvider(context));
+    context.providers.register(ComfyUIVideoProvider(context));
   }
 }

@@ -1,6 +1,7 @@
 import '../models/story.dart';
 import 'noema_state.dart';
 import '../models/generated_image.dart';
+import '../models/generated_video.dart';
 import '../models/generated_audio.dart';
 import '../models/character.dart';
 import '../models/style.dart';
@@ -44,6 +45,7 @@ class NoemaProject {
 
   // ── Assets (generated outputs) ────────────────────────────────────────────
   final List<GeneratedImage> images = [];
+  final List<GeneratedVideo> videos = [];
   final List<GeneratedAudio> audios = [];
   String? finalVideoPath;
 
@@ -108,6 +110,19 @@ class NoemaProject {
     );
   }
 
+  void updateVideoFromJob(Job job) {
+    final video = videos.cast<GeneratedVideo?>().firstWhere(
+      (e) => e?.jobId == job.id,
+      orElse: () => null,
+    );
+    if (video == null) return;
+    video.asset = Asset(
+      id: job.id,
+      path: job.result ?? '',
+      type: AssetType.video,
+    );
+  }
+
   // ── Serialization ─────────────────────────────────────────────────────────
 
   Map<String, dynamic> toJson() {
@@ -125,6 +140,7 @@ class NoemaProject {
       'style': style.toJson(),
       'characters': characters.map((e) => e.toJson()).toList(),
       'images': images.map((e) => e.toJson()).toList(),
+      'videos': videos.map((e) => e.toJson()).toList(),
       'audios': audios.map((e) => e.toJson()).toList(),
       'finalVideoPath': finalVideoPath,
       'tasks': tasks.map((e) => e.toJson()).toList(),
@@ -169,6 +185,14 @@ class NoemaProject {
       project.images.addAll(
         (json['images'] as List).map(
           (e) => GeneratedImage.fromJson(e as Map<String, dynamic>),
+        ),
+      );
+    }
+
+    if (json['videos'] != null) {
+      project.videos.addAll(
+        (json['videos'] as List).map(
+          (e) => GeneratedVideo.fromJson(e as Map<String, dynamic>),
         ),
       );
     }

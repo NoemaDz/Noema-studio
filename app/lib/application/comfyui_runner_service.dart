@@ -99,7 +99,7 @@ class ComfyUIRunnerService extends ChangeNotifier {
 
       final hwInfo = await HardwareService().detectHardware();
       final List<String> args = ['main.py', '--port', '8188'];
-      
+
       if (!hwInfo.isUnknown) {
         if (hwInfo.vramMB <= 6144) {
           // Low VRAM (<= 6GB): aggressive compression but NO FP8 UNet to preserve quality
@@ -110,26 +110,25 @@ class ComfyUIRunnerService extends ChangeNotifier {
           ]);
         } else if (hwInfo.vramMB <= 8192) {
           // Medium VRAM (8GB)
-          args.addAll([
-            '--lowvram',
-            '--fp8_e4m3fn-text-enc',
-          ]);
+          args.addAll(['--lowvram', '--fp8_e4m3fn-text-enc']);
         } else {
           // High VRAM (12GB+)
-          args.addAll([
-            '--highvram',
-          ]);
+          args.addAll(['--highvram']);
         }
       } else {
         // Fallback for unknown hardware
         args.addAll([
-            '--lowvram',
-            '--fp8_e4m3fn-text-enc',
-            '--disable-dynamic-vram',
+          '--lowvram',
+          '--fp8_e4m3fn-text-enc',
+          '--disable-dynamic-vram',
         ]);
       }
 
-      _process = await Process.start(pythonExecutable, args, workingDirectory: installDir);
+      _process = await Process.start(
+        pythonExecutable,
+        args,
+        workingDirectory: installDir,
+      );
 
       debugPrint("ComfyUI Process Started (PID: ${_process!.pid})");
 

@@ -77,7 +77,7 @@ class SceneImageStage extends PipelineStage {
         debugPrint('SceneImageStage: Scene ${scene.id} job queued ✓');
 
         // Wait for job to complete
-        await jobManager.waitForCompletion(job.id);
+        await jobManager.waitForCompletion(job.id, token: cancellationToken);
 
         if (job.status == JobStatus.failed) {
           throw Exception(

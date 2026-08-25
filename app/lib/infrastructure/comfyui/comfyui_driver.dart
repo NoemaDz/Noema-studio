@@ -20,11 +20,15 @@ class ComfyUIDriver {
   String get baseUrl => context.appSettings.comfyUIUrl;
 
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) async {
-    // Check if we have characters for IP-Adapter
-    final List<dynamic>? characters = options?["characters"];
-    final bool useIpAdapter = characters != null && characters.isNotEmpty;
+    final bool isVideo = options?["is_video"] == true;
+    final String? sourceImagePath = options?["source_image_path"];
 
-    // Upload character images first
+    // Check if we have characters for IP-Adapter (only for images)
+    final List<dynamic>? characters = options?["characters"];
+    final bool useIpAdapter =
+        !isVideo && characters != null && characters.isNotEmpty;
+
+    // Upload character images first (for IP-Adapter)
     List<dynamic> uploadedCharacters = [];
     if (useIpAdapter) {
       for (final char in characters) {
@@ -41,9 +45,23 @@ class ComfyUIDriver {
       }
     }
 
-    String workflowPath = useIpAdapter
-        ? "assets/workflows/ip_adapter_api.json"
-        : "assets/workflows/text_to_image_api.json";
+    String? uploadedVideoSource;
+    if (isVideo && sourceImagePath != null) {
+      try {
+        uploadedVideoSource = await _uploadImage(sourceImagePath);
+      } catch (e) {
+        throw Exception("Failed to upload source image for video: $e");
+      }
+    }
+
+    String workflowPath;
+    if (isVideo) {
+      workflowPath = "assets/workflows/image_to_video_api.json";
+    } else {
+      workflowPath = useIpAdapter
+          ? "assets/workflows/ip_adapter_api.json"
+          : "assets/workflows/text_to_image_api.json";
+    }
 
     String workflow;
     try {
@@ -78,6 +96,10 @@ class ComfyUIDriver {
       adapter.applyPerformanceProfile(context.appSettings.performanceMode);
     }
 
+    if (isVideo && uploadedVideoSource != null) {
+      adapter.setInputByClass('LoadImage', 'image', uploadedVideoSource);
+    }
+
     if (options != null) {
       adapter.applyOptions(options);
     }
@@ -103,8 +125,8 @@ class ComfyUIDriver {
     final data = jsonDecode(response.body);
     return Job(
       id: data["prompt_id"],
-      providerId: "comfyui",
-      type: "image",
+      providerId: isVideo ? "comfyui_video" : "comfyui",
+      type: isVideo ? "video" : "image",
       status: JobStatus.queued,
     );
   }
@@ -157,8 +179,13 @@ class ComfyUIDriver {
       }
     } catch (e) {
       debugPrint("ComfyUIDriver Error in getJobStatus: $e");
+      // Throw exception to allow callers (like JobManager) to retry via RetryPolicy
+      // instead of marking the job as permanently failed due to a transient network error.
+      throw Exception("Network error while getting job status: $e");
     }
 
+    // If we reach here without exception and it's not found in queue or history, it might be an unknown state.
+    // However, keeping fallback to failed for now, but transient errors will be caught above.
     return JobStatus.failed;
   }
 
@@ -236,6 +263,15 @@ class ComfyUIDriver {
 
   Future<void> cancelJob(String jobId) async {
     try {
+      // 1. Remove from pending queue
+      await http.post(
+        Uri.parse("$baseUrl/queue"),
+        body: jsonEncode({
+          "delete": [jobId],
+        }),
+      );
+
+      // 2. Interrupt current running job
       await http.post(Uri.parse("$baseUrl/interrupt"));
     } catch (e) {
       debugPrint("ComfyUIDriver Error in cancelJob: $e");

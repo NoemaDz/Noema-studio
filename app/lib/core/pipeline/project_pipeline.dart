@@ -59,6 +59,7 @@ class ProjectPipeline {
       cancellationToken?.throwIfCancelled();
       final name = stage.runtimeType.toString();
       onUpdate?.call('[$name] planning...');
+      stage.cancellationToken = cancellationToken;
       await stage.run(project);
       onUpdate?.call('[$name] done ✓');
     }
@@ -128,6 +129,7 @@ class ProjectPipeline {
             name: '$stageName [Scene ${scene.id}]',
             execute: () async {
               onUpdate?.call('[Scene ${scene.id}] $stageName...');
+              stage.cancellationToken = cancellationToken;
               await stage.runForScene(project, scene);
               onUpdate?.call('[Scene ${scene.id}] $stageName ✓');
             },
@@ -166,6 +168,7 @@ class ProjectPipeline {
       cancellationToken?.throwIfCancelled();
       final name = stage.runtimeType.toString();
       onUpdate?.call('[$name] compiling...');
+      stage.cancellationToken = cancellationToken;
       await stage.run(project);
       onUpdate?.call('[$name] done ✓');
     }

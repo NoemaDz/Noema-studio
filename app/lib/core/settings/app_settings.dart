@@ -19,6 +19,7 @@ class AppSettings extends ChangeNotifier {
   static const _kPerformanceMode = 'performance_mode';
   static const _kAutoDetectHardware = 'auto_detect_hardware';
   static const _kImageResolution = 'image_resolution';
+  static const _kEnableVideoGeneration = 'enable_video_generation';
 
   String _ollamaUrl = 'http://localhost:11434';
   String _llmModelName = 'qwen3:8b';
@@ -35,6 +36,7 @@ class AppSettings extends ChangeNotifier {
   PerformanceProfile _performanceMode = PerformanceProfile.balanced;
   bool _autoDetectHardware = true;
   String _imageResolution = '768x512'; // wide landscape
+  bool _enableVideoGeneration = false;
 
   String get ollamaUrl => _ollamaUrl;
   String get llmModelName => _llmModelName;
@@ -51,6 +53,7 @@ class AppSettings extends ChangeNotifier {
   PerformanceProfile get performanceMode => _performanceMode;
   bool get autoDetectHardware => _autoDetectHardware;
   String get imageResolution => _imageResolution;
+  bool get enableVideoGeneration => _enableVideoGeneration;
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -66,7 +69,7 @@ class AppSettings extends ChangeNotifier {
     _activeTtsProvider = prefs.getString(_kActiveTtsProvider) ?? 'flutter_tts';
     _openAiTtsVoice = prefs.getString(_kOpenAiTtsVoice) ?? 'alloy';
     _edgeTtsVoice = prefs.getString(_kEdgeTtsVoice) ?? 'en-US-AriaNeural';
-    
+
     final perfStr = prefs.getString(_kPerformanceMode) ?? 'balanced';
     _performanceMode = PerformanceProfile.values.firstWhere(
       (e) => e.toString().split('.').last == perfStr,
@@ -74,6 +77,7 @@ class AppSettings extends ChangeNotifier {
     );
     _autoDetectHardware = prefs.getBool(_kAutoDetectHardware) ?? true;
     _imageResolution = prefs.getString(_kImageResolution) ?? '768x512';
+    _enableVideoGeneration = prefs.getBool(_kEnableVideoGeneration) ?? false;
     notifyListeners();
   }
 
@@ -93,6 +97,7 @@ class AppSettings extends ChangeNotifier {
     required PerformanceProfile performanceMode,
     required bool autoDetectHardware,
     required String imageResolution,
+    required bool enableVideoGeneration,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -108,9 +113,13 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
     await prefs.setString(_kOpenAiTtsVoice, openAiTtsVoice);
     await prefs.setString(_kEdgeTtsVoice, edgeTtsVoice);
-    await prefs.setString(_kPerformanceMode, performanceMode.toString().split('.').last);
+    await prefs.setString(
+      _kPerformanceMode,
+      performanceMode.toString().split('.').last,
+    );
     await prefs.setBool(_kAutoDetectHardware, autoDetectHardware);
     await prefs.setString(_kImageResolution, imageResolution);
+    await prefs.setBool(_kEnableVideoGeneration, enableVideoGeneration);
 
     _ollamaUrl = ollamaUrl;
     _llmModelName = llmModelName;
@@ -127,6 +136,7 @@ class AppSettings extends ChangeNotifier {
     _performanceMode = performanceMode;
     _autoDetectHardware = autoDetectHardware;
     _imageResolution = imageResolution;
+    _enableVideoGeneration = enableVideoGeneration;
 
     notifyListeners();
   }

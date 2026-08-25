@@ -37,23 +37,18 @@ class GenerateCharacterImagesStep extends WorkflowStep<void> {
     }
 
     // Wait for all character image jobs to complete
+    final jobManager = context.get<JobManager>("jobManager")!;
     for (final entry in pendingJobs.entries) {
       final character = entry.key;
       final jobId = entry.value;
 
-      bool isDone = false;
-      while (!isDone) {
-        final status = await provider.getJobStatus(jobId);
-        if (status == JobStatus.completed || status == JobStatus.failed) {
-          isDone = true;
-          if (status == JobStatus.completed) {
-            final asset = await provider.downloadAsset(jobId);
-            if (asset != null) {
-              character.imagePath = asset.path;
-            }
-          }
-        } else {
-          await Future.delayed(const Duration(seconds: 2));
+      await jobManager.waitForCompletion(jobId);
+      final job = jobManager.find(jobId);
+
+      if (job != null && job.status == JobStatus.completed) {
+        final asset = await provider.downloadAsset(jobId);
+        if (asset != null) {
+          character.imagePath = asset.path;
         }
       }
     }

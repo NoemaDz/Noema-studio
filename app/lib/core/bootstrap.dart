@@ -1,4 +1,5 @@
 import 'providers/provider_registry.dart';
+import 'providers/proxy_video_provider.dart';
 import 'providers/proxy_llm_provider.dart';
 import 'providers/proxy_tts_provider.dart';
 import 'providers/proxy_image_provider.dart';
@@ -71,6 +72,7 @@ class Bootstrap {
   void initializePlugins(List<IPlugin> plugins) {
     providerRegistry.register(ProxyTTSProvider(pluginContext));
     providerRegistry.register(ProxyImageProvider(pluginContext));
+    providerRegistry.register(ProxyVideoProvider(pluginContext));
     providerRegistry.register(ProxyLLMProvider(pluginContext));
 
     pluginManager.loadPlugins(plugins);
@@ -105,6 +107,9 @@ class Bootstrap {
       imageProvider: imageProvider,
       jobEvents: jobEvents,
       projectState: projectState,
+      providerRegistry: providerRegistry,
+      jobManager: jobManager,
+      saveProject: projectPersistenceService.saveProject,
     );
 
     documentIngestionService = DocumentIngestionService(providerRegistry);

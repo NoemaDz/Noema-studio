@@ -14,7 +14,7 @@ import 'package:noema_studio/core/plugins/ingestion_plugin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:noema_studio/core/providers/async_provider.dart';
-import 'package:noema_studio/main.dart'; 
+import 'package:noema_studio/main.dart';
 
 void main() {
   test(
@@ -66,7 +66,9 @@ void main() {
       final refAsset = await provider.downloadAsset(refJob.id);
 
       if (refAsset == null) {
-        throw Exception("Failed to generate reference image for Sami! Status: \${refJob.status}");
+        throw Exception(
+          "Failed to generate reference image for Sami! Status: \${refJob.status}",
+        );
       }
 
       final samiImagePath = refAsset.path;
@@ -77,7 +79,8 @@ void main() {
         id: "char_sami",
         name: "Sami",
         description: "Handsome 30yo middle eastern man, neat beard",
-        prompt: "Handsome 30yo middle eastern man named Sami, short dark hair, neat beard, intense brown eyes",
+        prompt:
+            "Handsome 30yo middle eastern man named Sami, short dark hair, neat beard, intense brown eyes",
         imagePath: samiImagePath,
       );
 
@@ -91,24 +94,24 @@ void main() {
         "Sami in a professional restaurant kitchen, wearing a white chef's uniform and apron. He is tossing vegetables in a flaming pan. Action shot.",
         "Sami riding a horse in a medieval battlefield, wearing silver knight armor. Dramatic cloudy sky, epic fantasy style.",
         "Sami sitting comfortably on a living room couch, wearing a comfortable t-shirt and sweatpants, playing a video game with a controller.",
-        "Sami floating inside a futuristic space station looking at Earth through the window. He is wearing a white astronaut spacesuit, helmet off, holding it under his arm."
+        "Sami floating inside a futuristic space station looking at Earth through the window. He is wearing a white astronaut spacesuit, helmet off, holding it under his arm.",
       ];
 
-      final scenes = List.generate(10, (i) => Scene(
-        id: i + 1,
-        description: scenePrompts[i],
-        narration: "",
-        dialogue: [],
-        characterNames: ["Sami"],
-      ));
+      final scenes = List.generate(
+        10,
+        (i) => Scene(
+          id: i + 1,
+          description: scenePrompts[i],
+          narration: "",
+          dialogue: [],
+          characterNames: ["Sami"],
+        ),
+      );
 
       final project = NoemaProject(
         id: "10_scenes_proj",
         idea: "Sami in 10 different universes.",
-        story: Story(
-          title: "The 10 Lives of Sami",
-          scenes: scenes,
-        ),
+        story: Story(title: "The 10 Lives of Sami", scenes: scenes),
       );
 
       project.characters.add(sami);
@@ -119,17 +122,19 @@ void main() {
         print("Pipeline finished successfully!");
 
         print("\n--- [RESULTS] ---");
-        print("Reference: file://\$samiImagePath");
+        print("Reference: file://$samiImagePath");
         for (final img in finishedProject.images) {
-          print("Scene Image [\${img.sceneId}]: file://\${img.asset?.path ?? 'FAILED'}");
+          print(
+            "Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+          );
         }
       } catch (e) {
-        print("Pipeline failed: \$e");
+        print("Pipeline failed: $e");
       } finally {
         noema.bootstrap.jobMonitor.stop();
       }
       print("--- [10 SCENES CHALLENGE END] ---");
     },
-    timeout: const Timeout(Duration(minutes: 60)), 
+    timeout: const Timeout(Duration(minutes: 60)),
   );
 }

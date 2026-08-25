@@ -1,10 +1,6 @@
 import 'dart:io';
 
-enum PerformanceProfile {
-  fast,
-  balanced,
-  ultra,
-}
+enum PerformanceProfile { fast, balanced, ultra }
 
 class HardwareInfo {
   final int vramMB;
@@ -34,9 +30,9 @@ class HardwareService {
         // Try nvidia-smi for VRAM
         final vramResult = await Process.run('nvidia-smi', [
           '--query-gpu=memory.total',
-          '--format=csv,noheader,nounits'
+          '--format=csv,noheader,nounits',
         ]);
-        
+
         if (vramResult.exitCode == 0) {
           final lines = vramResult.stdout.toString().trim().split('\n');
           if (lines.isNotEmpty) {
@@ -47,9 +43,9 @@ class HardwareService {
         // Try nvidia-smi for GPU Name
         final nameResult = await Process.run('nvidia-smi', [
           '--query-gpu=name',
-          '--format=csv,noheader'
+          '--format=csv,noheader',
         ]);
-        
+
         if (nameResult.exitCode == 0) {
           final lines = nameResult.stdout.toString().trim().split('\n');
           if (lines.isNotEmpty) {
@@ -62,7 +58,7 @@ class HardwareService {
     }
 
     final recommended = recommendProfile(vramMB);
-    
+
     return HardwareInfo(
       vramMB: vramMB,
       gpuName: gpuName,

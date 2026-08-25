@@ -1,5 +1,6 @@
 import '../../noema_project.dart';
 import '../../../models/scene.dart';
+import '../../cancellation_token.dart';
 
 /// Contract for all pipeline stages.
 ///
@@ -10,6 +11,9 @@ import '../../../models/scene.dart';
 abstract class PipelineStage {
   /// Execution order. Lower = runs first.
   int get priority => 0;
+
+  /// Token to check for cancellation during long-running tasks.
+  CancellationToken? cancellationToken;
 
   /// Run this stage over the entire [project].
   /// Used for planning and compilation stages.
