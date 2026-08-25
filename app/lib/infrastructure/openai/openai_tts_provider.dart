@@ -52,7 +52,7 @@ class OpenAITTSProvider extends TTSProvider {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({'model': 'tts-1', 'input': text, 'voice': voice}),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final file = File(outputPath);

@@ -23,8 +23,11 @@ class PdfReader implements DocumentIngestionProvider {
 
     final bytes = await file.readAsBytes();
     final document = PdfDocument(inputBytes: bytes);
+    print("PdfReader: Loaded document");
     final extractor = PdfTextExtractor(document);
+    print("PdfReader: Extracting text...");
     final text = extractor.extractText();
+    print("PdfReader: Text extracted, disposing document...");
     document.dispose();
 
     return text;
