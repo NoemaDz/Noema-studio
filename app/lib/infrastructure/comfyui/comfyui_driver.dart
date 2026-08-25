@@ -32,11 +32,14 @@ class ComfyUIDriver {
     try {
       workflow = await rootBundle.loadString(workflowPath);
     } catch (e) {
-      debugPrint(
-        "ComfyUIDriver: Failed to load $workflowPath ($e), falling back to text_to_image_api.json",
-      );
-      workflowPath = "assets/workflows/text_to_image_api.json";
-      workflow = await rootBundle.loadString(workflowPath);
+      if (useIpAdapter) {
+        throw Exception(
+          "Character Identity Enforcement Failed: Could not load IP-Adapter workflow ($workflowPath). "
+          "Ensure the workflow exists and is registered in pubspec.yaml assets.",
+        );
+      } else {
+        throw Exception("Failed to load generic text_to_image workflow: $e");
+      }
     }
 
     final Map<String, dynamic> json = jsonDecode(workflow);

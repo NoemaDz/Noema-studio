@@ -54,7 +54,7 @@ void main() async {
     // Attach the synchronizer to trigger video generation when images/audio are ready
     final synchronizer = ProjectSynchronizer(
       project: project,
-      provider: noema.bootstrap.imageProvider,
+      registry: noema.bootstrap.providerRegistry,
       state: noema.bootstrap.projectState,
     );
     synchronizer.attach(noema.bootstrap.jobEvents);

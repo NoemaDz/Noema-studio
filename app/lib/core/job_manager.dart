@@ -1,4 +1,6 @@
+import 'dart:async';
 import '../models/job.dart';
+import 'cancellation_token.dart';
 
 class JobManager {
   final List<Job> _jobs = [];
@@ -58,5 +60,27 @@ class JobManager {
 
   bool contains(String id) {
     return find(id) != null;
+  }
+
+  Future<void> waitForCompletion(
+    String id, {
+    CancellationToken? token,
+  }) async {
+    while (true) {
+      if (token?.isCancelled == true) {
+        throw CancelledException();
+      }
+
+      final job = find(id);
+      if (job == null) {
+        throw Exception("Job $id not found");
+      }
+
+      if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
+        return;
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+    }
   }
 }

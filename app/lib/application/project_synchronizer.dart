@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../core/noema_project.dart';
-import '../core/providers/image_provider.dart';
+import '../core/providers/provider_registry.dart';
+import '../core/providers/async_provider.dart';
 import '../models/job.dart';
 import '../core/job_events.dart';
 import '../presentation/state/project_state.dart';
@@ -9,12 +10,12 @@ import '../../main.dart'; // To access noema global
 class ProjectSynchronizer {
   final NoemaProject project;
 
-  final ImageProvider provider;
+  final ProviderRegistry registry;
   final ProjectState state;
 
   ProjectSynchronizer({
     required this.project,
-    required this.provider,
+    required this.registry,
     required this.state,
   });
 
@@ -62,11 +63,9 @@ class ProjectSynchronizer {
 
     if (job.type == "image") {
       try {
-        debugPrint(
-          "ProjectSynchronizer: Downloading asset for job ${job.id} (type: ${job.type})",
-        );
-        final asset = await provider.downloadAsset(job.id);
-        debugPrint("ProjectSynchronizer: Downloaded asset: $asset");
+        final provider = registry.get(job.providerId);
+        if (provider is AsyncProvider) {
+          final asset = await provider.downloadAsset(job.id);
         if (asset != null) {
           debugPrint(
             "ProjectSynchronizer: project.images contains ${project.images.length} images.",
@@ -93,6 +92,7 @@ class ProjectSynchronizer {
               "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
             );
           }
+        }
         }
       } catch (e) {
         debugPrint("ProjectSynchronizer Error: $e");

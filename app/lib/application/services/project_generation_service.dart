@@ -59,7 +59,7 @@ class ProjectGenerationService {
   Future<NoemaProject> generateProduction(NoemaProject project) async {
     final synchronizer = ProjectSynchronizer(
       project: project,
-      provider: imageProvider,
+      registry: noema.bootstrap.providerRegistry,
       state: projectState,
     );
     synchronizer.attach(jobEvents);

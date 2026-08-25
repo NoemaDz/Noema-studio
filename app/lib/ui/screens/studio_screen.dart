@@ -128,7 +128,7 @@ class _StudioScreenState extends State<StudioScreen> {
     try {
       final synchronizer = ProjectSynchronizer(
         project: p,
-        provider: noema.bootstrap.imageProvider,
+        registry: noema.bootstrap.providerRegistry,
         state: noema.bootstrap.projectState,
       );
       synchronizer.attach(noema.bootstrap.jobEvents);
@@ -222,7 +222,7 @@ class _StudioScreenState extends State<StudioScreen> {
 
         final synchronizer = ProjectSynchronizer(
           project: project,
-          provider: noema.bootstrap.imageProvider,
+          registry: noema.bootstrap.providerRegistry,
           state: noema.bootstrap.projectState,
         );
         synchronizer.attach(noema.bootstrap.jobEvents);

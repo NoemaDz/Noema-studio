@@ -52,10 +52,7 @@ class SceneAudioStage extends PipelineStage {
         jobId: job.id,
         text: scene.narration!,
       );
-      while (job.status != JobStatus.completed &&
-          job.status != JobStatus.failed) {
-        await Future.delayed(const Duration(seconds: 1));
-      }
+      await jobManager.waitForCompletion(job.id);
 
       if (job.status == JobStatus.completed && job.result != null) {
         audio.asset = Asset(
@@ -91,10 +88,7 @@ class SceneAudioStage extends PipelineStage {
         jobId: job.id,
         text: dialogueLine.text,
       );
-      while (job.status != JobStatus.completed &&
-          job.status != JobStatus.failed) {
-        await Future.delayed(const Duration(seconds: 1));
-      }
+      await jobManager.waitForCompletion(job.id);
 
       if (job.status == JobStatus.completed && job.result != null) {
         audio.asset = Asset(
@@ -126,10 +120,7 @@ class SceneAudioStage extends PipelineStage {
         jobId: job.id,
         text: scene.description,
       );
-      while (job.status != JobStatus.completed &&
-          job.status != JobStatus.failed) {
-        await Future.delayed(const Duration(seconds: 1));
-      }
+      await jobManager.waitForCompletion(job.id);
 
       if (job.status == JobStatus.completed && job.result != null) {
         audio.asset = Asset(
