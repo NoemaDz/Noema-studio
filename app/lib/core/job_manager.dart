@@ -62,10 +62,7 @@ class JobManager {
     return find(id) != null;
   }
 
-  Future<void> waitForCompletion(
-    String id, {
-    CancellationToken? token,
-  }) async {
+  Future<void> waitForCompletion(String id, {CancellationToken? token}) async {
     while (true) {
       if (token?.isCancelled == true) {
         throw CancelledException();

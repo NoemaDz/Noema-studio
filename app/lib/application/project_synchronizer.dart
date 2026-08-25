@@ -66,33 +66,33 @@ class ProjectSynchronizer {
         final provider = registry.get(job.providerId);
         if (provider is AsyncProvider) {
           final asset = await provider.downloadAsset(job.id);
-        if (asset != null) {
-          debugPrint(
-            "ProjectSynchronizer: project.images contains ${project.images.length} images.",
-          );
-          bool found = false;
-          for (final image in project.images) {
+          if (asset != null) {
             debugPrint(
-              "ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}",
+              "ProjectSynchronizer: project.images contains ${project.images.length} images.",
             );
-            if (image.jobId == job.id) {
-              image.asset = asset;
-              state.refresh();
-              noema.saveProject(project);
-              debugPrint("ProjectSynchronizer: Assigned asset to image!");
-              found = true;
-              break;
+            bool found = false;
+            for (final image in project.images) {
+              debugPrint(
+                "ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}",
+              );
+              if (image.jobId == job.id) {
+                image.asset = asset;
+                state.refresh();
+                noema.saveProject(project);
+                debugPrint("ProjectSynchronizer: Assigned asset to image!");
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              debugPrint(
+                "ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!",
+              );
+              debugPrint(
+                "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
+              );
             }
           }
-          if (!found) {
-            debugPrint(
-              "ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!",
-            );
-            debugPrint(
-              "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
-            );
-          }
-        }
         }
       } catch (e) {
         debugPrint("ProjectSynchronizer Error: $e");
