@@ -15,6 +15,8 @@ class AppSettings extends ChangeNotifier {
   static const _kActiveTtsProvider = 'active_tts_provider';
   static const _kOpenAiTtsVoice = 'openai_tts_voice';
   static const _kEdgeTtsVoice = 'edge_tts_voice';
+  static const _kUseDetailer = 'use_detailer';
+  static const _kImageResolution = 'image_resolution';
 
   String _ollamaUrl = 'http://localhost:11434';
   String _llmModelName = 'qwen3:8b';
@@ -28,6 +30,8 @@ class AppSettings extends ChangeNotifier {
   String _activeTtsProvider = 'flutter_tts';
   String _openAiTtsVoice = 'alloy';
   String _edgeTtsVoice = 'en-US-AriaNeural';
+  bool _useDetailer = true; // FaceDetailer + PersonDetailer
+  String _imageResolution = '768x512'; // wide landscape
 
   String get ollamaUrl => _ollamaUrl;
   String get llmModelName => _llmModelName;
@@ -41,6 +45,8 @@ class AppSettings extends ChangeNotifier {
   String get activeTtsProvider => _activeTtsProvider;
   String get openAiTtsVoice => _openAiTtsVoice;
   String get edgeTtsVoice => _edgeTtsVoice;
+  bool get useDetailer => _useDetailer;
+  String get imageResolution => _imageResolution;
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -56,6 +62,8 @@ class AppSettings extends ChangeNotifier {
     _activeTtsProvider = prefs.getString(_kActiveTtsProvider) ?? 'flutter_tts';
     _openAiTtsVoice = prefs.getString(_kOpenAiTtsVoice) ?? 'alloy';
     _edgeTtsVoice = prefs.getString(_kEdgeTtsVoice) ?? 'en-US-AriaNeural';
+    _useDetailer = prefs.getBool(_kUseDetailer) ?? true;
+    _imageResolution = prefs.getString(_kImageResolution) ?? '768x512';
     notifyListeners();
   }
 
@@ -72,6 +80,8 @@ class AppSettings extends ChangeNotifier {
     required String activeTtsProvider,
     required String openAiTtsVoice,
     required String edgeTtsVoice,
+    required bool useDetailer,
+    required String imageResolution,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -87,6 +97,8 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
     await prefs.setString(_kOpenAiTtsVoice, openAiTtsVoice);
     await prefs.setString(_kEdgeTtsVoice, edgeTtsVoice);
+    await prefs.setBool(_kUseDetailer, useDetailer);
+    await prefs.setString(_kImageResolution, imageResolution);
 
     _ollamaUrl = ollamaUrl;
     _llmModelName = llmModelName;
@@ -100,6 +112,8 @@ class AppSettings extends ChangeNotifier {
     _activeTtsProvider = activeTtsProvider;
     _openAiTtsVoice = openAiTtsVoice;
     _edgeTtsVoice = edgeTtsVoice;
+    _useDetailer = useDetailer;
+    _imageResolution = imageResolution;
 
     notifyListeners();
   }

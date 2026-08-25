@@ -24,6 +24,21 @@ class ComfyUIDriver {
     final List<dynamic>? characters = options?["characters"];
     final bool useIpAdapter = characters != null && characters.isNotEmpty;
 
+    // Upload character images first
+    List<dynamic> uploadedCharacters = [];
+    if (useIpAdapter) {
+      for (final char in characters) {
+        final path = char["imagePath"] as String;
+        try {
+          final uploadedName = await _uploadImage(path);
+          uploadedCharacters.add({"imagePath": uploadedName});
+        } catch (e) {
+           debugPrint("Warning: Failed to upload character image $path. Error: $e");
+           uploadedCharacters.add(char); // Fallback to original
+        }
+      }
+    }
+
     String workflowPath = useIpAdapter
         ? "assets/workflows/ip_adapter_api.json"
         : "assets/workflows/text_to_image_api.json";
@@ -45,11 +60,21 @@ class ComfyUIDriver {
     final Map<String, dynamic> json = jsonDecode(workflow);
     final adapter = ComfyUIWorkflowAdapter(json);
 
+    // Apply resolution from settings
+    final resolution = context.appSettings.imageResolution;
+    adapter.setResolution(resolution);
+
     // Semantic Injection
     adapter.setPrompt(prompt);
 
     if (useIpAdapter) {
-      adapter.setCharacterImages(characters);
+      adapter.setCharacterImages(uploadedCharacters);
+    }
+
+    // Apply or disable Detailer based on settings
+    final useDetailer = context.appSettings.useDetailer;
+    if (!useDetailer && useIpAdapter) {
+      adapter.disableDetailer();
     }
 
     if (options != null) {
@@ -69,7 +94,7 @@ class ComfyUIDriver {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("ComfyUI API returned ${response.statusCode}");
+      throw Exception("ComfyUI API returned ${response.statusCode}: ${response.body}");
     }
 
     final data = jsonDecode(response.body);
@@ -79,6 +104,20 @@ class ComfyUIDriver {
       type: "image",
       status: JobStatus.queued,
     );
+  }
+
+  Future<String> _uploadImage(String filePath) async {
+    final request = http.MultipartRequest('POST', Uri.parse("$baseUrl/upload/image"));
+    request.files.add(await http.MultipartFile.fromPath('image', filePath));
+    final response = await request.send();
+    
+    if (response.statusCode != 200) {
+      throw Exception("ComfyUI API upload returned ${response.statusCode}");
+    }
+    
+    final body = await response.stream.bytesToString();
+    final json = jsonDecode(body);
+    return json["name"] as String;
   }
 
   Future<JobStatus> getJobStatus(String jobId) async {

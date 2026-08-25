@@ -1,3 +1,5 @@
+import 'package:path/path.dart' as p;
+
 class ComfyUIWorkflowAdapter {
   final Map<String, dynamic> workflow;
 
@@ -61,8 +63,16 @@ class ComfyUIWorkflowAdapter {
     for (int i = 0; i < characters.length; i++) {
       final charData = characters[i] as Map<String, dynamic>;
       final fullPath = charData['imagePath'] as String;
-      final uri = Uri.parse(fullPath);
-      final filename = uri.queryParameters['filename'] ?? 'image.png';
+      String filename = fullPath;
+      try {
+        final uri = Uri.parse(fullPath);
+        if (uri.queryParameters.containsKey('filename')) {
+          filename = uri.queryParameters['filename']!;
+        } else {
+          // If it's a local path or raw filename
+          filename = p.basename(fullPath);
+        }
+      } catch (_) {}
 
       // 1. Try semantic title: "Character Image 1", "Character Image 2" etc.
       if (setInputByTitle('Character Image ${i + 1}', 'image', filename)) {
@@ -103,5 +113,64 @@ class ComfyUIWorkflowAdapter {
     }
   }
 
+  /// Set image resolution from a "WxH" string like "768x512"
+  void setResolution(String resolution) {
+    final parts = resolution.toLowerCase().split('x');
+    if (parts.length != 2) return;
+    final w = int.tryParse(parts[0].trim());
+    final h = int.tryParse(parts[1].trim());
+    if (w == null || h == null) return;
+
+    for (final node in workflow.values) {
+      if (node is Map<String, dynamic> &&
+          node['class_type'] == 'EmptyLatentImage') {
+        node['inputs']['width'] = w;
+        node['inputs']['height'] = h;
+        break;
+      }
+    }
+  }
+
+  /// Remove Detailer nodes (FaceDetailer, PersonDetailer, detectors)
+  /// and redirect SaveImage directly to VAEDecode output.
+  void disableDetailer() {
+    // Find the VAEDecode node — its output goes to FaceDetailer.
+    // We need SaveImage (node 7) to point to VAEDecode instead.
+    String? vaeDecodeNodeId;
+    String? saveImageNodeId;
+
+    for (final entry in workflow.entries) {
+      final node = entry.value;
+      if (node is! Map<String, dynamic>) continue;
+      if (node['class_type'] == 'VAEDecode') {
+        vaeDecodeNodeId = entry.key;
+      }
+      if (node['class_type'] == 'SaveImage') {
+        saveImageNodeId = entry.key;
+      }
+    }
+
+    if (saveImageNodeId != null && vaeDecodeNodeId != null) {
+      // Redirect SaveImage.images → [vaeDecodeNodeId, 0]
+      workflow[saveImageNodeId]['inputs']['images'] = [vaeDecodeNodeId, 0];
+    }
+
+    // Remove detailer-related nodes by class_type
+    final toRemove = <String>[];
+    for (final entry in workflow.entries) {
+      final node = entry.value;
+      if (node is! Map<String, dynamic>) continue;
+      final classType = node['class_type'] as String? ?? '';
+      if (classType == 'FaceDetailer' ||
+          classType == 'UltralyticsDetectorProvider') {
+        toRemove.add(entry.key);
+      }
+    }
+    for (final key in toRemove) {
+      workflow.remove(key);
+    }
+  }
+
   Map<String, dynamic> toJson() => workflow;
 }
+

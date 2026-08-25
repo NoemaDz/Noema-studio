@@ -26,6 +26,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late String _activeTtsProvider;
   late String _openAiTtsVoice;
   late String _edgeTtsVoice;
+  late bool _useDetailer;
+  late String _imageResolution;
+
+  final List<String> _resolutions = [
+    '512x512',
+    '768x512',
+    '512x768',
+    '1024x576',
+    '576x1024',
+  ];
 
   final List<String> _effects = [
     'random',
@@ -87,6 +97,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
     if (!_edgeVoices.contains(_edgeTtsVoice)) {
       _edgeTtsVoice = 'en-US-AriaNeural';
     }
+
+    _useDetailer = settings.useDetailer;
+    _imageResolution = settings.imageResolution;
+    if (!_resolutions.contains(_imageResolution)) {
+      _imageResolution = '768x512';
+    }
   }
 
   @override
@@ -126,6 +142,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
       activeTtsProvider: _activeTtsProvider,
       openAiTtsVoice: _openAiTtsVoice,
       edgeTtsVoice: _edgeTtsVoice,
+      useDetailer: _useDetailer,
+      imageResolution: _imageResolution,
     );
     Navigator.of(context).pop();
   }
@@ -149,7 +167,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             currentStep: _currentStep,
             onStepTapped: (step) => setState(() => _currentStep = step),
             onStepContinue: () {
-              if (_currentStep < 2) {
+              if (_currentStep < 3) {
                 setState(() => _currentStep += 1);
               } else {
                 _save();
@@ -163,7 +181,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
               }
             },
             controlsBuilder: (context, details) {
-              final isLastStep = _currentStep == 2;
+              final isLastStep = _currentStep == 3;
               return Padding(
                 padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
                 child: Row(
@@ -453,6 +471,153 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   ],
                 ),
               ),
+              // ── Step 3: Quality & Character Consistency ──────────────────
+              Step(
+                title: const Text(
+                  'Quality & Character Consistency',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'FaceDetailer · PersonDetailer · Resolution',
+                ),
+                isActive: _currentStep >= 3,
+                state: _currentStep == 3
+                    ? StepState.editing
+                    : StepState.indexed,
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+
+                    // ── Detailer toggle ───────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primaryContainer
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _useDetailer
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.face_retouching_natural,
+                            color: _useDetailer
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'FaceDetailer + PersonDetailer',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  _useDetailer
+                                      ? 'تحسين الوجه والجسم في كل مشهد (أبطأ، جودة أعلى)'
+                                      : 'سرعة أكبر، بدون تحسين تفاصيل',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _useDetailer,
+                            onChanged: (v) =>
+                                setState(() => _useDetailer = v),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Resolution dropdown ───────────────────────────────
+                    DropdownButtonFormField<String>(
+                      initialValue: _imageResolution,
+                      decoration: const InputDecoration(
+                        labelText: 'Image Resolution',
+                        border: OutlineInputBorder(),
+                        helperText:
+                            'Wide (768×512) recommended for scenes — Portrait (512×768) for close-ups',
+                      ),
+                      items: _resolutions.map((r) {
+                        String label;
+                        switch (r) {
+                          case '512x512':
+                            label = '512×512  — Square';
+                          case '768x512':
+                            label = '768×512  — Wide Landscape (recommended)';
+                          case '512x768':
+                            label = '512×768  — Portrait';
+                          case '1024x576':
+                            label = '1024×576  — HD Landscape (slow)';
+                          case '576x1024':
+                            label = '576×1024  — HD Portrait (slow)';
+                          default:
+                            label = r;
+                        }
+                        return DropdownMenuItem(
+                          value: r,
+                          child: Text(label),
+                        );
+                      }).toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          setState(() => _imageResolution = v);
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+                    // Info card
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.amber.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.amber,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'FaceDetailer requires face_yolov8m.pt and PersonDetailer requires person_yolov8m-seg.pt. Both are already installed.',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -460,3 +625,4 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 }
+
