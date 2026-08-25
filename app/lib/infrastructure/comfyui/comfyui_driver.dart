@@ -33,8 +33,10 @@ class ComfyUIDriver {
           final uploadedName = await _uploadImage(path);
           uploadedCharacters.add({"imagePath": uploadedName});
         } catch (e) {
-           debugPrint("Warning: Failed to upload character image $path. Error: $e");
-           uploadedCharacters.add(char); // Fallback to original
+          debugPrint(
+            "Warning: Failed to upload character image $path. Error: $e",
+          );
+          uploadedCharacters.add(char); // Fallback to original
         }
       }
     }
@@ -94,7 +96,9 @@ class ComfyUIDriver {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("ComfyUI API returned ${response.statusCode}: ${response.body}");
+      throw Exception(
+        "ComfyUI API returned ${response.statusCode}: ${response.body}",
+      );
     }
 
     final data = jsonDecode(response.body);
@@ -107,14 +111,17 @@ class ComfyUIDriver {
   }
 
   Future<String> _uploadImage(String filePath) async {
-    final request = http.MultipartRequest('POST', Uri.parse("$baseUrl/upload/image"));
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse("$baseUrl/upload/image"),
+    );
     request.files.add(await http.MultipartFile.fromPath('image', filePath));
     final response = await request.send();
-    
+
     if (response.statusCode != 200) {
       throw Exception("ComfyUI API upload returned ${response.statusCode}");
     }
-    
+
     final body = await response.stream.bytesToString();
     final json = jsonDecode(body);
     return json["name"] as String;

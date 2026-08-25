@@ -173,4 +173,3 @@ class ComfyUIWorkflowAdapter {
 
   Map<String, dynamic> toJson() => workflow;
 }
-

@@ -26,12 +26,13 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       HttpOverrides.global = null; // ALLOW REAL HTTP CALLS
 
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'),
-        (MethodCall methodCall) async {
-          return Directory.systemTemp.path;
-        },
-      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('plugins.flutter.io/path_provider'),
+            (MethodCall methodCall) async {
+              return Directory.systemTemp.path;
+            },
+          );
 
       noema.init([
         ComfyUIPlugin(),
@@ -57,11 +58,14 @@ void main() {
       noema.bootstrap.jobManager.add(refJob);
       await noema.bootstrap.jobManager.waitForCompletion(refJob.id);
 
-      final provider = noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
+      final provider =
+          noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
       final refAsset = await provider.downloadAsset(refJob.id);
 
       if (refAsset == null) {
-        throw Exception("Failed to generate reference image! Status: ${refJob.status}");
+        throw Exception(
+          "Failed to generate reference image! Status: ${refJob.status}",
+        );
       }
 
       final samiImagePath = refAsset;
@@ -72,7 +76,8 @@ void main() {
       final character = Character(
         id: "sami_01",
         name: "Sami",
-        description: "Handsome young Arab man with short black hair and brown eyes.",
+        description:
+            "Handsome young Arab man with short black hair and brown eyes.",
         prompt: "Sami, handsome young Arab man, short black hair, brown eyes.",
         imagePath: samiImagePath.path,
       );
@@ -80,7 +85,8 @@ void main() {
       // Scene A: Traditional outfit in desert — full body wide shot
       final sceneA = Scene(
         id: 1,
-        description: "Full body wide shot of Sami wearing a white thobe "
+        description:
+            "Full body wide shot of Sami wearing a white thobe "
             "standing in the middle of a vast golden desert at sunset, "
             "cinematic lighting, dramatic sky",
         narration: "",
@@ -91,7 +97,8 @@ void main() {
       // Scene B: Modern casual outfit in city — medium full body
       final sceneB = Scene(
         id: 2,
-        description: "Sami in casual jeans and blue shirt walking through "
+        description:
+            "Sami in casual jeans and blue shirt walking through "
             "a busy modern city street, medium shot showing full body, "
             "urban environment, golden hour",
         narration: "",
@@ -102,7 +109,8 @@ void main() {
       // Scene C: Action pose on horseback — extreme wide shot
       final sceneC = Scene(
         id: 3,
-        description: "Extreme wide shot of Sami riding a white horse "
+        description:
+            "Extreme wide shot of Sami riding a white horse "
             "through a green valley, full body visible, medieval setting, "
             "epic cinematic scene, dust and motion",
         narration: "",
@@ -121,7 +129,9 @@ void main() {
 
       project.characters.add(character);
 
-      print("3. Executing Production Pipeline (FaceDetailer + PersonDetailer)...");
+      print(
+        "3. Executing Production Pipeline (FaceDetailer + PersonDetailer)...",
+      );
       try {
         final finishedProject = await noema.generateProduction(project);
         print("Pipeline finished successfully!");
@@ -129,7 +139,9 @@ void main() {
         print("\n--- [RESULTS] ---");
         print("Reference Portrait: file://${samiImagePath.path}");
         for (final img in finishedProject.images) {
-          print("Scene [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}");
+          print(
+            "Scene [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+          );
         }
       } catch (e) {
         print("Pipeline error: $e");

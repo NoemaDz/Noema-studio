@@ -26,12 +26,13 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       HttpOverrides.global = null; // ALLOW REAL HTTP CALLS
 
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'),
-        (MethodCall methodCall) async {
-          return Directory.systemTemp.path;
-        },
-      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('plugins.flutter.io/path_provider'),
+            (MethodCall methodCall) async {
+              return Directory.systemTemp.path;
+            },
+          );
 
       // Use global noema from main.dart
       noema.init([
@@ -50,17 +51,22 @@ void main() {
       noema.bootstrap.jobMonitor.start();
 
       print("1. Generating Reference Image for 'Ali'...");
-      final refJob = await noema.generateImage("A handsome young man named Ali, short black hair, neutral expression, high quality portrait, highly detailed face");
+      final refJob = await noema.generateImage(
+        "A handsome young man named Ali, short black hair, neutral expression, high quality portrait, highly detailed face",
+      );
       noema.bootstrap.jobManager.add(refJob);
       await noema.bootstrap.jobManager.waitForCompletion(refJob.id);
-      
-      final provider = noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
+
+      final provider =
+          noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
       final refAsset = await provider.downloadAsset(refJob.id);
-      
+
       if (refAsset == null) {
-        throw Exception("Failed to generate reference image for Ali! Status: ${refJob.status}");
+        throw Exception(
+          "Failed to generate reference image for Ali! Status: ${refJob.status}",
+        );
       }
-      
+
       final aliImagePath = refAsset;
       print("Reference image generated at: ${aliImagePath.path}");
 
@@ -75,7 +81,8 @@ void main() {
 
       final scene1 = Scene(
         id: 1,
-        description: "Close-up portrait of Ali smiling warmly in a cozy cafe, drinking coffee.",
+        description:
+            "Close-up portrait of Ali smiling warmly in a cozy cafe, drinking coffee.",
         narration: "",
         dialogue: [],
         characterNames: ["Ali"],
@@ -83,7 +90,8 @@ void main() {
 
       final scene2 = Scene(
         id: 2,
-        description: "Full body shot of Ali running fast in a green park, wearing red sportswear, sunny day.",
+        description:
+            "Full body shot of Ali running fast in a green park, wearing red sportswear, sunny day.",
         narration: "",
         dialogue: [],
         characterNames: ["Ali"],
@@ -91,7 +99,8 @@ void main() {
 
       final scene3 = Scene(
         id: 3,
-        description: "Ali wearing a sharp black tuxedo sitting in a futuristic neon office, side profile, dramatic lighting.",
+        description:
+            "Ali wearing a sharp black tuxedo sitting in a futuristic neon office, side profile, dramatic lighting.",
         narration: "",
         dialogue: [],
         characterNames: ["Ali"],
@@ -105,18 +114,20 @@ void main() {
           scenes: [scene1, scene2, scene3],
         ),
       );
-      
+
       project.characters.add(character);
 
       print("3. Executing Production Pipeline (Generating Scene Images)...");
       try {
         final finishedProject = await noema.generateProduction(project);
         print("Pipeline finished successfully!");
-        
+
         print("\n--- [RESULTS] ---");
         print("Reference: file://${aliImagePath.path}");
         for (final img in finishedProject.images) {
-           print("Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}");
+          print(
+            "Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+          );
         }
       } catch (e) {
         print("Pipeline failed: $e");

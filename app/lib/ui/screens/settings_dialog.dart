@@ -492,10 +492,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     // ── Detailer toggle ───────────────────────────────────
                     Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.15),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _useDetailer
@@ -523,9 +522,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               children: [
                                 const Text(
                                   'FaceDetailer + PersonDetailer',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 Text(
                                   _useDetailer
@@ -541,8 +538,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           ),
                           Switch(
                             value: _useDetailer,
-                            onChanged: (v) =>
-                                setState(() => _useDetailer = v),
+                            onChanged: (v) => setState(() => _useDetailer = v),
                           ),
                         ],
                       ),
@@ -575,10 +571,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           default:
                             label = r;
                         }
-                        return DropdownMenuItem(
-                          value: r,
-                          child: Text(label),
-                        );
+                        return DropdownMenuItem(value: r, child: Text(label));
                       }).toList(),
                       onChanged: (v) {
                         if (v != null) {
@@ -625,4 +618,3 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 }
-
