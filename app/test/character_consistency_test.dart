@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:noema_studio/core/noema.dart';
 import 'package:noema_studio/core/noema_project.dart';
 import 'package:noema_studio/models/story.dart';
 import 'package:noema_studio/models/scene.dart';
@@ -13,7 +12,6 @@ import 'package:noema_studio/infrastructure/ffmpeg/ffmpeg_plugin.dart';
 import 'package:noema_studio/core/plugins/core_pipeline_plugin.dart';
 import 'package:noema_studio/core/plugins/ingestion_plugin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:noema_studio/core/providers/async_provider.dart';
 import 'package:noema_studio/main.dart';
