@@ -66,8 +66,9 @@ class PipelineEngine {
 
     void checkAndRun() {
       if (cancellationToken?.isCancelled == true) {
-        if (!completer.isCompleted)
+        if (!completer.isCompleted) {
           completer.completeError(CancelledException());
+        }
         return;
       }
 

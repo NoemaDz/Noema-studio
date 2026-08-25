@@ -19,8 +19,9 @@ class RetryPolicy {
     if (msg.contains("500") ||
         msg.contains("502") ||
         msg.contains("503") ||
-        msg.contains("504"))
+        msg.contains("504")) {
       return true;
+    }
     return false; // Don't retry on 400s or logic errors
   }
 
