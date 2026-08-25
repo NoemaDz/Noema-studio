@@ -19,6 +19,9 @@ import 'package:noema_studio/main.dart';
 void main() {
   test(
     'Simulate Character Consistency (IP-Adapter)',
+    skip: Platform.environment.containsKey('CI')
+        ? 'Requires local ComfyUI to be running'
+        : false,
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       SharedPreferences.setMockInitialValues({});

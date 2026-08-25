@@ -19,6 +19,9 @@ import 'package:noema_studio/main.dart'; // Ensure global noema is used
 void main() {
   test(
     'Full-Body Consistency Challenge — IP-Adapter + FaceDetailer + PersonDetailer',
+    skip: Platform.environment.containsKey('CI')
+        ? 'Requires local ComfyUI to be running'
+        : false,
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       SharedPreferences.setMockInitialValues({});
