@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import '../../models/asset.dart';
 import '../../models/asset_type.dart';
 import '../../core/retry_policy.dart';
+import '../../core/hardware/hardware_service.dart';
 import 'comfyui_workflow_adapter.dart';
 import 'comfyui_error_parser.dart';
 
@@ -27,8 +28,11 @@ class ComfyUIDriver {
 
     // Check if we have characters for IP-Adapter (only for images)
     final List<dynamic>? characters = options?["characters"];
-    final bool useIpAdapter =
-        !isVideo && characters != null && characters.isNotEmpty;
+    // Bypass IP-Adapter on 'fast' profile (low VRAM) to avoid OOM and missing heavy models
+    final bool useIpAdapter = !isVideo &&
+        characters != null &&
+        characters.isNotEmpty &&
+        context.appSettings.performanceMode != PerformanceProfile.fast;
 
     // Upload character images first (for IP-Adapter)
     List<dynamic> uploadedCharacters = [];
