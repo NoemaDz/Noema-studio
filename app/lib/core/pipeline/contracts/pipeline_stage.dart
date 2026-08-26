@@ -12,6 +12,10 @@ abstract class PipelineStage {
   /// Execution order. Lower = runs first.
   int get priority => 0;
 
+  /// Whether this stage requires intensive GPU usage (e.g. Image/Video generation).
+  /// Used by PipelineEngine to limit concurrency and prevent VRAM exhaustion.
+  bool get requiresGPU => false;
+
   /// Token to check for cancellation during long-running tasks.
   CancellationToken? cancellationToken;
 

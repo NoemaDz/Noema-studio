@@ -15,6 +15,9 @@ class SceneVideoStage extends PipelineStage {
   @override
   int get priority => 60; // After Image (50) and before Compilation (70)
 
+  @override
+  bool get requiresGPU => true;
+
   final WorkflowEngine engine;
   final VideoProvider provider;
   final JobManager jobManager;

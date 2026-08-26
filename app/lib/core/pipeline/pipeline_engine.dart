@@ -4,8 +4,12 @@ import '../cancellation_token.dart';
 
 class PipelineEngine {
   final int maxConcurrentTasks;
+  final int maxConcurrentGPUTasks;
 
-  PipelineEngine({this.maxConcurrentTasks = 2});
+  PipelineEngine({
+    this.maxConcurrentTasks = 4,
+    this.maxConcurrentGPUTasks = 1,
+  });
 
   void validateGraph(List<TaskNode> tasks) {
     final ids = <String>{};
@@ -82,12 +86,17 @@ class PipelineEngine {
 
       // Find tasks that can run
       final runnableTasks = tasks.where((t) => t.canRun).toList();
+      
+      int currentGPUTasks = tasks.where((t) => t.isRunning && t.requiresGPU).length;
 
       for (var task in runnableTasks) {
         if (runningTasksCount >= maxConcurrentTasks) break;
+        if (task.requiresGPU && currentGPUTasks >= maxConcurrentGPUTasks) continue;
 
         task.isRunning = true;
         runningTasksCount++;
+        if (task.requiresGPU) currentGPUTasks++;
+        
         onTaskUpdate?.call(task);
 
         // Execute asynchronously

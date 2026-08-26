@@ -16,6 +16,9 @@ class SceneImageStage extends PipelineStage {
   @override
   int get priority => 50;
 
+  @override
+  bool get requiresGPU => true;
+
   final WorkflowEngine engine;
   final ImageProvider provider;
   final JobManager jobManager;

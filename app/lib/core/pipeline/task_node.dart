@@ -6,6 +6,7 @@ class TaskNode {
   final Future<void> Function() execute;
   final void Function()? onCancel;
   final List<TaskNode> dependencies;
+  final bool requiresGPU;
 
   bool isCompleted = false;
   bool isFailed = false;
@@ -17,6 +18,7 @@ class TaskNode {
     required this.execute,
     this.onCancel,
     this.dependencies = const [],
+    this.requiresGPU = false,
   });
 
   bool get canRun =>
