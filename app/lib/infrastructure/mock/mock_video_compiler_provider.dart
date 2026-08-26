@@ -27,4 +27,7 @@ class MockVideoCompilerProvider extends VideoCompilerProvider {
       result: outputPath,
     );
   }
+
+  @override
+  Future<void> cancelJob(String jobId) async {}
 }

@@ -7,6 +7,8 @@ import '../../providers/video_compiler_provider.dart';
 import '../../job_manager.dart';
 import '../../../workflows/video/video_workflow.dart';
 import '../../../models/job.dart';
+import '../../cancellation_token.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 class VideoCompilationStage extends PipelineStage {
@@ -54,11 +56,17 @@ class VideoCompilationStage extends PipelineStage {
           .where((aud) => aud.asset?.path != null)
           .map((aud) => aud.asset!.path)
           .toList();
+          
+      final subtitleText = audios
+          .map((aud) => aud.text)
+          .where((text) => text.trim().isNotEmpty)
+          .join(" ");
 
       resources.add(
         AudioVideoResource(
           imagePath: mediaPath,
           audioPaths: validAudioPaths,
+          subtitleText: subtitleText.isNotEmpty ? subtitleText : null,
           effect: scene.cameraEffect,
         ),
       );
@@ -88,7 +96,13 @@ class VideoCompilationStage extends PipelineStage {
     jobManager.add(job);
     project.jobIds.add(job.id);
 
-    await jobManager.waitForCompletion(job.id, token: cancellationToken);
+    try {
+      await jobManager.waitForCompletion(job.id, token: cancellationToken);
+    } on CancelledException {
+      debugPrint('VideoCompilationStage: Cancellation requested, killing job ${job.id} on provider.');
+      await provider.cancelJob(job.id);
+      rethrow;
+    }
 
     if (job.status == JobStatus.failed) {
       throw Exception("Video compilation failed: ${job.result}");

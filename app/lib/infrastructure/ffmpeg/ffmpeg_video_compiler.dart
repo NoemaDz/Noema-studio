@@ -21,6 +21,29 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   @override
   bool get available => true; // DependencyManager ensures it's available
 
+  final Map<String, Process> _runningProcesses = {};
+
+  @override
+  Future<void> cancelJob(String jobId) async {
+    if (_runningProcesses.containsKey(jobId)) {
+      _runningProcesses[jobId]?.kill(ProcessSignal.sigkill);
+      _runningProcesses.remove(jobId);
+    }
+  }
+
+  Future<int> _runFfmpeg(String jobId, String executable, List<String> args) async {
+    final process = await Process.start(executable, args);
+    _runningProcesses[jobId] = process;
+    
+    final exitCode = await process.exitCode;
+    _runningProcesses.remove(jobId);
+    
+    if (exitCode != 0) {
+      throw Exception("FFmpeg failed with exit code $exitCode");
+    }
+    return exitCode;
+  }
+
   @override
   Future<Job> compileVideo(
     List<AudioVideoResource> resources,
@@ -71,17 +94,12 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         if (resource.audioPaths.isEmpty) {
           // Generate 3 seconds of silent audio as fallback
           finalSceneAudio = p.join(tempDir.path, "silence_$i.m4a");
-          await Process.run(ffmpegPath, [
-            '-f',
-            'lavfi',
-            '-i',
-            'anullsrc=r=44100:cl=stereo',
-            '-t',
-            '3',
-            '-q:a',
-            '9',
-            '-acodec',
-            'aac',
+          await _runFfmpeg(jobId, ffmpegPath, [
+            '-f', 'lavfi',
+            '-i', 'anullsrc=r=44100:cl=stereo',
+            '-t', '3',
+            '-q:a', '9',
+            '-acodec', 'aac',
             finalSceneAudio,
           ]);
         } else if (resource.audioPaths.length == 1) {
@@ -96,15 +114,11 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
           }
           audioListFile.writeAsStringSync(audioListContent.toString());
 
-          await Process.run(ffmpegPath, [
-            '-f',
-            'concat',
-            '-safe',
-            '0',
-            '-i',
-            audioListFile.path,
-            '-c',
-            'copy',
+          await _runFfmpeg(jobId, ffmpegPath, [
+            '-f', 'concat',
+            '-safe', '0',
+            '-i', audioListFile.path,
+            '-c', 'copy',
             finalSceneAudio,
           ]);
         }
@@ -115,6 +129,18 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
             resource.imagePath.toLowerCase().endsWith('.webm');
 
         List<String> args = [];
+        String? subtitlesFilter;
+
+        if (resource.subtitleText != null && resource.subtitleText!.isNotEmpty) {
+          final srtPath = p.join(tempDir.path, "scene_$i.srt");
+          final srtContent = "1\n00:00:00,000 --> 99:59:59,000\n${resource.subtitleText}\n";
+          File(srtPath).writeAsStringSync(srtContent);
+          // FFmpeg subtitles filter requires escaping backslashes and colons for Windows paths
+          final safeSrtPath = srtPath.replaceAll('\\', '/').replaceAll(':', '\\:');
+          
+          // Using standard subtitles filter with a readable font styling
+          subtitlesFilter = "subtitles='$safeSrtPath':force_style='FontSize=20,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,BorderStyle=4,Outline=1,Shadow=1,MarginV=20'";
+        }
 
         if (isVideo) {
           // It's already a video, loop it until the audio finishes
@@ -122,6 +148,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
             '-stream_loop', '-1', // Loop the video infinitely
             '-i', resource.imagePath,
             '-i', finalSceneAudio,
+            if (subtitlesFilter != null) ...['-vf', subtitlesFilter],
             '-map', '0:v',
             '-map', '1:a',
             '-c:v', 'libx264',
@@ -139,45 +166,28 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
             width: width,
             height: height,
           );
+          
+          if (subtitlesFilter != null) {
+            filter += ",$subtitlesFilter";
+          }
 
           args = [
-            '-i',
-            resource.imagePath,
-            '-i',
-            finalSceneAudio,
-            '-filter_complex',
-            filter,
-            '-map',
-            '[v]',
-            '-map',
-            '1:a',
-            '-c:v',
-            'libx264',
-            '-pix_fmt',
-            'yuv420p',
-            '-c:a',
-            'aac',
-            '-b:a',
-            '192k',
+            '-i', resource.imagePath,
+            '-i', finalSceneAudio,
+            '-filter_complex', filter,
+            '-map', '[v]',
+            '-map', '1:a',
+            '-c:v', 'libx264',
+            '-pix_fmt', 'yuv420p',
+            '-c:a', 'aac',
+            '-b:a', '192k',
             '-shortest',
             '-y',
             sceneOutputPath,
           ];
         }
 
-        final result = await Process.run(ffmpegPath, args);
-        if (result.exitCode != 0) {
-          print("FFMPEG FAILED on scene $i");
-          print("STDOUT: ${result.stdout}");
-          print("STDERR: ${result.stderr}");
-          return Job(
-            id: jobId,
-            providerId: id,
-            type: "video_compile",
-            status: JobStatus.failed,
-            result: "FFmpeg failed on scene $i: ${result.stderr}",
-          );
-        }
+        await _runFfmpeg(jobId, ffmpegPath, args);
 
         sceneFiles.add(sceneOutputPath);
       }
@@ -201,19 +211,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         outputPath,
       ];
 
-      final concatResult = await Process.run(ffmpegPath, concatArgs);
-      if (concatResult.exitCode != 0) {
-        print("FFMPEG CONCAT FAILED");
-        print("STDOUT: ${concatResult.stdout}");
-        print("STDERR: ${concatResult.stderr}");
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "video_compile",
-          status: JobStatus.failed,
-          result: "FFmpeg concat failed: ${concatResult.stderr}",
-        );
-      }
+      await _runFfmpeg(jobId, ffmpegPath, concatArgs);
 
       // Cleanup temp dir
       try {
