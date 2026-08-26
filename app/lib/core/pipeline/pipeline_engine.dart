@@ -105,6 +105,15 @@ class PipelineEngine {
               task.isRunning = false;
               hasFailedTask = true;
               runningTasksCount--;
+              
+              // Cancel all other running tasks
+              cancellationToken?.cancel();
+              for (final t in tasks) {
+                if (t.isRunning) {
+                  t.onCancel?.call();
+                }
+              }
+              
               onTaskUpdate?.call(task);
               if (!completer.isCompleted) completer.completeError(error);
             });

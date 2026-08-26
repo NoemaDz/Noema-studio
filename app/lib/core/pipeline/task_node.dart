@@ -4,6 +4,7 @@ class TaskNode {
   final String id;
   final String name;
   final Future<void> Function() execute;
+  final void Function()? onCancel;
   final List<TaskNode> dependencies;
 
   bool isCompleted = false;
@@ -14,6 +15,7 @@ class TaskNode {
     required this.id,
     required this.name,
     required this.execute,
+    this.onCancel,
     this.dependencies = const [],
   });
 

@@ -4,6 +4,7 @@ import 'providers/async_provider.dart';
 
 class JobRunner {
   final ProviderRegistry registry;
+  final Map<String, int> _transientFailures = {};
 
   JobRunner(this.registry);
 
@@ -38,7 +39,17 @@ class JobRunner {
           case JobStatus.pending:
             break;
         }
+        // Clear transient failure count on success
+        _transientFailures.remove(job.id);
       } catch (e) {
+        final currentFailures = (_transientFailures[job.id] ?? 0) + 1;
+        _transientFailures[job.id] = currentFailures;
+        
+        if (currentFailures >= 5) {
+          job.status = JobStatus.failed;
+          job.result = "Failed to update job status after 5 retries: $e";
+          _transientFailures.remove(job.id);
+        }
         // A network or transient error occurred. We leave the job in its current state
         // so the system will retry polling it again on the next tick.
       }

@@ -205,10 +205,8 @@ class ComfyUIDriver {
               return;
             }
           }
-          
           // If we reach here, we found the job in history but it's not strictly successful or error.
-          // Usually history only contains completed/failed jobs, so fallback to completed if it's there.
-          job.status = JobStatus.completed;
+          // Leave the job state as is (polling).
           return;
         }
       }

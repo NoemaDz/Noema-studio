@@ -8,6 +8,7 @@ import '../../job_manager.dart';
 import '../../../workflows/image/image_workflow.dart';
 import '../../../models/generated_image.dart';
 import '../../../models/job.dart';
+import '../../cancellation_token.dart';
 import '../../../models/character.dart';
 import '../../../models/scene.dart';
 
@@ -77,7 +78,13 @@ class SceneImageStage extends PipelineStage {
         debugPrint('SceneImageStage: Scene ${scene.id} job queued ✓');
 
         // Wait for job to complete
-        await jobManager.waitForCompletion(job.id, token: cancellationToken);
+        try {
+          await jobManager.waitForCompletion(job.id, token: cancellationToken);
+        } on CancelledException {
+          debugPrint('SceneImageStage: Cancellation requested, killing job ${job.id} on provider.');
+          await provider.cancelJob(job.id);
+          rethrow;
+        }
 
         if (job.status == JobStatus.failed) {
           throw Exception(
