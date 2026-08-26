@@ -11,6 +11,7 @@ import '../../models/asset.dart';
 import '../../models/asset_type.dart';
 import '../../core/retry_policy.dart';
 import 'comfyui_workflow_adapter.dart';
+import 'comfyui_error_parser.dart';
 
 class ComfyUIDriver {
   final PluginContext context;
@@ -185,28 +186,28 @@ class ComfyUIDriver {
         final historyData = jsonDecode(historyResponse.body);
         if (historyData.containsKey(job.id)) {
           final jobHistory = historyData[job.id];
-          // Check if there is an error in the status object
-          if (jobHistory['status'] != null &&
-              jobHistory['status']['status_str'] == 'error') {
-            job.status = JobStatus.failed;
+          
+          if (jobHistory['status'] != null) {
+            final statusStr = jobHistory['status']['status_str'];
+            final completed = jobHistory['status']['completed'] == true;
             
-            // Attempt to parse the error message securely
-            try {
-              final messages = jobHistory['status']['messages'] as List;
-              if (messages.isNotEmpty) {
-                // Usually errors are in messages[0][1][0] or similar, let's grab the exception message
-                final firstMsg = messages.first;
-                final exceptionNode = firstMsg[1]?[0] ?? firstMsg.toString();
-                // We'll provide a clear error message depending on what is returned
-                job.result = exceptionNode.toString();
-              } else {
-                job.result = "Unknown ComfyUI Error";
+            if (statusStr == 'success' || completed) {
+              job.status = JobStatus.completed;
+              return;
+            } else if (statusStr == 'error') {
+              job.status = JobStatus.failed;
+              try {
+                final messages = jobHistory['status']['messages'] as List;
+                job.result = ComfyUIErrorParser.parseError(messages);
+              } catch (e) {
+                job.result = "Failed to parse ComfyUI error: $e";
               }
-            } catch (e) {
-              job.result = "Failed to parse ComfyUI error: $e";
+              return;
             }
-            return;
           }
+          
+          // If we reach here, we found the job in history but it's not strictly successful or error.
+          // Usually history only contains completed/failed jobs, so fallback to completed if it's there.
           job.status = JobStatus.completed;
           return;
         }
@@ -240,21 +241,31 @@ class ComfyUIDriver {
 
       final Map<String, dynamic> data = jsonDecode(response.body);
 
-      if (data.isEmpty) {
-        debugPrint("ComfyUIDriver: downloadAsset history data empty");
-        return null;
+      if (!data.containsKey(jobId)) {
+        throw Exception("HistoryMissing: Job $jobId not found in history data");
+      }
+      
+      final jobData = data[jobId] as Map<String, dynamic>;
+      if (!jobData.containsKey("outputs") || jobData["outputs"] == null) {
+        throw Exception("OutputMissing: No outputs found for job $jobId");
       }
 
-      final outputs = data[jobId]["outputs"] as Map<String, dynamic>;
+      final outputs = jobData["outputs"] as Map<String, dynamic>;
 
       debugPrint("ComfyUIDriver: Checking outputs... ${outputs.keys}");
       for (final node in outputs.values) {
-        debugPrint("ComfyUIDriver: Node keys: ${(node as Map).keys}");
-        if (node["images"] != null || node["gifs"] != null) {
-          final isVideo = node["gifs"] != null;
+        if (node is! Map) continue;
+        
+        debugPrint("ComfyUIDriver: Node keys: ${node.keys}");
+        
+        final images = node["images"] as List?;
+        final gifs = node["gifs"] as List?;
+        
+        if ((images != null && images.isNotEmpty) || (gifs != null && gifs.isNotEmpty)) {
+          final isVideo = gifs != null && gifs.isNotEmpty;
           final filename = isVideo
-              ? node["gifs"][0]["filename"]
-              : node["images"][0]["filename"];
+              ? gifs[0]["filename"]
+              : images![0]["filename"];
 
           final assetUrl = "$baseUrl/view?filename=$filename&type=output";
           debugPrint("ComfyUIDriver: Downloading file from $assetUrl");
@@ -288,12 +299,12 @@ class ComfyUIDriver {
           }
         }
       }
-      debugPrint("ComfyUIDriver: Finished loop without returning asset.");
+      
+      throw Exception("UnsupportedOutput: No image or video files found in the outputs");
     } catch (e) {
       debugPrint("ComfyUIDriver Error in downloadAsset: $e");
+      rethrow;
     }
-
-    return null;
   }
 
   Future<void> cancelJob(String jobId) async {

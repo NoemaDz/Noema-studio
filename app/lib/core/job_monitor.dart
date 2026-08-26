@@ -12,10 +12,12 @@ class JobMonitor {
 
   Timer? _timer;
   bool _isPolling = false;
+  bool _isRunning = false;
 
   JobMonitor(this.runner, this.manager, this.events);
 
   void start() {
+    _isRunning = true;
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 2), (_) async {
@@ -25,6 +27,8 @@ class JobMonitor {
       try {
         final activeJobs = manager.jobs.toList();
         for (final job in activeJobs) {
+          if (!_isRunning) break; // Early exit if stopped mid-poll
+          
           if (job.status == JobStatus.completed ||
               job.status == JobStatus.failed) {
             continue;
@@ -43,6 +47,8 @@ class JobMonitor {
   }
 
   void stop() {
+    _isRunning = false;
     _timer?.cancel();
+    _isPolling = false;
   }
 }
