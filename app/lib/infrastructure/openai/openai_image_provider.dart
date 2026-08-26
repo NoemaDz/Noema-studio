@@ -131,6 +131,10 @@ class OpenAIImageProvider extends ImageProvider {
 
   @override
   Future<void> cancelJob(String jobId) async {
+    // NOTE: This is a logical cancellation. 
+    // The HTTP request to OpenAI is synchronous and cannot be easily cancelled
+    // midway using the standard http package without a dedicated CancelToken/Client.
+    // Setting the job to failed ensures the PipelineEngine moves on and ignores the result.
     if (_jobs.containsKey(jobId)) {
       final job = _jobs[jobId]!;
       if (job.status == JobStatus.running) {

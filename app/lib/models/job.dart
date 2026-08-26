@@ -24,12 +24,21 @@ class Job {
   }) : metadata = metadata ?? <String, dynamic>{};
 
   factory Job.fromJson(Map<String, dynamic> json) {
+    JobStatus parseStatus(dynamic statusStr) {
+      if (statusStr == null) return JobStatus.pending;
+      try {
+        return JobStatus.values.byName(statusStr.toString());
+      } catch (_) {
+        return JobStatus.pending;
+      }
+    }
+
     return Job(
       id: json["id"],
       providerId: json["providerId"] ?? 'unknown', // Fallback for old projects
       type: json["type"],
-      status: JobStatus.values.byName(json["status"]),
-      progress: (json["progress"] as num).toDouble(),
+      status: parseStatus(json["status"]),
+      progress: (json["progress"] as num?)?.toDouble() ?? 0.0,
       result: json["result"],
       metadata: Map<String, dynamic>.from(json["metadata"] ?? {}),
     );

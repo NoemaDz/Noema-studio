@@ -15,6 +15,7 @@ import 'comfyui_error_parser.dart';
 
 class ComfyUIDriver {
   final PluginContext context;
+  final Map<String, int> _notFoundCounts = {};
 
   ComfyUIDriver(this.context);
 
@@ -191,11 +192,13 @@ class ComfyUIDriver {
             final statusStr = jobHistory['status']['status_str'];
             final completed = jobHistory['status']['completed'] == true;
             
-            if (statusStr == 'success' || completed) {
+            if (statusStr == 'success' && completed) {
               job.status = JobStatus.completed;
+              _notFoundCounts.remove(job.id);
               return;
             } else if (statusStr == 'error') {
               job.status = JobStatus.failed;
+              _notFoundCounts.remove(job.id);
               try {
                 final messages = jobHistory['status']['messages'] as List;
                 job.result = ComfyUIErrorParser.parseError(messages);
@@ -218,9 +221,16 @@ class ComfyUIDriver {
     }
 
     // If we reach here without exception and it's not found in queue or history, it might be an unknown state.
-    // However, keeping fallback to failed for now, but transient errors will be caught above.
-    job.status = JobStatus.failed;
-    job.result = "Job not found in queue or history";
+    // Instead of failing immediately, we allow a few retries because it might be transitioning from queue to history.
+    final currentNotFound = (_notFoundCounts[job.id] ?? 0) + 1;
+    _notFoundCounts[job.id] = currentNotFound;
+    
+    if (currentNotFound > 3) {
+      job.status = JobStatus.failed;
+      job.result = "Job not found in queue or history after 3 polls";
+      _notFoundCounts.remove(job.id);
+    }
+    // Else, leave as is (polling).
   }
 
   Future<Asset?> downloadAsset(String jobId) async {

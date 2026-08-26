@@ -88,4 +88,7 @@ class OpenAITTSProvider extends TTSProvider {
       );
     }
   }
+
+  @override
+  Future<void> cancelJob(String jobId) async {}
 }

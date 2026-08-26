@@ -10,6 +10,8 @@ import '../../../models/job.dart';
 import '../../../models/scene.dart';
 import '../../../models/asset.dart';
 import '../../../models/asset_type.dart';
+import '../../cancellation_token.dart';
+import 'package:flutter/foundation.dart';
 
 class SceneAudioStage extends PipelineStage {
   @override
@@ -52,7 +54,13 @@ class SceneAudioStage extends PipelineStage {
         jobId: job.id,
         text: scene.narration!,
       );
-      await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      try {
+        await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      } on CancelledException {
+        debugPrint('SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.');
+        await provider.cancelJob(job.id);
+        rethrow;
+      }
 
       if (job.status == JobStatus.completed && job.result != null) {
         audio.asset = Asset(
@@ -97,7 +105,13 @@ class SceneAudioStage extends PipelineStage {
         jobId: job.id,
         text: dialogueLine.text,
       );
-      await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      try {
+        await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      } on CancelledException {
+        debugPrint('SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.');
+        await provider.cancelJob(job.id);
+        rethrow;
+      }
 
       if (job.status == JobStatus.completed && job.result != null) {
         audio.asset = Asset(
@@ -129,7 +143,13 @@ class SceneAudioStage extends PipelineStage {
         jobId: job.id,
         text: scene.description,
       );
-      await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      try {
+        await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      } on CancelledException {
+        debugPrint('SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.');
+        await provider.cancelJob(job.id);
+        rethrow;
+      }
 
       if (job.status == JobStatus.completed && job.result != null) {
         audio.asset = Asset(

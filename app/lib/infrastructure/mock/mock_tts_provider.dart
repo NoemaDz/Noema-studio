@@ -27,4 +27,7 @@ class MockTTSProvider extends TTSProvider {
       result: "path/to/mock_audio.mp3",
     );
   }
+
+  @override
+  Future<void> cancelJob(String jobId) async {}
 }

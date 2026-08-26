@@ -29,4 +29,16 @@ class ProxyTTSProvider extends TTSProvider {
 
     return provider.generateAudio(text, voiceProfile: voiceProfile);
   }
+
+  @override
+  Future<void> cancelJob(String jobId) {
+    final activeId = context.appSettings.activeTtsProvider;
+    final provider = context.providers.all.whereType<TTSProvider>().firstWhere(
+      (p) => p.id == activeId && p.id != "proxy_tts",
+      orElse: () => context.providers.all.whereType<TTSProvider>().firstWhere(
+            (p) => p.id == 'flutter_tts', // Fallback
+          ),
+    );
+    return provider.cancelJob(jobId);
+  }
 }
