@@ -3,11 +3,15 @@ import '../../core/providers/video_compiler_provider.dart';
 import '../../models/job.dart';
 import 'ffmpeg_effect_builder.dart';
 import 'package:path/path.dart' as p;
-import '../../main.dart'; // To access global noema
+import '../../core/settings/app_settings.dart';
 
 import '../../application/dependency_manager.dart';
 
 class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
+  final AppSettings appSettings;
+
+  FFmpegVideoCompilerProvider(this.appSettings);
+
   @override
   String get id => "ffmpeg_cli";
 
@@ -45,7 +49,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
       // Options
       final effectType =
           options?['video_effect'] ??
-          noema.bootstrap.appSettings.defaultVideoEffect;
+          appSettings.defaultVideoEffect;
       final width = options?['width'] ?? 1920;
       final height = options?['height'] ?? 1080;
 

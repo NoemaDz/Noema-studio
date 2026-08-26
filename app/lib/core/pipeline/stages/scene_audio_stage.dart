@@ -73,9 +73,18 @@ class SceneAudioStage extends PipelineStage {
       final workflow = AudioWorkflow(provider);
       final context = WorkflowContext();
 
-      // TODO: Pass character name to TTS provider to pick voice profile
+      // Find the character's voice profile
+      final character = project.characters.cast<dynamic>().firstWhere(
+        (c) => c.name == dialogueLine.characterName,
+        orElse: () => null,
+      );
+
       context.set("text", dialogueLine.text);
       context.set("characterName", dialogueLine.characterName);
+      
+      if (character != null && character.voiceProfile != null) {
+        context.set("voiceProfile", character.voiceProfile!);
+      }
 
       final result = await engine.runWithContext(workflow, context);
       final job = result.get<Job>("audio")!;

@@ -18,7 +18,7 @@ class FlutterTTSProvider extends TTSProvider {
   final FlutterTts flutterTts = FlutterTts();
 
   @override
-  Future<Job> generateAudio(String text) async {
+  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
     final jobId = "tts_${DateTime.now().millisecondsSinceEpoch}";
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(

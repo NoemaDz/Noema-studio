@@ -13,6 +13,7 @@ import '../../models/generation_state.dart';
 import '../widgets/generation_panel.dart';
 import '../widgets/scene_editor_view.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/character_list.dart';
 import 'settings_dialog.dart';
 
 class StudioScreen extends StatefulWidget {
@@ -427,6 +428,24 @@ class _StudioScreenState extends State<StudioScreen> {
                               ],
                             ),
                     ),
+
+                    // Right Sidebar: Characters Panel
+                    if (project != null && project.characters.isNotEmpty)
+                      GlassContainer(
+                        width: 240,
+                        color: Theme.of(context).colorScheme.surface,
+                        opacity: 0.12,
+                        border: const Border(
+                          left: BorderSide(color: Colors.white10, width: 1.0),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: SingleChildScrollView(
+                          child: CharacterList(
+                            characters: project.characters,
+                            onCharacterUpdated: () => setState(() {}),
+                          ),
+                        ),
+                      ),
                   ],
                 );
               },

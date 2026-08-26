@@ -16,7 +16,7 @@ class EdgeTTSProvider extends TTSProvider {
   bool get available => true;
 
   @override
-  Future<Job> generateAudio(String text) async {
+  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
     final jobId = "tts_${DateTime.now().millisecondsSinceEpoch}";
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(
@@ -29,7 +29,7 @@ class EdgeTTSProvider extends TTSProvider {
     final fileName = "$jobId.mp3";
     final outputPath = p.join(outputDir.path, fileName);
 
-    final voice = noema.bootstrap.appSettings.edgeTtsVoice;
+    final voice = voiceProfile ?? noema.bootstrap.appSettings.edgeTtsVoice;
 
     try {
       ProcessResult? result;

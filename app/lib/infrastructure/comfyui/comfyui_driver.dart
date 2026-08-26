@@ -35,7 +35,9 @@ class ComfyUIDriver {
         final path = char["imagePath"] as String;
         try {
           final uploadedName = await _uploadImage(path);
-          uploadedCharacters.add({"imagePath": uploadedName});
+          final newChar = Map<String, dynamic>.from(char);
+          newChar["imagePath"] = uploadedName;
+          uploadedCharacters.add(newChar);
         } catch (e) {
           debugPrint(
             "Warning: Failed to upload character image $path. Error: $e",
@@ -58,9 +60,15 @@ class ComfyUIDriver {
     if (isVideo) {
       workflowPath = "assets/workflows/image_to_video_api.json";
     } else {
-      workflowPath = useIpAdapter
-          ? "assets/workflows/ip_adapter_api.json"
-          : "assets/workflows/text_to_image_api.json";
+      if (useIpAdapter) {
+        if (characters.length > 1) {
+          workflowPath = "assets/workflows/multi_character_api.json";
+        } else {
+          workflowPath = "assets/workflows/ip_adapter_api.json";
+        }
+      } else {
+        workflowPath = "assets/workflows/text_to_image_api.json";
+      }
     }
 
     String workflow;
@@ -80,16 +88,16 @@ class ComfyUIDriver {
     final Map<String, dynamic> json = jsonDecode(workflow);
     final adapter = ComfyUIWorkflowAdapter(json);
 
-    // Apply resolution from settings
-    final resolution = context.appSettings.imageResolution;
-    adapter.setResolution(resolution);
-
     // Semantic Injection
     adapter.setPrompt(prompt);
 
     if (useIpAdapter) {
       adapter.setCharacterImages(uploadedCharacters);
     }
+
+    // Apply resolution from settings (Must be called AFTER setCharacterImages to apply positions)
+    final resolution = context.appSettings.imageResolution;
+    adapter.setResolution(resolution);
 
     // Apply hardware-based performance profile
     if (useIpAdapter) {

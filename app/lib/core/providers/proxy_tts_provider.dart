@@ -17,15 +17,16 @@ class ProxyTTSProvider extends TTSProvider {
   bool get available => true;
 
   @override
-  Future<Job> generateAudio(String text) {
+  Future<Job> generateAudio(String text, {String? voiceProfile}) {
     final activeId = context.appSettings.activeTtsProvider;
-    // Find the provider with this id
+    // Find active provider
     final provider = context.providers.all.whereType<TTSProvider>().firstWhere(
       (p) => p.id == activeId && p.id != "proxy_tts",
       orElse: () => context.providers.all.whereType<TTSProvider>().firstWhere(
-        (p) => p.id == "flutter_tts",
-      ),
+            (p) => p.id == 'flutter_tts', // Fallback
+          ),
     );
-    return provider.generateAudio(text);
+
+    return provider.generateAudio(text, voiceProfile: voiceProfile);
   }
 }

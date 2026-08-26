@@ -17,12 +17,13 @@ class GenerateAudioStep extends WorkflowStep<Job> {
   @override
   Future<Job> execute(WorkflowContext context) async {
     final text = context.get<String>("text");
+    final voiceProfile = context.get<String>("voiceProfile");
 
     if (text == null) {
       throw Exception("Missing text for audio generation");
     }
 
-    final job = await provider.generateAudio(text);
+    final job = await provider.generateAudio(text, voiceProfile: voiceProfile);
 
     job.metadata["text"] = text;
 

@@ -12,12 +12,16 @@ class MockTTSProvider extends TTSProvider {
   bool get available => true;
 
   @override
-  Future<Job> generateAudio(String text) async {
+  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
+    final jobId = "tts_mock_${DateTime.now().millisecondsSinceEpoch}";
+    
+    // Simulate some network delay
+    await Future.delayed(const Duration(seconds: 1));
     return Job(
-      id: "mock_audio_${DateTime.now().millisecondsSinceEpoch}",
+      id: jobId,
       providerId: id,
       type: "audio",
-      metadata: {"text": text},
+      metadata: {"text": text, "voiceProfile": voiceProfile},
       status: JobStatus.completed,
       progress: 1.0,
       result: "path/to/mock_audio.mp3",

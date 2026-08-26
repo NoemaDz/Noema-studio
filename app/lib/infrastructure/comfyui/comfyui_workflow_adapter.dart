@@ -3,6 +3,7 @@ import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 class ComfyUIWorkflowAdapter {
   final Map<String, dynamic> workflow;
+  final List<String> _characterPositions = ['center', 'center', 'center'];
 
   ComfyUIWorkflowAdapter(this.workflow);
 
@@ -20,6 +21,20 @@ class ComfyUIWorkflowAdapter {
       }
     }
     return found;
+  }
+
+  /// Helper to get an input value for a node matching a specific `_meta.title`.
+  dynamic getInputByTitle(String title, String inputKey) {
+    for (final node in workflow.values) {
+      if (node is Map<String, dynamic> &&
+          node['_meta'] != null &&
+          node['_meta']['title'] == title) {
+        if (node['inputs'] != null) {
+          return node['inputs'][inputKey];
+        }
+      }
+    }
+    return null;
   }
 
   /// Helper to set an input value for a node matching a specific `class_type`.
@@ -61,26 +76,45 @@ class ComfyUIWorkflowAdapter {
 
   /// Set character images for IP-Adapter
   void setCharacterImages(List<dynamic> characters) {
+    // First, disable all multiple character IP-Adapters
+    for (int i = 1; i <= 3; i++) {
+      setInputByTitle('IPAdapter Advanced $i', 'weight', 0.0);
+    }
+
     for (int i = 0; i < characters.length; i++) {
+      if (i >= 3) break; // Max 3 characters
+
       final charData = characters[i] as Map<String, dynamic>;
       final fullPath = charData['imagePath'] as String;
+      final position = charData['position'] as String? ?? 'center';
+      
+      _characterPositions[i] = position;
+
       String filename = fullPath;
       try {
         final uri = Uri.parse(fullPath);
         if (uri.queryParameters.containsKey('filename')) {
           filename = uri.queryParameters['filename']!;
         } else {
-          // If it's a local path or raw filename
           filename = p.basename(fullPath);
         }
       } catch (_) {}
 
-      // 1. Try semantic title: "Character Image 1", "Character Image 2" etc.
+      // If this is the first character, set it as a fallback for all nodes to bypass ComfyUI missing file validation
+      if (i == 0) {
+        for (int j = 1; j <= 3; j++) {
+          setInputByTitle('Character Image $j', 'image', filename);
+        }
+      }
+
+      // Try semantic title: "Character Image 1", etc.
       if (setInputByTitle('Character Image ${i + 1}', 'image', filename)) {
+        // Enable this IP-Adapter
+        setInputByTitle('IPAdapter Advanced ${i + 1}', 'weight', 0.6);
         continue;
       }
 
-      // 2. Backward compatibility: nodes starting at ID 100+i
+      // Backward compatibility for single character
       final legacyId = (100 + i).toString();
       if (workflow.containsKey(legacyId) &&
           workflow[legacyId]['class_type'] == 'LoadImage') {
@@ -112,6 +146,14 @@ class ComfyUIWorkflowAdapter {
         }
       }
     }
+
+    if (options.containsKey('motion')) {
+      setInputByClass('SVD_img2vid_Conditioning', 'motion_bucket_id', options['motion'], firstOnly: true);
+    }
+
+    if (options.containsKey('augmentation')) {
+      setInputByClass('SVD_img2vid_Conditioning', 'augmentation_level', options['augmentation'], firstOnly: true);
+    }
   }
 
   /// Set image resolution from a "WxH" string like "768x512"
@@ -130,14 +172,75 @@ class ComfyUIWorkflowAdapter {
         break;
       }
     }
+
+    // Also update background mask for regional prompting
+    setInputByTitle('Background Mask', 'width', w);
+    setInputByTitle('Background Mask', 'height', h);
+
+    // Determine number of active characters
+    int activeCharacters = 0;
+    for (int i = 1; i <= 3; i++) {
+      final weight = getInputByTitle('IPAdapter Advanced $i', 'weight');
+      if (weight != null && (weight as num) > 0.0) {
+        activeCharacters++;
+      }
+    }
+    
+    // If no characters, default to 1 to avoid division by zero
+    if (activeCharacters == 0) activeCharacters = 1;
+
+    // Update region masks depending on position
+    final regionWidth = w ~/ activeCharacters;
+    
+    for (int i = 0; i < 3; i++) {
+      final pos = _characterPositions[i];
+      int x = 0;
+      
+      if (activeCharacters == 1) {
+        // Full screen mask for single character to prevent confining IPAdapter
+        x = 0;
+      } else if (pos == 'left') {
+        x = 0;
+      } else if (pos == 'center') {
+        x = (w - regionWidth) ~/ 2;
+      } else if (pos == 'right') {
+        x = w - regionWidth;
+      }
+
+      setInputByTitle('Region Mask ${i + 1}', 'width', activeCharacters == 1 ? w : regionWidth);
+      setInputByTitle('Region Mask ${i + 1}', 'height', h);
+      setInputByTitle('Composite Mask ${i + 1}', 'x', x);
+    }
   }
 
   /// Apply hardware-based performance profile
   void applyPerformanceProfile(PerformanceProfile profile) {
+    int activeCharacters = 0;
+    for (int i = 1; i <= 3; i++) {
+      final weight = getInputByTitle('IPAdapter Advanced $i', 'weight');
+      if (weight != null && (weight as num) > 0.0) {
+        activeCharacters++;
+      }
+    }
+
+    if (activeCharacters > 1) {
+      // For multiple characters, PLUS model takes too much VRAM. Downgrade to STANDARD.
+      setInputByTitle('IPAdapter Unified Loader', 'preset', 'STANDARD (medium strength)');
+      
+      // Also downgrade Ultra to Balanced to remove PersonDetailer and save VRAM
+      if (profile == PerformanceProfile.ultra) {
+        profile = PerformanceProfile.balanced;
+      }
+    }
+
     if (profile == PerformanceProfile.ultra) {
-      // Keep everything (FaceDetailer and PersonDetailer)
+      // Keep everything (FaceDetailer and PersonDetailer, and max video frames)
       return;
     }
+
+    // --- I2V VRAM Safeguard ---
+    // SVD needs a lot of VRAM for 24 frames. Downgrade to 14 frames if not ultra.
+    setInputByClass('SVD_img2vid_Conditioning', 'video_frames', 14, firstOnly: true);
 
     String? vaeDecodeNodeId;
     String? saveImageNodeId;

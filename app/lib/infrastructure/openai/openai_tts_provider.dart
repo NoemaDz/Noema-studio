@@ -18,7 +18,7 @@ class OpenAITTSProvider extends TTSProvider {
   bool get available => noema.bootstrap.appSettings.openAiKey.isNotEmpty;
 
   @override
-  Future<Job> generateAudio(String text) async {
+  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
     final jobId = "tts_${DateTime.now().millisecondsSinceEpoch}";
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(
@@ -32,7 +32,7 @@ class OpenAITTSProvider extends TTSProvider {
     final outputPath = p.join(outputDir.path, fileName);
 
     final apiKey = noema.bootstrap.appSettings.openAiKey;
-    final voice = noema.bootstrap.appSettings.openAiTtsVoice;
+    final voice = voiceProfile ?? noema.bootstrap.appSettings.openAiTtsVoice;
 
     if (apiKey.isEmpty) {
       return Job(

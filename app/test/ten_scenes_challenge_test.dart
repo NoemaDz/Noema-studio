@@ -129,7 +129,7 @@ void main() {
           );
         }
       } catch (e) {
-        print("Pipeline failed: $e");
+        fail("Pipeline failed: $e");
       } finally {
         noema.bootstrap.jobMonitor.stop();
       }
