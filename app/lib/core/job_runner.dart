@@ -15,10 +15,9 @@ class JobRunner {
     final provider = registry.get(job.providerId);
     if (provider is AsyncProvider) {
       try {
-        final status = await provider.getJobStatus(job.id);
-        job.status = status;
+        await provider.updateJobStatus(job);
 
-        switch (status) {
+        switch (job.status) {
           case JobStatus.completed:
             job.progress = 1.0;
             break;

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/character.dart';
+import 'package:noema_studio/models/character.dart';
 
 void main() {
   test('Character model supports voiceProfile', () {

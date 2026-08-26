@@ -598,8 +598,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             onChanged: _autoDetectHardware
                                 ? null
                                 : (val) {
-                                    if (val != null)
+                                    if (val != null) {
                                       setState(() => _performanceMode = val);
+                                    }
                                   },
                           ),
                         ],

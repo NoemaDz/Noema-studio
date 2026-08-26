@@ -28,8 +28,8 @@ class ComfyUIProvider extends ImageProvider {
   }
 
   @override
-  Future<JobStatus> getJobStatus(String jobId) {
-    return driver.getJobStatus(jobId);
+  Future<void> updateJobStatus(Job job) {
+    return driver.updateJobStatus(job);
   }
 
   @override

@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/infrastructure/comfyui/comfyui_workflow_adapter.dart';
-import '../lib/core/settings/app_settings.dart';
-import '../lib/core/hardware/hardware_service.dart';
+import 'package:noema_studio/infrastructure/comfyui/comfyui_workflow_adapter.dart';
+import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 dynamic getInputByClass(Map<String, dynamic> workflow, String className, String inputName) {
   for (final node in workflow.values) {

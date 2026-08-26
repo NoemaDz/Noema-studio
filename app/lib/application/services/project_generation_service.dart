@@ -40,6 +40,9 @@ class ProjectGenerationService {
   });
 
   Future<NoemaProject> generatePlanning(NoemaProject project) async {
+    // Start job monitor so that Character image generation jobs can be tracked
+    jobMonitor.start();
+
     await projectPipeline.generatePlanning(
       project,
       onUpdate: (status) {

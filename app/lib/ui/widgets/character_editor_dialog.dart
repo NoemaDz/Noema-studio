@@ -124,20 +124,20 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
           DateTime.now().add(const Duration(minutes: 3));
       while (DateTime.now().isBefore(deadline)) {
         await Future.delayed(const Duration(seconds: 2));
-        final status = await provider.getJobStatus(job.id);
-        if (status == JobStatus.completed || status == JobStatus.failed) {
+        await provider.updateJobStatus(job);
+        if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
           break;
         }
       }
 
-      final refreshed = await provider.getJobStatus(job.id);
-      if (refreshed == JobStatus.completed && job.result != null) {
+      await provider.updateJobStatus(job);
+      if (job.status == JobStatus.completed && job.result != null) {
         setState(() {
           _generatedImagePath = job.result;
           widget.character.imagePath = job.result;
         });
       } else {
-        setState(() => _generateError = 'Image generation failed.');
+        setState(() => _generateError = job.result ?? 'Image generation failed.');
       }
     } catch (e) {
       setState(() => _generateError = e.toString());

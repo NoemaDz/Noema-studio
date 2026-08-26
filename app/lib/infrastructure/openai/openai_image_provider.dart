@@ -93,11 +93,17 @@ class OpenAIImageProvider extends ImageProvider {
   }
 
   @override
-  Future<JobStatus> getJobStatus(String jobId) async {
-    if (_jobs.containsKey(jobId)) {
-      return _jobs[jobId]!.status;
+  Future<void> updateJobStatus(Job job) async {
+    // OpenAI images are synchronous (or we already awaited them),
+    // but if we implemented queuing we would check here.
+    // For now, we assume if it's here, it's completed or failed.
+    if (job.result != null && job.result!.startsWith('http')) {
+      job.status = JobStatus.completed;
+    } else if (job.result != null && job.result!.startsWith('Error')) {
+      job.status = JobStatus.failed;
+    } else {
+      job.status = JobStatus.completed;
     }
-    return JobStatus.failed;
   }
 
   @override

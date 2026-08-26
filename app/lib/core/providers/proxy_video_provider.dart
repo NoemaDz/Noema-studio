@@ -37,8 +37,8 @@ class ProxyVideoProvider extends VideoProvider {
   }
 
   @override
-  Future<JobStatus> getJobStatus(String jobId) {
-    return _activeProvider.getJobStatus(jobId);
+  Future<void> updateJobStatus(Job job) {
+    return _activeProvider.updateJobStatus(job);
   }
 
   @override

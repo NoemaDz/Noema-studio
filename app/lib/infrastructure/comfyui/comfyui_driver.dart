@@ -158,7 +158,7 @@ class ComfyUIDriver {
     return json["name"] as String;
   }
 
-  Future<JobStatus> getJobStatus(String jobId) async {
+  Future<void> updateJobStatus(Job job) async {
     try {
       final queueResponse = await http
           .get(Uri.parse("$baseUrl/queue"))
@@ -168,27 +168,51 @@ class ComfyUIDriver {
         final running = queueData["queue_running"] as List;
         final pending = queueData["queue_pending"] as List;
 
-        if (running.any((q) => q[1] == jobId)) return JobStatus.running;
-        if (pending.any((q) => q[1] == jobId)) return JobStatus.queued;
+        if (running.any((q) => q[1] == job.id)) {
+          job.status = JobStatus.running;
+          return;
+        }
+        if (pending.any((q) => q[1] == job.id)) {
+          job.status = JobStatus.queued;
+          return;
+        }
       }
 
       final historyResponse = await http
-          .get(Uri.parse("$baseUrl/history/$jobId"))
+          .get(Uri.parse("$baseUrl/history/${job.id}"))
           .timeout(const Duration(seconds: 5));
       if (historyResponse.statusCode == 200) {
         final historyData = jsonDecode(historyResponse.body);
-        if (historyData.containsKey(jobId)) {
-          final jobHistory = historyData[jobId];
+        if (historyData.containsKey(job.id)) {
+          final jobHistory = historyData[job.id];
           // Check if there is an error in the status object
           if (jobHistory['status'] != null &&
               jobHistory['status']['status_str'] == 'error') {
-            return JobStatus.failed;
+            job.status = JobStatus.failed;
+            
+            // Attempt to parse the error message securely
+            try {
+              final messages = jobHistory['status']['messages'] as List;
+              if (messages.isNotEmpty) {
+                // Usually errors are in messages[0][1][0] or similar, let's grab the exception message
+                final firstMsg = messages.first;
+                final exceptionNode = firstMsg[1]?[0] ?? firstMsg.toString();
+                // We'll provide a clear error message depending on what is returned
+                job.result = exceptionNode.toString();
+              } else {
+                job.result = "Unknown ComfyUI Error";
+              }
+            } catch (e) {
+              job.result = "Failed to parse ComfyUI error: $e";
+            }
+            return;
           }
-          return JobStatus.completed;
+          job.status = JobStatus.completed;
+          return;
         }
       }
     } catch (e) {
-      debugPrint("ComfyUIDriver Error in getJobStatus: $e");
+      debugPrint("ComfyUIDriver Error in updateJobStatus: $e");
       // Throw exception to allow callers (like JobManager) to retry via RetryPolicy
       // instead of marking the job as permanently failed due to a transient network error.
       throw Exception("Network error while getting job status: $e");
@@ -196,7 +220,8 @@ class ComfyUIDriver {
 
     // If we reach here without exception and it's not found in queue or history, it might be an unknown state.
     // However, keeping fallback to failed for now, but transient errors will be caught above.
-    return JobStatus.failed;
+    job.status = JobStatus.failed;
+    job.result = "Job not found in queue or history";
   }
 
   Future<Asset?> downloadAsset(String jobId) async {
