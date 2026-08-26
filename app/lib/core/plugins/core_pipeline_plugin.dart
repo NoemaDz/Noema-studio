@@ -5,7 +5,6 @@ import '../providers/image_provider.dart';
 import '../providers/proxy_llm_provider.dart';
 
 import '../pipeline/stages/agent_planner_stage.dart';
-import '../pipeline/stages/character_stage.dart';
 import '../pipeline/stages/character_image_stage.dart';
 import '../pipeline/stages/scene_image_stage.dart';
 import '../pipeline/stages/scene_video_stage.dart';
@@ -61,9 +60,10 @@ class CorePipelinePlugin implements IPlugin {
       AgentPlannerStage(engine: context.engine, provider: llmProvider),
     );
 
-    context.pipelines.register(
-      CharacterStage(engine: context.engine, provider: llmProvider),
-    );
+    // CharacterStage is now obsolete because AgentPlannerStage acts as a full Director Agent
+    // context.pipelines.register(
+    //   CharacterStage(engine: context.engine, provider: llmProvider),
+    // );
 
     context.pipelines.register(
       CharacterImageStage(

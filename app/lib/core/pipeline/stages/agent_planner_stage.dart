@@ -7,6 +7,7 @@ import '../../noema_project.dart';
 import '../../../models/scene.dart';
 import '../../../models/story.dart';
 import '../../../models/scene_directive.dart';
+import '../../../models/character.dart';
 
 class AgentPlannerStage extends PipelineStage {
   @override
@@ -82,7 +83,27 @@ class AgentPlannerStage extends PipelineStage {
       }
     }
 
+    // Parse and store characters
+    final charactersData = planningData["characters"] as List<dynamic>? ?? [];
+    final List<Character> characters = [];
+    int charId = 1;
+    for (final c in charactersData) {
+      if (c is Map<String, dynamic>) {
+        characters.add(Character(
+          id: 'char_${charId++}',
+          name: c["name"] ?? "Unknown",
+          description: c["description"] ?? "",
+          prompt: c["prompt"] ?? "",
+          voiceProfile: c["voiceProfile"],
+        ));
+      }
+    }
+
     project.story = Story(title: title, scenes: scenes);
+    
+    // Completely replace existing characters with Director's Cast
+    project.characters.clear();
+    project.characters.addAll(characters);
 
     // Store directives in metadata so the next stages (AgentExecutor) can use them.
     project.metadata["agent_directives"] = directives

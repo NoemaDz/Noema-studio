@@ -43,6 +43,7 @@ class _AgentPlanningStep implements WorkflowStep {
     }
 
     List<Map<String, dynamic>> allScenes = [];
+    List<Map<String, dynamic>> allCharacters = [];
     String storyTitle = "Generated Story";
 
     String narrativeContext = "";
@@ -55,7 +56,7 @@ class _AgentPlanningStep implements WorkflowStep {
         narrativeContext: narrativeContext,
       );
       final fullPrompt =
-          "${AgentPromptTemplates.sceneBreakdownSystem}\n\n$prompt";
+          "${AgentPromptTemplates.directorSystemPrompt}\n\n$prompt";
 
       final response = await provider.generate(fullPrompt);
       print("RAW LLM OUTPUT: $response");
@@ -67,6 +68,10 @@ class _AgentPlanningStep implements WorkflowStep {
       if (decoded != null) {
         if (decoded.containsKey("title") && i == 0) {
           storyTitle = decoded["title"];
+        }
+
+        if (decoded.containsKey("characters") && i == 0) {
+          allCharacters = List<Map<String, dynamic>>.from(decoded["characters"]);
         }
 
         if (decoded.containsKey("scenes")) {
@@ -92,7 +97,7 @@ class _AgentPlanningStep implements WorkflowStep {
       }
     }
 
-    return {"title": storyTitle, "scenes": allScenes};
+    return {"title": storyTitle, "characters": allCharacters, "scenes": allScenes};
   }
 
   Map<String, dynamic>? _safeDecode(String jsonStr) {
