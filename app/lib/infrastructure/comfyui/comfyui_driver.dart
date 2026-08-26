@@ -31,6 +31,10 @@ class ComfyUIDriver {
     // Upload character images first (for IP-Adapter)
     List<dynamic> uploadedCharacters = [];
     if (useIpAdapter) {
+      if (characters.length > 3) {
+        throw Exception(
+            "Maximum 3 characters supported for regional identity per scene. Found ${characters.length}.");
+      }
       for (final char in characters) {
         final path = char["imagePath"] as String;
         try {
@@ -39,10 +43,10 @@ class ComfyUIDriver {
           newChar["imagePath"] = uploadedName;
           uploadedCharacters.add(newChar);
         } catch (e) {
-          debugPrint(
-            "Warning: Failed to upload character image $path. Error: $e",
+          throw Exception(
+            "Character Identity Enforcement Failed: Could not upload character image '$path'. "
+            "Ensure the file exists and ComfyUI is reachable. Error: $e",
           );
-          uploadedCharacters.add(char); // Fallback to original
         }
       }
     }
@@ -99,10 +103,8 @@ class ComfyUIDriver {
     final resolution = context.appSettings.imageResolution;
     adapter.setResolution(resolution);
 
-    // Apply hardware-based performance profile
-    if (useIpAdapter) {
-      adapter.applyPerformanceProfile(context.appSettings.performanceMode);
-    }
+    // Apply hardware-based performance profile (applies to Image and Video)
+    adapter.applyPerformanceProfile(context.appSettings.performanceMode);
 
     if (isVideo && uploadedVideoSource != null) {
       adapter.setInputByClass('LoadImage', 'image', uploadedVideoSource);

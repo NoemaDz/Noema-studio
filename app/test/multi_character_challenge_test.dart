@@ -13,7 +13,6 @@ import 'package:noema_studio/core/plugins/core_pipeline_plugin.dart';
 import 'package:noema_studio/core/plugins/ingestion_plugin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
-import 'package:noema_studio/core/providers/async_provider.dart';
 import 'package:noema_studio/main.dart';
 
 void main() {
@@ -54,10 +53,16 @@ void main() {
       print("--- [MULTI-CHARACTER CHALLENGE START] ---");
       noema.bootstrap.jobMonitor.start();
 
-      final char1Path = "/home/nabil/.gemini/antigravity/brain/2e2c4353-6599-408f-ae1a-dd161a249e1b/character_1_man_1787692011661.jpg";
-      final char2Path = "/home/nabil/.gemini/antigravity/brain/2e2c4353-6599-408f-ae1a-dd161a249e1b/character_2_woman_1787692026314.jpg";
-      final char3Path = "/home/nabil/.gemini/antigravity/brain/2e2c4353-6599-408f-ae1a-dd161a249e1b/character_3_man_beard_1787692041556.jpg";
+      // Use local test assets instead of hardcoded absolute paths
+      final char1Path = "test/assets/char1.jpg";
+      final char2Path = "test/assets/char2.jpg";
+      final char3Path = "test/assets/char3.jpg";
 
+      // Dynamically skip if we don't have the assets downloaded locally
+      if (!File(char1Path).existsSync() || !File(char2Path).existsSync() || !File(char3Path).existsSync()) {
+        print("Skipping Multi-Character Challenge because local test assets are missing.");
+        return;
+      }
       final char1 = Character(
         id: "c1",
         name: "Man 1",
@@ -127,6 +132,13 @@ void main() {
           print(
             "Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
           );
+        }
+
+        // Assertions for a true test
+        expect(finishedProject.images.length, 3, reason: "Expected 3 generated images");
+        for (final img in finishedProject.images) {
+          expect(img.asset, isNotNull, reason: "Image asset should be successfully generated");
+          expect(File(img.asset!.path).existsSync(), isTrue, reason: "Generated file must exist on disk");
         }
       } catch (e) {
         fail("Pipeline failed: $e");

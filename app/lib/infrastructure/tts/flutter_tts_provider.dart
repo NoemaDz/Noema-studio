@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../../core/providers/tts_provider.dart';
 import '../../models/job.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -32,8 +33,17 @@ class FlutterTTSProvider extends TTSProvider {
     final outputPath = p.join(outputDir.path, fileName);
 
     try {
-      // Set to a decent voice/language if possible
-      await flutterTts.setLanguage("en-US");
+      if (voiceProfile != null) {
+        try {
+          await flutterTts.setVoice({"name": voiceProfile, "locale": "en-US"});
+        } catch (e) {
+          debugPrint("Failed to set local voice: $e");
+          await flutterTts.setLanguage("en-US");
+        }
+      } else {
+        await flutterTts.setLanguage("en-US");
+      }
+      
       await flutterTts.setSpeechRate(0.5);
       await flutterTts.setVolume(1.0);
       await flutterTts.setPitch(1.0);
