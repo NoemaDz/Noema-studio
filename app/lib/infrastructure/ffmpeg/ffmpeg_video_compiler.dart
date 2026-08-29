@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import '../../core/providers/video_compiler_provider.dart';
 import '../../models/job.dart';
 import 'ffmpeg_effect_builder.dart';
@@ -35,11 +36,25 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     final process = await Process.start(executable, args);
     _runningProcesses[jobId] = process;
     
+    final List<int> stdoutBytes = [];
+    final List<int> stderrBytes = [];
+    
+    final stdoutSub = process.stdout.listen(stdoutBytes.addAll);
+    final stderrSub = process.stderr.listen(stderrBytes.addAll);
+    
     final exitCode = await process.exitCode;
     _runningProcesses.remove(jobId);
     
+    await stdoutSub.cancel();
+    await stderrSub.cancel();
+    
     if (exitCode != 0) {
-      throw Exception("FFmpeg failed with exit code $exitCode");
+      final stderrText = utf8.decode(stderrBytes, allowMalformed: true);
+      final stdoutText = utf8.decode(stdoutBytes, allowMalformed: true);
+      print("FFmpeg failed. Args: $args");
+      print("FFmpeg Stderr:\n$stderrText");
+      print("FFmpeg Stdout:\n$stdoutText");
+      throw Exception("FFmpeg failed with exit code $exitCode. Stderr: ${stderrText.trim()}");
     }
     return exitCode;
   }
@@ -63,8 +78,9 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
       );
     }
 
+    Directory? tempDir;
     try {
-      final tempDir = Directory(
+      tempDir = Directory(
         p.join(Directory.systemTemp.path, "noema_compile_$jobId"),
       );
       if (!tempDir.existsSync()) tempDir.createSync();
@@ -106,7 +122,9 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
           finalSceneAudio = resource.audioPaths.first;
         } else {
           // Concatenate multiple audios with a short delay/silence between them (optional, for now just concat)
-          finalSceneAudio = p.join(tempDir.path, "concat_audio_$i.m4a");
+          // NOTE: Output must be .wav, NOT .m4a, because flutter_tts generates pcm_s16le WAV files.
+          // Copying pcm_s16le into an M4A/MP4 container is unsupported and causes exit code 234 (EINVAL).
+          finalSceneAudio = p.join(tempDir.path, "concat_audio_$i.wav");
           final audioListFile = File(p.join(tempDir.path, 'audio_list_$i.txt'));
           final audioListContent = StringBuffer();
           for (final audPath in resource.audioPaths) {
@@ -170,6 +188,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
           if (subtitlesFilter != null) {
             filter += ",$subtitlesFilter";
           }
+          filter += "[v]";
 
           args = [
             '-i', resource.imagePath,
@@ -213,11 +232,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
       await _runFfmpeg(jobId, ffmpegPath, concatArgs);
 
-      // Cleanup temp dir
-      try {
-        tempDir.deleteSync(recursive: true);
-      } catch (_) {}
-
+      // Cleanup temp dir inside try is removed
       return Job(
         id: jobId,
         providerId: id,
@@ -235,6 +250,12 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         status: JobStatus.failed,
         result: "Exception: $e",
       );
+    } finally {
+      try {
+        if (tempDir != null && tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      } catch (_) {}
     }
   }
 }

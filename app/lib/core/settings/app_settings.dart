@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:noema_studio/core/hardware/hardware_service.dart';
 
 class AppSettings extends ChangeNotifier {
@@ -7,7 +8,8 @@ class AppSettings extends ChangeNotifier {
   static const _kLlmModelName = 'llm_model_name';
   static const _kActiveLlmProvider = 'active_llm_provider';
   static const _kOpenAiUrl = 'openai_url';
-  static const _kOpenAiKey = 'openai_key';
+  // NOTE: openai_key is intentionally NOT in SharedPreferences (stored in Secure Storage)
+  static const _kOpenAiKeySecure = 'openai_key';
   static const _kOpenAiModel = 'openai_model';
   static const _kComfyUIUrl = 'comfyui_url';
   static const _kActiveImageProvider = 'active_image_provider';
@@ -38,6 +40,11 @@ class AppSettings extends ChangeNotifier {
   String _imageResolution = '768x512'; // wide landscape
   bool _enableVideoGeneration = false;
 
+  // Secure storage instance (uses platform Keychain/KeyStore/Secret Service)
+  static const _secureStorage = FlutterSecureStorage(
+    lOptions: LinuxOptions(),
+  );
+
   String get ollamaUrl => _ollamaUrl;
   String get llmModelName => _llmModelName;
   String get activeLlmProvider => _activeLlmProvider;
@@ -61,7 +68,8 @@ class AppSettings extends ChangeNotifier {
     _llmModelName = prefs.getString(_kLlmModelName) ?? 'qwen2.5:3b';
     _activeLlmProvider = prefs.getString(_kActiveLlmProvider) ?? 'ollama';
     _openAiUrl = prefs.getString(_kOpenAiUrl) ?? 'https://api.openai.com/v1';
-    _openAiKey = prefs.getString(_kOpenAiKey) ?? '';
+    // Load API key securely from platform Keychain/KeyStore
+    _openAiKey = await _secureStorage.read(key: _kOpenAiKeySecure) ?? '';
     _openAiModel = prefs.getString(_kOpenAiModel) ?? 'gpt-4o';
     _comfyUIUrl = prefs.getString(_kComfyUIUrl) ?? 'http://127.0.0.1:8188';
     _activeImageProvider = prefs.getString(_kActiveImageProvider) ?? 'comfyui';
@@ -121,7 +129,8 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kLlmModelName, llmModelName.trim());
     await prefs.setString(_kActiveLlmProvider, activeLlmProvider);
     await prefs.setString(_kOpenAiUrl, cleanOpenAiUrl);
-    await prefs.setString(_kOpenAiKey, openAiKey.trim());
+    // Save API key securely (NOT in SharedPreferences)
+    await _secureStorage.write(key: _kOpenAiKeySecure, value: openAiKey.trim());
     await prefs.setString(_kOpenAiModel, openAiModel.trim());
     await prefs.setString(_kComfyUIUrl, cleanComfyUIUrl);
     await prefs.setString(_kActiveImageProvider, activeImageProvider);

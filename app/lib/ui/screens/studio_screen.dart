@@ -83,11 +83,13 @@ class _StudioScreenState extends State<StudioScreen> {
 
       await noema.generatePlanning(p);
 
+      if (!mounted) return;
       setState(() {
         _statusText = "Planning complete. Please review scenes.";
         _isGenerating = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _statusText = "Error: $e";
         _isGenerating = false;
@@ -192,6 +194,7 @@ class _StudioScreenState extends State<StudioScreen> {
           files.first.path!,
         );
 
+        if (!mounted) return;
         setState(() {
           _ideaController.text = text;
           _isGenerating = false;
@@ -199,6 +202,7 @@ class _StudioScreenState extends State<StudioScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _statusText = "Import Error: $e";
         _isGenerating = false;

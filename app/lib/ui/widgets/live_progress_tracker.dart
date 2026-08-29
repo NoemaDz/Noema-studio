@@ -16,7 +16,9 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
   StreamSubscription? _subscription;
   void _onJobUpdate(Job job) {
     if (mounted) {
-      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
     }
   }
 
@@ -122,11 +124,14 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
               Expanded(
                 child: Row(
                   children: [
-                    Text(
-                      _getJobTitle(job),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        _getJobTitle(job),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 6),
