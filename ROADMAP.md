@@ -31,14 +31,24 @@ This document outlines the strategic phases and technical milestones for Noema S
 - [x] ComfyUI Emergency VRAM Cleanup (`/free` and `/interrupt` signal dispatch on cancellation)
 - [x] End-to-End Test Suite & Static Analysis Verification (`flutter analyze`: 0 issues)
 
-## Phase 4: Plugin Ecosystem & Pro Features (Current Target)
-*Focus: Opening the platform to external contributors and commercial cloud APIs.*
+## Phase 4A: RC1 Verification & 1.0 Foundation (Current Target)
+*Focus: End-to-End stress testing, pipeline resilience, and achieving a production-ready 1.0.0 release.*
 
+- [ ] Full End-to-End Execution (Idea → Text-to-Image → Image-to-Video → Final MP4)
+- [ ] Crash/Recovery & Persistence Validation (Simulating unexpected terminations)
+- [ ] VRAM/OOM Management & Cleanup Verification (Ensuring `/free` and `/interrupt` work properly)
+- [ ] Interactive Cancellation & Job State Machine Stress Test
+- [ ] UI Performance and Resilience under high concurrency
+- [ ] CI/CD Pipeline & Automated Tests expansion
+
+## Phase 4B: Plugin Ecosystem & Cloud Providers (Post 1.0.0)
+*Focus: Capability-Based Orchestration and extending platform capabilities via cloud and plugins.*
+
+- [ ] Capability-Based Orchestration (`If VRAM < 8GB, route to Cloud Provider`)
 - [ ] Formalize `IPlugin` SDK and capabilities
 - [ ] Cloud Video Providers: Runway ML, Sora, Veo integrations
 - [ ] Lip-syncing integration (Wav2Lip / SadTalker)
 - [ ] Automatic Sound Effects (SFX) and Music Generation based on scene mood
-- [ ] Capability-Based Orchestration (`If VRAM < 8GB, route to Cloud Provider`)
 
 ---
 *Note: This roadmap is a living document and will evolve based on community feedback and open-source contributions.*
