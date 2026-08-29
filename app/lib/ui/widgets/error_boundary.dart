@@ -12,15 +12,32 @@ class ErrorBoundary extends StatefulWidget {
 
 class _ErrorBoundaryState extends State<ErrorBoundary> {
   FlutterErrorDetails? _errorDetails;
+  Key _childKey = UniqueKey();
 
   @override
   void initState() {
     super.initState();
-    // Catch custom widget build errors
-    ErrorWidget.builder = (FlutterErrorDetails details) {
+    _registerCustomErrorWidget();
+  }
+
+  void _registerCustomErrorWidget() {
+    final oldHandler = FlutterError.onError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      if (mounted) {
+        setState(() {
+          _errorDetails = details;
+        });
+      }
       CrashLogger.logCrash(details.exception, details.stack, context: 'WIDGET_BUILD_ERROR');
-      return _buildErrorCard(details);
+      if (oldHandler != null) oldHandler(details);
     };
+  }
+
+  void _resetErrorState() {
+    setState(() {
+      _errorDetails = null;
+      _childKey = UniqueKey(); // Forces unmount and remount of child widget tree
+    });
   }
 
   Widget _buildErrorCard(FlutterErrorDetails details) {
@@ -49,7 +66,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
               const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 48),
               const SizedBox(height: 16),
               const Text(
-                "Something went wrong",
+                "UI Error Encountered",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -73,12 +90,8 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text("Recover Application"),
-                onPressed: () {
-                  setState(() {
-                    _errorDetails = null;
-                  });
-                },
+                label: const Text("Recover Subtree"),
+                onPressed: _resetErrorState,
               ),
             ],
           ),
@@ -92,6 +105,9 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     if (_errorDetails != null) {
       return _buildErrorCard(_errorDetails!);
     }
-    return widget.child;
+    return KeyedSubtree(
+      key: _childKey,
+      child: widget.child,
+    );
   }
 }

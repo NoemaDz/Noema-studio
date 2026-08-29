@@ -81,8 +81,8 @@ class ComfyUIPreflightChecker {
   }
 
   /// Validates a full API prompt (workflow JSON map) against installed nodes & models.
-  Future<PreflightCheckResult> validateWorkflow(Map<String, dynamic> promptJson) async {
-    final objectInfo = await fetchObjectInfo();
+  Future<PreflightCheckResult> validateWorkflow(Map<String, dynamic> promptJson, {bool isRetry = false}) async {
+    final objectInfo = await fetchObjectInfo(forceRefresh: isRetry);
 
     for (final entry in promptJson.entries) {
       final nodeData = entry.value;
@@ -93,6 +93,10 @@ class ComfyUIPreflightChecker {
 
       // 1. Check if class_type exists on server
       if (!objectInfo.containsKey(classType)) {
+        if (!isRetry) {
+          // Self-healing: force refresh cache in case node was just installed
+          return validateWorkflow(promptJson, isRetry: true);
+        }
         return PreflightCheckResult.missingNode(classType);
       }
 
@@ -121,6 +125,10 @@ class ComfyUIPreflightChecker {
             final availableModels = (paramSpec[0] as List).cast<String>();
             // If models list is non-empty and does not contain requested file
             if (availableModels.isNotEmpty && !availableModels.contains(paramValue)) {
+              if (!isRetry) {
+                // Self-healing: force refresh cache in case model file was just placed on server
+                return validateWorkflow(promptJson, isRetry: true);
+              }
               return PreflightCheckResult.missingModel(
                 nodeClass: classType,
                 input: paramName,
