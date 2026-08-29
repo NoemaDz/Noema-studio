@@ -47,9 +47,13 @@ class ProjectSynchronizer {
   }
 
   Future<void> synchronize(Job job) async {
+    // Always update the savedJobs snapshot before saving
+    _updateSavedJobs();
+
     if (job.status == JobStatus.failed) {
       // If a job fails, we should update the UI to show the error
       state.refresh();
+      saveProject(project);
       return;
     }
 
@@ -138,5 +142,13 @@ class ProjectSynchronizer {
       }
       return;
     }
+  }
+
+  /// Snapshots currently active (non-terminal) jobs into the project
+  /// so they survive app restarts.
+  void _updateSavedJobs() {
+    project.savedJobs
+      ..clear()
+      ..addAll(jobManager.snapshotActiveJobs());
   }
 }

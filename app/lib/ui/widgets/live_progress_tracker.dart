@@ -63,14 +63,21 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
         icon = Icons.schedule;
         color = Colors.grey;
         break;
+      case JobStatus.starting:
+      case JobStatus.retrying:
       case JobStatus.running:
         icon = Icons.autorenew;
         color = Colors.blue;
+        break;
+      case JobStatus.cancelling:
+        icon = Icons.cancel_outlined;
+        color = Colors.orange;
         break;
       case JobStatus.completed:
         icon = Icons.check_circle;
         color = Colors.green;
         break;
+      case JobStatus.cancelled:
       case JobStatus.failed:
         icon = Icons.error;
         color = Colors.red;

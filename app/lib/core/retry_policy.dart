@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'errors/noema_exception.dart';
 
 class RetryPolicy {
   final int maxRetries;
@@ -14,6 +15,9 @@ class RetryPolicy {
   });
 
   bool _defaultShouldRetry(Exception e) {
+    if (e is NoemaException) {
+      return e.isRetryable;
+    }
     if (e is TimeoutException || e is SocketException) return true;
     final msg = e.toString();
     if (msg.contains("500") ||

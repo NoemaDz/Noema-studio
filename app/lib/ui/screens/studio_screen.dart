@@ -10,6 +10,7 @@ import '../widgets/video_preview.dart';
 import '../widgets/storyboard_view.dart';
 import '../../models/story.dart' as import_story;
 import '../../models/generation_state.dart';
+import '../../core/cancellation_token.dart';
 import '../widgets/generation_panel.dart';
 import '../widgets/scene_editor_view.dart';
 import '../widgets/glass_container.dart';
@@ -27,6 +28,7 @@ class _StudioScreenState extends State<StudioScreen> {
   final _ideaController = TextEditingController();
   bool _isGenerating = false;
   String _statusText = "Ready";
+  CancellationToken? _cancelToken;
 
   @override
   void initState() {
@@ -124,31 +126,53 @@ class _StudioScreenState extends State<StudioScreen> {
     setState(() {
       _isGenerating = true;
       _statusText = "Starting production phase...";
+      _cancelToken = CancellationToken();
     });
 
     try {
-      final synchronizer = ProjectSynchronizer(
-        project: p,
-        registry: noema.bootstrap.providerRegistry,
-        state: noema.bootstrap.projectState,
-        jobManager: noema.bootstrap.jobManager,
-        saveProject: noema.saveProject,
+      await noema.generateProduction(
+        p,
+        cancellationToken: _cancelToken,
+        onUpdate: (status) {
+          if (mounted) {
+            setState(() {
+              _statusText = status;
+            });
+          }
+        },
       );
-      synchronizer.attach(noema.bootstrap.jobEvents);
-      noema.bootstrap.jobMonitor.start();
 
-      await noema.generateProduction(p);
-
-      setState(() {
-        _statusText = "Pipeline started. Processing in background...";
-        _isGenerating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _statusText = "Pipeline completed.";
+          _isGenerating = false;
+          _cancelToken = null;
+        });
+      }
+    } on CancelledException {
+      if (mounted) {
+        setState(() {
+          _statusText = "Pipeline cancelled.";
+          _isGenerating = false;
+          _cancelToken = null;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _statusText = "Error: $e";
-        _isGenerating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _statusText = "Error: $e";
+          _isGenerating = false;
+          _cancelToken = null;
+        });
+      }
     }
+  }
+
+  void _cancelGeneration() {
+    _cancelToken?.cancel();
+    setState(() {
+      _statusText = "Cancelling pipeline...";
+    });
   }
 
   Future<void> _importStory() async {
@@ -222,6 +246,12 @@ class _StudioScreenState extends State<StudioScreen> {
       try {
         final project = await noema.openProject(files.first.path!);
         noema.bootstrap.projectState.setProject(project);
+
+        // Restore any previously active jobs into the JobManager
+        if (project.savedJobs.isNotEmpty) {
+          noema.bootstrap.jobManager.restoreJobs(project.savedJobs);
+          debugPrint('StudioScreen: Restored ${project.savedJobs.length} saved jobs.');
+        }
 
         final synchronizer = ProjectSynchronizer(
           project: project,
@@ -375,6 +405,7 @@ class _StudioScreenState extends State<StudioScreen> {
                                 .toList()
                           : [],
                       onGenerate: _generateProject,
+                      onCancel: _cancelGeneration,
                       onImportStory: _importStory,
                     ),
 

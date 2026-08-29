@@ -24,7 +24,11 @@ class JobManager {
     final job = find(id);
 
     if (job != null) {
-      job.status = status;
+      if (!job.transitionTo(status)) {
+        // Log illegal transition attempt
+        // TODO: use structured logging later
+        print("WARNING: Illegal transition attempted for Job ${job.id} to $status");
+      }
     }
   }
 
@@ -40,9 +44,20 @@ class JobManager {
     final job = find(id);
 
     if (job != null) {
-      job.status = JobStatus.completed;
-      job.progress = 1.0;
-      job.result = result;
+      if (job.transitionTo(JobStatus.completed)) {
+        job.progress = 1.0;
+        job.result = result;
+      }
+    }
+  }
+
+  void fail(String id, String error) {
+    final job = find(id);
+
+    if (job != null) {
+      if (job.transitionTo(JobStatus.failed)) {
+        job.result = error;
+      }
     }
   }
 
@@ -60,6 +75,27 @@ class JobManager {
 
   bool contains(String id) {
     return find(id) != null;
+  }
+
+  /// Restores previously saved jobs into the manager.
+  /// Skips jobs that are already tracked (by id).
+  void restoreJobs(List<Job> jobs) {
+    for (final job in jobs) {
+      if (!contains(job.id)) {
+        _jobs.add(job);
+      }
+    }
+  }
+
+  /// Returns a snapshot of all non-terminal jobs for persistence.
+  /// These are the jobs that should be saved in the project file
+  /// so they can be resumed if the app restarts.
+  List<Job> snapshotActiveJobs() {
+    return _jobs.where((job) =>
+      job.status != JobStatus.completed &&
+      job.status != JobStatus.failed &&
+      job.status != JobStatus.cancelled
+    ).toList();
   }
 
   Future<void> waitForCompletion(String id, {CancellationToken? token}) async {

@@ -6,6 +6,7 @@ import '/core/job_monitor.dart';
 import '/core/providers/image_provider.dart';
 import '/core/job_events.dart';
 import '/core/pipeline/project_pipeline.dart';
+import '../../core/cancellation_token.dart';
 import '../../presentation/state/project_state.dart';
 import '../../core/providers/provider_registry.dart';
 import '../../core/job_manager.dart';
@@ -67,7 +68,7 @@ class ProjectGenerationService {
     return project;
   }
 
-  Future<NoemaProject> generateProduction(NoemaProject project) async {
+  Future<NoemaProject> generateProduction(NoemaProject project, {CancellationToken? cancellationToken, Function(String)? onUpdate}) async {
     final synchronizer = ProjectSynchronizer(
       project: project,
       registry: providerRegistry,
@@ -80,8 +81,12 @@ class ProjectGenerationService {
 
     await projectPipeline.generateProduction(
       project,
+      cancellationToken: cancellationToken,
       onUpdate: (status) {
         projectState.setPipelineStatus(status);
+        if (onUpdate != null) {
+          onUpdate(status);
+        }
       },
     );
 

@@ -76,18 +76,18 @@ class OpenAIImageProvider extends ImageProvider {
         final imageUrl = data["data"][0]["url"];
 
         final job = _jobs[jobId]!;
-        job.status = JobStatus.completed;
+        job.transitionTo(JobStatus.completed);
         job.progress = 1.0;
         job.metadata["url"] = imageUrl;
       } else {
         final job = _jobs[jobId]!;
-        job.status = JobStatus.failed;
+        job.transitionTo(JobStatus.failed);
         job.metadata["error"] =
             "OpenAI Error: ${response.statusCode} - ${response.body}";
       }
     } catch (e) {
       final job = _jobs[jobId]!;
-      job.status = JobStatus.failed;
+      job.transitionTo(JobStatus.failed);
       job.metadata["error"] = "Exception: $e";
     }
   }
@@ -96,7 +96,7 @@ class OpenAIImageProvider extends ImageProvider {
   Future<void> updateJobStatus(Job job) async {
     final knownJob = _jobs[job.id];
     if (knownJob != null) {
-      job.status = knownJob.status;
+      job.forceStatus(knownJob.status);
       job.result = knownJob.result;
       job.metadata = knownJob.metadata;
     }
@@ -121,6 +121,16 @@ class OpenAIImageProvider extends ImageProvider {
         final file = File(p.join(outputDir, "dalle3_image.png"));
         await file.writeAsBytes(response.bodyBytes);
 
+        // --- OUTPUT VERIFICATION ---
+        if (!await file.exists()) {
+          throw Exception("Output Verification Failed: File does not exist on disk.");
+        }
+        final length = await file.length();
+        if (length == 0) {
+          throw Exception("Output Verification Failed: File is 0 bytes.");
+        }
+        // ---------------------------
+
         return Asset(id: jobId, type: AssetType.image, path: file.path);
       }
     } catch (e) {
@@ -137,8 +147,8 @@ class OpenAIImageProvider extends ImageProvider {
     // Setting the job to failed ensures the PipelineEngine moves on and ignores the result.
     if (_jobs.containsKey(jobId)) {
       final job = _jobs[jobId]!;
-      if (job.status == JobStatus.running) {
-        job.status = JobStatus.failed;
+      if (job.status == JobStatus.running || job.status == JobStatus.queued || job.status == JobStatus.starting) {
+        job.transitionTo(JobStatus.cancelled);
         job.metadata["error"] = "Cancelled by user";
       }
     }

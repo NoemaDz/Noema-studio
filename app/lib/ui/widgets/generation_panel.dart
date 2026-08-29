@@ -12,6 +12,7 @@ class GenerationPanel extends StatelessWidget {
   final String pipelineStatus;
   final List<Job> jobs;
   final VoidCallback onGenerate;
+  final VoidCallback onCancel;
   final VoidCallback onImportStory;
 
   const GenerationPanel({
@@ -22,6 +23,7 @@ class GenerationPanel extends StatelessWidget {
     required this.pipelineStatus,
     required this.jobs,
     required this.onGenerate,
+    required this.onCancel,
     required this.onImportStory,
   });
 
@@ -142,6 +144,7 @@ class GenerationPanel extends StatelessWidget {
           _AnimatedGenerateButton(
             isGenerating: isGenerating,
             onGenerate: onGenerate,
+            onCancel: onCancel,
           ),
           const SizedBox(height: 16),
           ListenableBuilder(
@@ -220,10 +223,12 @@ class GenerationPanel extends StatelessWidget {
 class _AnimatedGenerateButton extends StatefulWidget {
   final bool isGenerating;
   final VoidCallback onGenerate;
+  final VoidCallback onCancel;
 
   const _AnimatedGenerateButton({
     required this.isGenerating,
     required this.onGenerate,
+    required this.onCancel,
   });
 
   @override
@@ -295,7 +300,15 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
                 : null,
           ),
           child: FilledButton.icon(
-            onPressed: widget.isGenerating ? null : widget.onGenerate,
+            onPressed: widget.isGenerating ? widget.onCancel : widget.onGenerate,
+            style: FilledButton.styleFrom(
+              backgroundColor: widget.isGenerating 
+                ? Theme.of(context).colorScheme.error 
+                : Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             icon: widget.isGenerating
                 ? const SizedBox(
                     width: 20,
@@ -311,15 +324,10 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
               builder: (context, _) {
                 final isVideo = noema.bootstrap.appSettings.enableVideoGeneration;
                 return Text(
-                  widget.isGenerating ? "Generating..." : (isVideo ? "Generate Video" : "Generate Image"),
+                  widget.isGenerating ? "Cancel Generation" : (isVideo ? "Generate Video" : "Generate Image"),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 );
               }
-            ),
-            style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
             ),
           ),
         );

@@ -175,11 +175,11 @@ class ComfyUIDriver {
         final pending = queueData["queue_pending"] as List;
 
         if (running.any((q) => q[1] == job.id)) {
-          job.status = JobStatus.running;
+          job.transitionTo(JobStatus.running);
           return;
         }
         if (pending.any((q) => q[1] == job.id)) {
-          job.status = JobStatus.queued;
+          job.transitionTo(JobStatus.queued);
           return;
         }
       }
@@ -197,15 +197,15 @@ class ComfyUIDriver {
             final completed = jobHistory['status']['completed'] == true;
             
             if (statusStr == 'success' && completed) {
-              job.status = JobStatus.completed;
+              job.transitionTo(JobStatus.completed);
               _notFoundCounts.remove(job.id);
               return;
             } else if (statusStr == 'error') {
-              job.status = JobStatus.failed;
+              job.transitionTo(JobStatus.failed);
               _notFoundCounts.remove(job.id);
               try {
                 final messages = jobHistory['status']['messages'] as List;
-                job.result = ComfyUIErrorParser.parseError(messages);
+                job.result = ComfyUIErrorParser.parseError(messages).toString();
               } catch (e) {
                 job.result = "Failed to parse ComfyUI error: $e";
               }
@@ -230,7 +230,7 @@ class ComfyUIDriver {
     _notFoundCounts[job.id] = currentNotFound;
     
     if (currentNotFound > 3) {
-      job.status = JobStatus.failed;
+      job.transitionTo(JobStatus.failed);
       job.result = "Job not found in queue or history after 3 polls";
       _notFoundCounts.remove(job.id);
     }
@@ -302,6 +302,20 @@ class ComfyUIDriver {
             await file.create(recursive: true);
             await file.writeAsBytes(assetResponse.bodyBytes);
             debugPrint("ComfyUIDriver: Saved to $localPath");
+
+            // --- OUTPUT VERIFICATION ---
+            if (!await file.exists()) {
+              throw Exception("Output Verification Failed: File does not exist on disk.");
+            }
+            final length = await file.length();
+            if (length == 0) {
+              throw Exception("Output Verification Failed: File is 0 bytes.");
+            }
+            final ext = p.extension(localPath).toLowerCase();
+            if (ext != '.png' && ext != '.mp4' && ext != '.webp' && ext != '.gif') {
+              throw Exception("Output Verification Failed: Invalid extension '$ext'.");
+            }
+            // ---------------------------
 
             return Asset(
               id: filename,

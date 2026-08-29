@@ -65,12 +65,58 @@ class SceneImageStage extends PipelineStage {
     context.set('options', scene.extras);
 
     try {
-      final result = await engine.runWithContext(workflow, context);
-      final job = result.get<Job>('image');
-      if (job != null) {
-        job.metadata['title'] = 'Generating Scene ${scene.id} Image';
-        jobManager.add(job);
-        project.jobIds.add(job.id);
+      await _submitAndWait(workflow, context, scene, project);
+    } catch (e) {
+      // ── IPAdapter Automatic Fallback ─────────────────────────────────────
+      // If the job failed because IPAdapter models are not installed on this
+      // machine, retry transparently with text_to_image (no characters).
+      // This makes the app "Plug & Play" regardless of model availability.
+      final errorStr = e.toString();
+      final isIpAdapterError = errorStr.contains('modelNotFound') ||
+          errorStr.contains('IPAdapter') ||
+          errorStr.contains('IPAdapterUnifiedLoader') ||
+          errorStr.contains('ip_adapter');
+
+      if (isIpAdapterError && characterRefs.isNotEmpty) {
+        debugPrint(
+          'SceneImageStage: IPAdapter model missing for scene ${scene.id}. '
+          'Retrying with text_to_image fallback (no character refs)...',
+        );
+        // Strip character refs so ComfyUIDriver picks text_to_image workflow
+        scene.extras['characters'] = <Map<String, dynamic>>[];
+        final fallbackContext = WorkflowContext();
+        fallbackContext.set('prompt', scene.imagePrompt ?? scene.description);
+        fallbackContext.set('options', scene.extras);
+        try {
+          await _submitAndWait(workflow, fallbackContext, scene, project);
+        } catch (fallbackErr) {
+          debugPrint('SceneImageStage: Fallback also failed for scene ${scene.id}: $fallbackErr');
+          rethrow;
+        }
+      } else {
+        debugPrint('SceneImageStage: ERROR scene ${scene.id}: $e');
+        rethrow;
+      }
+    }
+  }
+
+  /// Submits the image job and waits for completion.
+  Future<void> _submitAndWait(
+    ImageWorkflow workflow,
+    WorkflowContext context,
+    Scene scene,
+    NoemaProject project,
+  ) async {
+    final result = await engine.runWithContext(workflow, context);
+    final job = result.get<Job>('image');
+    if (job != null) {
+      job.metadata['title'] = 'Generating Scene ${scene.id} Image';
+      jobManager.add(job);
+      project.jobIds.add(job.id);
+
+      // Only add a new GeneratedImage entry if not already tracked
+      final alreadyTracked = project.images.any((img) => img.sceneId == scene.id);
+      if (!alreadyTracked) {
         project.images.add(
           GeneratedImage(
             sceneId: scene.id,
@@ -78,26 +124,43 @@ class SceneImageStage extends PipelineStage {
             prompt: scene.description,
           ),
         );
-        debugPrint('SceneImageStage: Scene ${scene.id} job queued ✓');
-
-        // Wait for job to complete
-        try {
-          await jobManager.waitForCompletion(job.id, token: cancellationToken);
-        } on CancelledException {
-          debugPrint('SceneImageStage: Cancellation requested, killing job ${job.id} on provider.');
-          await provider.cancelJob(job.id);
-          rethrow;
-        }
-
-        if (job.status == JobStatus.failed) {
-          throw Exception(
-            "Image generation failed for scene ${scene.id}: ${job.result}",
-          );
+      } else {
+        // Update the existing entry's jobId (fallback re-submission)
+        for (final img in project.images) {
+          if (img.sceneId == scene.id) {
+            img.jobId = job.id;
+            break;
+          }
         }
       }
-    } catch (e) {
-      debugPrint('SceneImageStage: ERROR scene ${scene.id}: $e');
-      rethrow;
+      debugPrint('SceneImageStage: Scene ${scene.id} job queued ✓');
+
+      // Wait for job to complete
+      try {
+        await jobManager.waitForCompletion(job.id, token: cancellationToken);
+      } on CancelledException {
+        debugPrint('SceneImageStage: Cancellation requested, killing job ${job.id} on provider.');
+        await provider.cancelJob(job.id);
+        rethrow;
+      }
+
+      if (job.status == JobStatus.failed) {
+        throw Exception(
+          'Image generation failed for scene ${scene.id}: ${job.result}',
+        );
+      }
+
+      final asset = await provider.downloadAsset(job.id);
+      if (asset == null) {
+        throw Exception('Failed to download image asset for scene ${scene.id}.');
+      }
+
+      for (final img in project.images) {
+        if (img.jobId == job.id) {
+          img.asset = asset;
+          break;
+        }
+      }
     }
   }
 }

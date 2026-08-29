@@ -1,4 +1,5 @@
 import 'workflow/workflow_engine.dart';
+import 'cancellation_token.dart';
 import 'noema_project.dart';
 import '../models/job.dart';
 import 'bootstrap.dart';
@@ -58,8 +59,8 @@ class Noema {
     return projectGenerationService.generatePlanning(project);
   }
 
-  Future<NoemaProject> generateProduction(NoemaProject project) {
-    return projectGenerationService.generateProduction(project);
+  Future<NoemaProject> generateProduction(NoemaProject project, {CancellationToken? cancellationToken, Function(String)? onUpdate}) {
+    return projectGenerationService.generateProduction(project, cancellationToken: cancellationToken, onUpdate: onUpdate);
   }
 
   //===========================================

@@ -3,7 +3,7 @@ import 'asset.dart';
 class GeneratedImage {
   final int sceneId;
 
-  final String jobId;
+  String jobId; // mutable: updated on IPAdapter fallback re-submission
 
   final String prompt;
 

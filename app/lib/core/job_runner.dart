@@ -24,6 +24,9 @@ class JobRunner {
             break;
 
           case JobStatus.running:
+          case JobStatus.starting:
+          case JobStatus.retrying:
+          case JobStatus.cancelling:
             // We will no longer artificially increment progress.
             // In the future, this should fetch real progress from the provider.
             break;
@@ -33,6 +36,7 @@ class JobRunner {
             break;
 
           case JobStatus.failed:
+          case JobStatus.cancelled:
             job.progress = 0;
             break;
 
@@ -46,7 +50,7 @@ class JobRunner {
         _transientFailures[job.id] = currentFailures;
         
         if (currentFailures >= 5) {
-          job.status = JobStatus.failed;
+          job.transitionTo(JobStatus.failed);
           job.result = "Failed to update job status after 5 retries: $e";
           _transientFailures.remove(job.id);
         }
