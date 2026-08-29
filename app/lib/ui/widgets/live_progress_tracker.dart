@@ -56,33 +56,59 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
   Widget _buildJobItem(Job job) {
     IconData icon;
     Color color;
+    String statusBadge;
 
     switch (job.status) {
       case JobStatus.pending:
-      case JobStatus.queued:
         icon = Icons.schedule;
         color = Colors.grey;
+        statusBadge = "Pending";
+        break;
+      case JobStatus.queued:
+        icon = Icons.queue_play_next;
+        color = Colors.purpleAccent;
+        statusBadge = "Queued";
         break;
       case JobStatus.starting:
-      case JobStatus.retrying:
+        icon = Icons.hourglass_top;
+        color = Colors.lightBlueAccent;
+        statusBadge = "Starting";
+        break;
       case JobStatus.running:
         icon = Icons.autorenew;
         color = Colors.blue;
+        statusBadge = "Running";
+        break;
+      case JobStatus.retrying:
+        icon = Icons.refresh;
+        color = Colors.orange;
+        statusBadge = "Retrying";
         break;
       case JobStatus.cancelling:
-        icon = Icons.cancel_outlined;
-        color = Colors.orange;
+        icon = Icons.motion_photos_paused;
+        color = Colors.amber;
+        statusBadge = "Cancelling";
         break;
       case JobStatus.completed:
         icon = Icons.check_circle;
         color = Colors.green;
+        statusBadge = "Completed";
         break;
       case JobStatus.cancelled:
+        icon = Icons.cancel;
+        color = Colors.grey;
+        statusBadge = "Cancelled";
+        break;
       case JobStatus.failed:
         icon = Icons.error;
         color = Colors.red;
+        statusBadge = "Failed";
         break;
     }
+
+    final isCanCancel = job.status == JobStatus.queued ||
+        job.status == JobStatus.starting ||
+        job.status == JobStatus.running;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -94,22 +120,50 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
               Icon(icon, size: 16, color: color),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  _getJobTitle(job),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Row(
+                  children: [
+                    Text(
+                      _getJobTitle(job),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: color.withValues(alpha: 0.4), width: 0.5),
+                      ),
+                      child: Text(
+                        statusBadge,
+                        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Text(
                 '${(job.progress * 100).toInt()}%',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
+              if (isCanCancel) ...[
+                const SizedBox(width: 6),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 14, color: Colors.grey),
+                  tooltip: 'Cancel job',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    noema.bootstrap.jobManager.updateStatus(job.id, JobStatus.cancelling);
+                  },
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),
-          const SizedBox(height: 8),
           Container(
             height: 6,
             width: double.infinity,
@@ -152,6 +206,15 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
                     },
                   ),
           ),
+          if (job.result != null && (job.status == JobStatus.failed || job.status == JobStatus.retrying)) ...[
+            const SizedBox(height: 4),
+            Text(
+              job.result!,
+              style: TextStyle(fontSize: 11, color: color, fontStyle: FontStyle.italic),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );

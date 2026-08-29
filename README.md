@@ -42,69 +42,33 @@ graph TD;
     FFmpeg --> FinalVideo[Final MP4 Export]
 ```
 
-## 🗺️ Roadmap & Status (v0.1.0-alpha)
+## 🗺️ Roadmap & Status (Release Candidate 1 - RC 1)
 
-Noema is currently in **Early Alpha**. We believe in transparency for the open-source community regarding what is working, what is in progress, and what is planned.
+Noema Studio has officially reached **Release Candidate 1 (RC 1)** status. All core pipeline stages, error management, state transitions, job persistence, and pre-flight checks are production-hardened.
 
-### ✅ Implemented
-- **Project-Centric Architecture:** Robust `NoemaProject` aggregate root for tracking all creative assets.
-- **True DAG Pipeline Engine:** Stage-level execution graph ensuring tasks process efficiently in correct dependency order.
-- **Agent Planner (Ollama/OpenAI):** AI decomposing ideas into structured stories, scenes, and characters.
-- **Provider Abstraction (V1):** Interface for plugging in `ImageProvider`, `TTSProvider`, `LLMProvider`.
-- **Local Generation (ComfyUI):** Image generation using ComfyUI APIs and Job polling.
+| Capability | Status | Description |
+|---|---|---|
+| **Story Planning** | Stable (RC 1) | Robust JSON extraction and fallback parsing from LLMs. |
+| **Provider Abstraction** | Stable (RC 1) | Interface for plugging in various Image, Video, TTS, LLM providers. |
+| **Job State Machine** | Stable (RC 1) | Formal `transitionTo()` state machine with `starting`, `retrying`, `cancelling`, `cancelled` states. |
+| **ComfyUI Pre-flight Check**| Stable (RC 1) | Validates `/object_info` nodes & models pre-submission with zero-crash fallbacks. |
+| **Output File Verification** | Stable (RC 1) | Validates local disk existence, non-zero file size, and extension formats. |
+| **Project Persistence** | Stable (RC 1) | Auto-snapshots active jobs (`savedJobs`) allowing seamless job restoration after app restarts. |
+| **Crash Recovery & Panic** | Stable (RC 1) | Global `CrashLogger` (`noema_crash.log`) and UI `ErrorBoundary` preventing red screens. |
+| **VRAM Emergency Cleanup** | Stable (RC 1) | Sends `/free` and `/interrupt` signals to ComfyUI on cancellation or error. |
+| **Character Generation** | Beta Candidate | Regional attention and IPAdapter composite character consistency. |
+| **Image-to-Video (I2V)** | Beta Candidate | SVD integration via ComfyUI with hardware performance profiles. |
+| **Multi-Voice (TTS)** | Beta Candidate | Character Voice Profiles mapped to speech synthesis. |
+| **Video Compilation** | Beta Candidate | Intelligent FFmpeg looping and audio sync. |
 
-### 🚧 In Progress
-- **Scene Audio (TTS):** Finalizing dialogue generation via local/cloud TTS.
-- **Video Compilation:** Intelligent FFMPEG looping and stitching to match audio lengths.
-- **Test Coverage:** Building integration tests for pipeline failover and project state persistence.
+---
 
-### 🔮 Planned (Future)
-- **Capability-Based Orchestration:** Dynamic provider resolution (e.g., auto-routing to OpenAI if local ComfyUI lacks VRAM).
-- **Custom Plugin Ecosystem:** Formal SDK for 3rd party providers (Runway, Sora, etc.).
-- **Automatic Audio/SFX/Music:** Generative music synced to scene moods.
-
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Flutter SDK (3.x)
-- FFmpeg (Must be installed and in your system PATH)
-- Git (for Auto-Installer)
-
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/NoemaDz/Noema-studio.git
-   cd Noema-studio/app
-   ```
-2. Install Flutter dependencies:
-   ```bash
-   flutter pub get
-   ```
-3. Run the app (Desktop mode recommended):
-   ```bash
-   flutter run -d linux # or windows / macos
-   ```
-
-### First Launch (Auto-Setup)
-On first launch, if you do not have ComfyUI installed, Noema's **Setup Wizard** will appear. It will automatically:
-- Download the ComfyUI backend into your local AppData/ApplicationSupport folder.
-- Install essential custom nodes (`ComfyUI_IPAdapter_plus`, `AnimateDiff`, etc.).
-
-*Note: You will still need to manually download large Checkpoint (.safetensors) models into the ComfyUI models directory.*
-
-## 🎛️ Settings & Configuration
-Noema is designed to be highly configurable. Go to `File > Settings` to configure:
-- **LLM Provider:** Choose between `Ollama` (Local) or `OpenAI` (Cloud).
-- **TTS Provider:** Choose between `Flutter TTS`, `Edge TTS` (Free Cloud), or `OpenAI TTS`.
-- **FFMPEG Default Effect:** Set default fallback camera effects (zoom, pan).
-
-## 🆕 Recent Updates
-- **DAG Pipeline Engine**: Replaced traditional sequential execution with a powerful Directed Acyclic Graph (DAG) orchestrator (`PipelineEngine`) to process tasks efficiently and securely in parallel at the stage level.
-- **Robust JSON Extraction**: Added `JsonExtractor` to safely parse LLM outputs even if they contain markdown or hallucinations, ensuring the AI agent never crashes the pipeline.
-- **Dynamic Shimmer UI**: Storyboard now features professional Shimmer effects while rendering images, and a live Pipeline Status tracker.
-- **Robust Error Handling**: Added smart fallback mechanisms. If an advanced ComfyUI workflow is missing, Noema gracefully falls back to basic without breaking the pipeline.
-- **Enhanced UI Feedback**: Live Progress Tracker now shows dynamic, context-aware job titles, and pipeline errors are surfaced immediately.
+## 🆕 Recent Updates (RC 1 Hardening)
+- 🛡️ **Crash Recovery & Panic Handler**: Added global `CrashLogger` logging to `noema_crash.log` and wrapped the UI in a custom `ErrorBoundary` widget to eliminate Flutter Red Screens of Death.
+- 🔍 **ComfyUI Pre-flight Validation**: Automatically queries `/object_info` before submitting prompts to detect missing nodes or models, triggering automatic fallback to standard text-to-image without crashing.
+- 💾 **Job State Persistence**: Unfinished jobs are now snapshotted into `project.json` (`savedJobs`) and restored upon opening the project, allowing polling to resume after app restarts.
+- ⚡ **VRAM Emergency Cleanup**: Automatic dispatch of `/free` memory and `/interrupt` requests to ComfyUI upon job cancellation or fatal errors to prevent VRAM memory leaks.
+- ✅ **Strict Output Verification**: All generated outputs are verified on local disk (existence, >0 bytes size, valid file extension) before marking jobs completed.
 
 ## 🤝 Contributing
 Want to build a new plugin to support Runway ML? Or a new Stage for Lip-Syncing? We welcome contributions!

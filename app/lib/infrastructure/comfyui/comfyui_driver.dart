@@ -13,6 +13,8 @@ import '../../core/retry_policy.dart';
 import '../../core/hardware/hardware_service.dart';
 import 'comfyui_workflow_adapter.dart';
 import 'comfyui_error_parser.dart';
+import 'comfyui_preflight_checker.dart';
+import '../../core/errors/noema_exception.dart';
 
 class ComfyUIDriver {
   final PluginContext context;
@@ -120,6 +122,44 @@ class ComfyUIDriver {
       adapter.applyOptions(options);
     }
 
+    // --- PRE-FLIGHT CHECK ---
+    try {
+      final preflightChecker = ComfyUIPreflightChecker(baseUrl: baseUrl);
+      final preflightResult = await preflightChecker.validateWorkflow(adapter.toJson());
+
+      if (!preflightResult.isOk) {
+        final missingStr = preflightResult.missingNode ?? preflightResult.missingModel ?? '';
+        final isIpAdapterMissing = useIpAdapter &&
+            (missingStr.contains('IPAdapter') || missingStr.toLowerCase().contains('ipadapter'));
+
+        if (isIpAdapterMissing) {
+          debugPrint(
+            'ComfyUIDriver Pre-flight: IPAdapter missing (${preflightResult.message}). Falling back to text_to_image.',
+          );
+          final fallbackWorkflow = await rootBundle.loadString("assets/workflows/text_to_image_api.json");
+          final fallbackAdapter = ComfyUIWorkflowAdapter(jsonDecode(fallbackWorkflow));
+          fallbackAdapter.setPrompt(prompt);
+          fallbackAdapter.setResolution(resolution);
+          fallbackAdapter.applyPerformanceProfile(context.appSettings.performanceMode);
+          if (options != null) fallbackAdapter.applyOptions(options);
+
+          return _postPrompt(fallbackAdapter.toJson(), isVideo: isVideo);
+        }
+
+        throw NoemaException.fromType(
+          NoemaErrorType.modelNotFound,
+          "Pre-flight Validation Failed: ${preflightResult.message}",
+        );
+      }
+    } catch (e) {
+      if (e is NoemaException && e.type == NoemaErrorType.modelNotFound) rethrow;
+      debugPrint("ComfyUIDriver Pre-flight Check warning (proceeding to prompt submission): $e");
+    }
+
+    return _postPrompt(adapter.toJson(), isVideo: isVideo);
+  }
+
+  Future<Job> _postPrompt(Map<String, dynamic> promptJson, {required bool isVideo}) async {
     final retryPolicy = const RetryPolicy(maxRetries: 3);
 
     final response = await retryPolicy.execute(
@@ -127,13 +167,14 @@ class ComfyUIDriver {
           .post(
             Uri.parse("$baseUrl/prompt"),
             headers: {"Content-Type": "application/json"},
-            body: jsonEncode({"prompt": adapter.toJson()}),
+            body: jsonEncode({"prompt": promptJson}),
           )
           .timeout(const Duration(seconds: 15)),
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
+      throw NoemaException.fromType(
+        NoemaErrorType.invalidWorkflow,
         "ComfyUI API returned ${response.statusCode}: ${response.body}",
       );
     }
@@ -333,6 +374,19 @@ class ComfyUIDriver {
     }
   }
 
+  Future<void> freeVRAM() async {
+    try {
+      await http.post(
+        Uri.parse("$baseUrl/free"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"unload_models": true, "free_memory": true}),
+      );
+      debugPrint("ComfyUIDriver: Emptied VRAM & freed models via /free");
+    } catch (e) {
+      debugPrint("ComfyUIDriver: Failed to send /free signal: $e");
+    }
+  }
+
   Future<void> cancelJob(String jobId) async {
     try {
       // 1. Remove from pending queue
@@ -345,6 +399,9 @@ class ComfyUIDriver {
 
       // 2. Interrupt current running job
       await http.post(Uri.parse("$baseUrl/interrupt"));
+
+      // 3. Emergency VRAM Cleanup
+      await freeVRAM();
     } catch (e) {
       debugPrint("ComfyUIDriver Error in cancelJob: $e");
     }

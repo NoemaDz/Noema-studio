@@ -81,6 +81,18 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  static String sanitizeUrl(String url, {String defaultUrl = ''}) {
+    var trimmed = url.trim();
+    if (trimmed.isEmpty) return defaultUrl;
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      trimmed = 'http://$trimmed';
+    }
+    while (trimmed.endsWith('/')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed;
+  }
+
   Future<void> saveSettings({
     required String ollamaUrl,
     required String llmModelName,
@@ -99,15 +111,19 @@ class AppSettings extends ChangeNotifier {
     required String imageResolution,
     required bool enableVideoGeneration,
   }) async {
+    final cleanOllama = sanitizeUrl(ollamaUrl, defaultUrl: 'http://localhost:11434');
+    final cleanOpenAiUrl = sanitizeUrl(openAiUrl, defaultUrl: 'https://api.openai.com/v1');
+    final cleanComfyUIUrl = sanitizeUrl(comfyUIUrl, defaultUrl: 'http://127.0.0.1:8188');
+
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(_kOllamaUrl, ollamaUrl);
-    await prefs.setString(_kLlmModelName, llmModelName);
+    await prefs.setString(_kOllamaUrl, cleanOllama);
+    await prefs.setString(_kLlmModelName, llmModelName.trim());
     await prefs.setString(_kActiveLlmProvider, activeLlmProvider);
-    await prefs.setString(_kOpenAiUrl, openAiUrl);
-    await prefs.setString(_kOpenAiKey, openAiKey);
-    await prefs.setString(_kOpenAiModel, openAiModel);
-    await prefs.setString(_kComfyUIUrl, comfyUIUrl);
+    await prefs.setString(_kOpenAiUrl, cleanOpenAiUrl);
+    await prefs.setString(_kOpenAiKey, openAiKey.trim());
+    await prefs.setString(_kOpenAiModel, openAiModel.trim());
+    await prefs.setString(_kComfyUIUrl, cleanComfyUIUrl);
     await prefs.setString(_kActiveImageProvider, activeImageProvider);
     await prefs.setString(_kDefaultVideoEffect, defaultVideoEffect);
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
@@ -121,13 +137,13 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kImageResolution, imageResolution);
     await prefs.setBool(_kEnableVideoGeneration, enableVideoGeneration);
 
-    _ollamaUrl = ollamaUrl;
-    _llmModelName = llmModelName;
+    _ollamaUrl = cleanOllama;
+    _llmModelName = llmModelName.trim();
     _activeLlmProvider = activeLlmProvider;
-    _openAiUrl = openAiUrl;
-    _openAiKey = openAiKey;
-    _openAiModel = openAiModel;
-    _comfyUIUrl = comfyUIUrl;
+    _openAiUrl = cleanOpenAiUrl;
+    _openAiKey = openAiKey.trim();
+    _openAiModel = openAiModel.trim();
+    _comfyUIUrl = cleanComfyUIUrl;
     _activeImageProvider = activeImageProvider;
     _defaultVideoEffect = defaultVideoEffect;
     _activeTtsProvider = activeTtsProvider;

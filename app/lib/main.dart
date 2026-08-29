@@ -14,10 +14,14 @@ import 'infrastructure/openai/openai_image_plugin.dart';
 import 'application/comfyui_installer_service.dart';
 import 'ui/screens/setup_wizard_screen.dart';
 
+import 'core/errors/crash_logger.dart';
+import 'ui/widgets/error_boundary.dart';
+
 final noema = Noema();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  CrashLogger.setupGlobalErrorHandler();
 
   noema.init([
     ComfyUIPlugin(),
@@ -32,7 +36,7 @@ void main() async {
 
   await noema.bootstrap.appSettings.loadSettings();
 
-  runApp(const AIStudioApp());
+  runApp(const ErrorBoundary(child: AIStudioApp()));
 }
 
 class AIStudioApp extends StatefulWidget {
