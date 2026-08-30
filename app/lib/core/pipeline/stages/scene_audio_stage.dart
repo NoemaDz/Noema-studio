@@ -71,7 +71,7 @@ class SceneAudioStage extends PipelineStage {
           type: AssetType.audio,
         );
       } else {
-        throw Exception("Audio generation failed: ${job.result}");
+        throw Exception("Audio generation failed: ${job.error?.message ?? 'Unknown error'}");
       }
       project.audios.add(audio);
     }
@@ -124,7 +124,7 @@ class SceneAudioStage extends PipelineStage {
           type: AssetType.audio,
         );
       } else {
-        throw Exception("Audio generation failed: ${job.result}");
+        throw Exception("Audio generation failed: ${job.error?.message ?? 'Unknown error'}");
       }
       project.audios.add(audio);
     }
@@ -164,7 +164,7 @@ class SceneAudioStage extends PipelineStage {
           type: AssetType.audio,
         );
       } else {
-        throw Exception("Audio generation failed: ${job.result}");
+        throw Exception("Audio generation failed: ${job.error?.message ?? 'Unknown error'}");
       }
       project.audios.add(audio);
     }

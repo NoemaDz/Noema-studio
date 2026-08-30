@@ -153,7 +153,7 @@ class SceneImageStage extends PipelineStage {
 
       if (job.status == JobStatus.failed) {
         throw Exception(
-          'Image generation failed for scene ${scene.id}: ${job.result}',
+          'Image generation failed for scene ${scene.id}: ${job.error?.message ?? 'Unknown error'}',
         );
       }
 

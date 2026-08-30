@@ -134,7 +134,7 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
         });
       } else {
         setState(
-          () => _generateError = job.result ?? 'Image generation failed.',
+          () => _generateError = job.error?.message ?? 'Image generation failed.',
         );
       }
     } catch (e) {

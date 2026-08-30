@@ -91,7 +91,7 @@ class SceneVideoStage extends PipelineStage {
 
         if (job.status == JobStatus.failed) {
           throw Exception(
-            "Video generation failed for scene ${scene.id}: ${job.result}",
+            "Video generation failed for scene ${scene.id}: ${job.error?.message ?? 'Unknown error'}",
           );
         }
 

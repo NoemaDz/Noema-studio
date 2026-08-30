@@ -107,7 +107,7 @@ class VideoCompilationStage extends PipelineStage {
     }
 
     if (job.status == JobStatus.failed) {
-      throw Exception("Video compilation failed: ${job.result}");
+      throw Exception("Video compilation failed: ${job.error?.message ?? 'Unknown error'}");
     }
 
     // finalVideoPath will be updated when the job completes, similar to how updateAudioFromJob works.
