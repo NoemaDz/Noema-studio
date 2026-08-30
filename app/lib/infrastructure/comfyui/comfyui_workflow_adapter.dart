@@ -238,11 +238,11 @@ class ComfyUIWorkflowAdapter {
     }
 
     if (activeCharacters > 1) {
-      // For multiple characters, PLUS model takes too much VRAM. Downgrade to STANDARD.
+      // For multiple characters, PLUS model takes too much VRAM. Downgrade to VIT-G.
       setInputByTitle(
         'IPAdapter Unified Loader',
         'preset',
-        'STANDARD (medium strength)',
+        'VIT-G (medium strength)',
       );
       // Also downgrade Ultra to Balanced to remove PersonDetailer and save VRAM
       if (profile == PerformanceProfile.ultra) {
