@@ -9,6 +9,7 @@ import 'plugins/plugin_manager.dart';
 import 'plugins/plugin_context.dart';
 import 'plugins/plugin_interface.dart';
 import 'capabilities/capability_resolver.dart';
+import 'capabilities/hardware_detector.dart';
 import 'pipeline/pipeline_registry.dart';
 import 'workflow/workflow_engine.dart';
 import 'job_runner.dart';
@@ -52,19 +53,15 @@ class Bootstrap {
   late final CharacterExtractionService characterExtractionService;
   late final DocumentIngestionService documentIngestionService;
 
-  Bootstrap() {
+  Bootstrap({HardwareDetector? hardwareDetector}) {
     providerRegistry = ProviderRegistry();
     pipelineRegistry = PipelineRegistry();
     workflowEngine = WorkflowEngine();
     appSettings = AppSettings();
 
     jobManager = JobManager();
-    final hardwareContext = HardwareContext(
-      hasGPU: true, // We assume standard devs have a GPU, mocked for now
-      totalVRAMGB: appSettings.mockVramGB ?? 6,
-      os: 'linux', // Mocked
-      hasCUDA: true, // Mocked
-    );
+    final detector = hardwareDetector ?? DefaultHardwareDetector();
+    final hardwareContext = detector.detect();
     final capabilityResolver = CapabilityResolver(
       providerRegistry,
       hardwareContext,

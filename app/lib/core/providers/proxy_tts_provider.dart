@@ -18,7 +18,7 @@ class ProxyTTSProvider extends TTSProvider {
   bool get available => true;
 
   @override
-  Set<CapabilityType> get capabilities => {};
+  Set<CapabilityType> get capabilities => {CapabilityType.tts};
 
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();

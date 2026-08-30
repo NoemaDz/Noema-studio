@@ -1,12 +1,16 @@
-enum CapabilityType { imageGeneration, videoGeneration, tts, lipSync, sfx }
+enum CapabilityType { imageGeneration, videoGeneration, tts, lipSync, sfx, llm }
 
 class HardwareRequirements {
   final bool requiresGPU;
   final int minimumVRAMGB;
+  final bool requiresCUDA;
+  final String? supportedOS;
 
   const HardwareRequirements({
     this.requiresGPU = false,
     this.minimumVRAMGB = 0,
+    this.requiresCUDA = false,
+    this.supportedOS,
   });
 }
 

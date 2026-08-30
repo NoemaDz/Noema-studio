@@ -19,7 +19,7 @@ class ProxyImageProvider extends ImageProvider {
   bool get available => true;
 
   @override
-  Set<CapabilityType> get capabilities => {};
+  Set<CapabilityType> get capabilities => {CapabilityType.imageGeneration};
 
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();

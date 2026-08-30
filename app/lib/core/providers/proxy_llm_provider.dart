@@ -17,7 +17,7 @@ class ProxyLLMProvider extends LLMProvider {
   bool get available => true;
 
   @override
-  Set<CapabilityType> get capabilities => {};
+  Set<CapabilityType> get capabilities => {CapabilityType.llm};
 
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();

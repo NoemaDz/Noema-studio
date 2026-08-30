@@ -19,7 +19,7 @@ class ProxyVideoProvider extends VideoProvider {
   bool get available => true;
 
   @override
-  Set<CapabilityType> get capabilities => {};
+  Set<CapabilityType> get capabilities => {CapabilityType.videoGeneration};
 
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();

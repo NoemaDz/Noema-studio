@@ -58,6 +58,8 @@ class CapabilityResolver {
     // Strict hardware checks based on declared requirements
     if (req.requiresGPU && !hardware.hasGPU) return false;
     if (hardware.totalVRAMGB < req.minimumVRAMGB) return false;
+    if (req.requiresCUDA && !hardware.hasCUDA) return false;
+    if (req.supportedOS != null && req.supportedOS != hardware.os) return false;
 
     return true;
   }

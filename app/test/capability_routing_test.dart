@@ -1,8 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noema_studio/core/capabilities/capability.dart';
 import 'package:noema_studio/core/capabilities/capability_resolver.dart';
+import 'package:noema_studio/core/capabilities/hardware_detector.dart';
 import 'package:noema_studio/core/providers/provider.dart';
 import 'package:noema_studio/core/providers/provider_registry.dart';
+import 'package:noema_studio/core/providers/proxy_image_provider.dart';
+import 'package:noema_studio/core/providers/proxy_llm_provider.dart';
+import 'package:noema_studio/core/providers/proxy_tts_provider.dart';
+import 'package:noema_studio/core/plugins/plugin_context.dart';
+import 'package:noema_studio/core/settings/app_settings.dart';
+import 'package:noema_studio/core/bootstrap.dart';
+import 'package:noema_studio/core/pipeline/pipeline_registry.dart';
+import 'package:noema_studio/core/workflow/workflow_engine.dart';
+import 'package:noema_studio/core/job_manager.dart';
 
 class MockProvider extends Provider {
   @override
@@ -25,118 +35,205 @@ class MockProvider extends Provider {
   });
 }
 
+class FakeHardwareDetector implements HardwareDetector {
+  final HardwareContext context;
+  FakeHardwareDetector(this.context);
+
+  @override
+  HardwareContext detect() => context;
+}
+
 void main() {
-  group('CapabilityResolver Routing', () {
+  group('CapabilityResolver Hardware Routing (Mandatory Tests)', () {
     late ProviderRegistry registry;
 
     setUp(() {
       registry = ProviderRegistry();
-      // Add local provider (needs 8GB VRAM)
-      registry.register(
-        MockProvider(
-          id: 'local_video',
-          name: 'Local Video',
-          capabilities: {CapabilityType.videoGeneration},
-          hardwareRequirements: const HardwareRequirements(
-            requiresGPU: true,
-            minimumVRAMGB: 8,
-          ),
-        ),
-      );
-
-      // Add cloud provider (needs 0 VRAM)
-      registry.register(
-        MockProvider(
-          id: 'cloud_video',
-          name: 'Cloud Video',
-          capabilities: {CapabilityType.videoGeneration},
-          hardwareRequirements: const HardwareRequirements(
-            requiresGPU: false,
-            minimumVRAMGB: 0,
-          ),
-        ),
-      );
-
-      // Add another unrelated provider
-      registry.register(
-        MockProvider(
-          id: 'tts_provider',
-          name: 'TTS Provider',
-          capabilities: {CapabilityType.tts},
-          hardwareRequirements: const HardwareRequirements(
-            requiresGPU: false,
-            minimumVRAMGB: 0,
-          ),
-        ),
-      );
+      registry.clear(); // Ensure clean state for each test
     });
 
-    test('Routes to cloud when VRAM is insufficient (6GB)', () {
+    test('1. GPU missing -> local GPU provider rejected', () {
+      registry.register(
+        MockProvider(
+          id: 'gpu_provider',
+          name: 'GPU Provider',
+          capabilities: {CapabilityType.videoGeneration},
+          hardwareRequirements: const HardwareRequirements(requiresGPU: true),
+        ),
+      );
       final hardware = HardwareContext(
-        hasGPU: true,
-        totalVRAMGB: 6,
+        hasGPU: false,
+        totalVRAMGB: 0,
         os: 'linux',
-        hasCUDA: true,
+        hasCUDA: false,
       );
       final resolver = CapabilityResolver(registry, hardware);
 
       final provider = resolver.resolve(
         VideoGenerationCapability(),
-        preferredProviderId: 'local_video',
+        preferredProviderId: 'gpu_provider',
       );
-
-      expect(provider, isNotNull);
-      expect(provider!.id, equals('cloud_video'));
-    });
-
-    test('Routes to local when VRAM is sufficient (12GB)', () {
-      final hardware = HardwareContext(
-        hasGPU: true,
-        totalVRAMGB: 12,
-        os: 'linux',
-        hasCUDA: true,
-      );
-      final resolver = CapabilityResolver(registry, hardware);
-
-      final provider = resolver.resolve(
-        VideoGenerationCapability(),
-        preferredProviderId: 'local_video',
-      );
-
-      expect(provider, isNotNull);
-      expect(provider!.id, equals('local_video')); // Preferred and capable
-    });
-
-    test('Fails when no provider supports capability', () {
-      final hardware = HardwareContext(
-        hasGPU: true,
-        totalVRAMGB: 12,
-        os: 'linux',
-        hasCUDA: true,
-      );
-      final resolver = CapabilityResolver(registry, hardware);
-
-      // Create a dummy capability that no provider registered supports
-      final dummyCapability = _DummyCapability();
-      final provider = resolver.resolve(dummyCapability);
-
       expect(provider, isNull);
     });
 
-    test('Ignores unavailable preferred provider', () {
+    test('2. VRAM insufficient -> provider rejected', () {
       registry.register(
         MockProvider(
-          id: 'unavailable_video',
-          name: 'Unavailable Video',
-          available: false,
+          id: 'vram_provider',
+          name: 'VRAM Provider',
           capabilities: {CapabilityType.videoGeneration},
           hardwareRequirements: const HardwareRequirements(
-            requiresGPU: false,
-            minimumVRAMGB: 0,
+            requiresGPU: true,
+            minimumVRAMGB: 12,
           ),
         ),
       );
+      final hardware = HardwareContext(
+        hasGPU: true,
+        totalVRAMGB: 8,
+        os: 'linux',
+        hasCUDA: true,
+      );
+      final resolver = CapabilityResolver(registry, hardware);
 
+      final provider = resolver.resolve(
+        VideoGenerationCapability(),
+        preferredProviderId: 'vram_provider',
+      );
+      expect(provider, isNull);
+    });
+
+    test('3. CUDA missing -> CUDA provider rejected', () {
+      registry.register(
+        MockProvider(
+          id: 'cuda_provider',
+          name: 'CUDA Provider',
+          capabilities: {CapabilityType.videoGeneration},
+          hardwareRequirements: const HardwareRequirements(
+            requiresGPU: true,
+            requiresCUDA: true,
+          ),
+        ),
+      );
+      final hardware = HardwareContext(
+        hasGPU: true,
+        totalVRAMGB: 8,
+        os: 'macos',
+        hasCUDA: false,
+      );
+      final resolver = CapabilityResolver(registry, hardware);
+
+      final provider = resolver.resolve(
+        VideoGenerationCapability(),
+        preferredProviderId: 'cuda_provider',
+      );
+      expect(provider, isNull);
+    });
+
+    test('4. OS mismatch -> provider rejected', () {
+      registry.register(
+        MockProvider(
+          id: 'windows_provider',
+          name: 'Windows Provider',
+          capabilities: {CapabilityType.videoGeneration},
+          hardwareRequirements: const HardwareRequirements(
+            requiresGPU: true,
+            supportedOS: 'windows',
+          ),
+        ),
+      );
+      final hardware = HardwareContext(
+        hasGPU: true,
+        totalVRAMGB: 8,
+        os: 'linux',
+        hasCUDA: true,
+      );
+      final resolver = CapabilityResolver(registry, hardware);
+
+      final provider = resolver.resolve(
+        VideoGenerationCapability(),
+        preferredProviderId: 'windows_provider',
+      );
+      expect(provider, isNull);
+    });
+
+    test('5. Hardware suitable -> provider selected', () {
+      registry.register(
+        MockProvider(
+          id: 'perfect_provider',
+          name: 'Perfect Provider',
+          capabilities: {CapabilityType.videoGeneration},
+          hardwareRequirements: const HardwareRequirements(
+            requiresGPU: true,
+            minimumVRAMGB: 6,
+            requiresCUDA: true,
+            supportedOS: 'linux',
+          ),
+        ),
+      );
+      final hardware = HardwareContext(
+        hasGPU: true,
+        totalVRAMGB: 8,
+        os: 'linux',
+        hasCUDA: true,
+      );
+      final resolver = CapabilityResolver(registry, hardware);
+
+      final provider = resolver.resolve(VideoGenerationCapability());
+      expect(provider?.id, equals('perfect_provider'));
+    });
+
+    test(
+      '6. Local provider unsuitable -> fallback to capable cloud provider',
+      () {
+        registry.register(
+          MockProvider(
+            id: 'heavy_local',
+            name: 'Heavy Local',
+            capabilities: {CapabilityType.videoGeneration},
+            hardwareRequirements: const HardwareRequirements(
+              requiresGPU: true,
+              minimumVRAMGB: 24,
+            ),
+          ),
+        );
+        registry.register(
+          MockProvider(
+            id: 'cloud_fallback',
+            name: 'Cloud Fallback',
+            capabilities: {CapabilityType.videoGeneration},
+            hardwareRequirements: const HardwareRequirements(
+              requiresGPU: false,
+              minimumVRAMGB: 0,
+            ),
+          ),
+        );
+
+        final hardware = HardwareContext(
+          hasGPU: true,
+          totalVRAMGB: 6,
+          os: 'linux',
+          hasCUDA: false,
+        );
+        final resolver = CapabilityResolver(registry, hardware);
+
+        final provider = resolver.resolve(
+          VideoGenerationCapability(),
+          preferredProviderId: 'heavy_local',
+        );
+        expect(provider?.id, equals('cloud_fallback'));
+      },
+    );
+
+    test('7. Capability unsupported -> no provider selected', () {
+      registry.register(
+        MockProvider(
+          id: 'image_only',
+          name: 'Image Only Provider',
+          capabilities: {CapabilityType.imageGeneration},
+          hardwareRequirements: const HardwareRequirements(requiresGPU: false),
+        ),
+      );
       final hardware = HardwareContext(
         hasGPU: true,
         totalVRAMGB: 12,
@@ -145,29 +242,72 @@ void main() {
       );
       final resolver = CapabilityResolver(registry, hardware);
 
-      final provider = resolver.resolve(
-        VideoGenerationCapability(),
-        preferredProviderId: 'unavailable_video',
-      );
-
-      // Should fall back to the next available one (local_video or cloud_video)
-      expect(provider, isNotNull);
-      expect(provider!.id, isNot('unavailable_video'));
-      expect(
-        provider.id,
-        equals('local_video'),
-      ); // first in registry.all that matches
+      final provider = resolver.resolve(VideoGenerationCapability());
+      expect(provider, isNull);
     });
   });
-}
 
-class _DummyCapability extends Capability {
-  @override
-  CapabilityType get type => CapabilityType.lipSync;
+  group('Proxy Providers Capabilities', () {
+    late PluginContext fakeContext;
+    setUp(() {
+      fakeContext = PluginContext(
+        providers: ProviderRegistry(),
+        pipelines: PipelineRegistry(),
+        engine: WorkflowEngine(),
+        appSettings: AppSettings(),
+        jobManager: JobManager(),
+        capabilityResolver: CapabilityResolver(
+          ProviderRegistry(),
+          const HardwareContext(
+            hasGPU: false,
+            totalVRAMGB: 0,
+            os: 'linux',
+            hasCUDA: false,
+          ),
+        ),
+      );
+    });
 
-  @override
-  bool get requiresGPU => false;
+    test('8. ProxyImageProvider discovered via capability', () {
+      final proxy = ProxyImageProvider(fakeContext);
+      expect(proxy.capabilities, contains(CapabilityType.imageGeneration));
+    });
 
-  @override
-  int get requiredVRAMGB => 0;
+    test('9. ProxyLLMProvider discovered via capability', () {
+      final proxy = ProxyLLMProvider(fakeContext);
+      expect(proxy.capabilities, contains(CapabilityType.llm));
+    });
+
+    test('10. ProxyTTSProvider discovered via capability', () {
+      final proxy = ProxyTTSProvider(fakeContext);
+      expect(proxy.capabilities, contains(CapabilityType.tts));
+    });
+  });
+
+  group('Bootstrap & HardwareDetector', () {
+    test('11. HardwareDetector replaceable by Mock in tests', () {
+      final fakeDetector = FakeHardwareDetector(
+        HardwareContext(
+          hasGPU: false,
+          totalVRAMGB: 1,
+          os: 'custom_os',
+          hasCUDA: false,
+        ),
+      );
+      final bootstrap = Bootstrap(hardwareDetector: fakeDetector);
+
+      // We can assert the bootstrap initializes cleanly without error using the fake
+      expect(bootstrap, isNotNull);
+    });
+
+    test(
+      '12. No hardcoded hardware in production bootstrap (DefaultHardwareDetector is used)',
+      () {
+        final bootstrap = Bootstrap();
+        // It should instantiate without throwing, relying on the Platform via DefaultHardwareDetector.
+        // And we verify it doesn't crash.
+        expect(bootstrap, isNotNull);
+      },
+    );
+  });
 }

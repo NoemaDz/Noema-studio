@@ -13,6 +13,10 @@ class ProviderRegistry {
     _providers[provider.id] = provider;
   }
 
+  void clear() {
+    _providers.clear();
+  }
+
   T get<T extends Provider>(String id) {
     final provider = _providers[id];
 
