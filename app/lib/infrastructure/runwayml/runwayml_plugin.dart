@@ -35,6 +35,11 @@ class RunwayMLVideoProvider extends VideoProvider {
 
   @override
   Future<void> cancelJob(String jobId) async {}
+
+  @override
+  Future<JobStatusUpdate> updateJobStatus(Job job) async {
+    return JobStatusUpdate(status: job.status);
+  }
 }
 
 class RunwayMLPlugin extends IPlugin {

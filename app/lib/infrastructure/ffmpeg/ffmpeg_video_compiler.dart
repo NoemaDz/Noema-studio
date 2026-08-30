@@ -20,6 +20,7 @@ import '../../models/artifact_type.dart';
 
 class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   final AppSettings appSettings;
+  final Map<String, Job> _jobs = {};
 
   FFmpegVideoCompilerProvider(this.appSettings);
 
@@ -104,7 +105,8 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         request.parameters['resources'] as List<AudioVideoResource>? ?? [];
     final outputPath =
         request.parameters['output_path'] as String? ??
-        p.join(appSettings.storagePath, 'video_${Uuid().v4()}.mp4');
+        p.join(Directory.systemTemp.path, 'video_${Uuid().v4()}.mp4');
+    final options = request.parameters['options'] as Map<String, dynamic>?;
 
     final jobId = request.jobId ?? const Uuid().v4();
     final job = Job(
@@ -113,8 +115,9 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
       type: "compileVideo",
       status: JobStatus.running,
     );
+    _jobs[jobId] = job;
 
-    _runCompileAsync(job, resources, outputPath);
+    _runCompileAsync(job, resources, outputPath, options);
     return job;
   }
 
@@ -122,6 +125,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     Job job,
     List<AudioVideoResource> resources,
     String outputPath,
+    Map<String, dynamic>? options,
   ) async {
     final jobId = job.id;
     final ffmpegPath = DependencyManager.instance.ffmpegPath;
@@ -306,33 +310,18 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
       await _runFfmpeg(jobId, ffmpegPath, concatArgs);
 
-      // Cleanup temp dir inside try is removed
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "video_compile",
-        metadata: {"outputPath": outputPath},
-        status: JobStatus.completed,
-        progress: 1.0,
-        result: outputPath,
-      );
+      job.metadata["outputPath"] = outputPath;
+      job.result = outputPath;
+      job.progress = 1.0;
+      job.transitionTo(JobStatus.completed);
     } catch (e) {
       if (_cancelledJobs.contains(jobId)) {
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "video_compile",
-          status: JobStatus.cancelled,
-          result: "Job cancelled by user",
-        );
+        job.result = "Job cancelled by user";
+        job.transitionTo(JobStatus.cancelled);
+      } else {
+        job.result = "Exception: $e";
+        job.transitionTo(JobStatus.failed);
       }
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "video_compile",
-        status: JobStatus.failed,
-        result: "Exception: $e",
-      );
     } finally {
       _cancelledJobs.remove(jobId);
       try {
@@ -345,7 +334,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
   @override
   Future<ExecutionResult> getResult(String jobId) async {
-    final job = DependencyManager.instance.jobManager.find(jobId);
+    final job = _jobs[jobId];
     if (job == null) {
       return ExecutionResult.failure(
         JobError(code: 'not_found', message: 'Job not found'),

@@ -13,6 +13,10 @@ import 'package:noema_studio/core/bootstrap.dart';
 import 'package:noema_studio/core/pipeline/pipeline_registry.dart';
 import 'package:noema_studio/core/workflow/workflow_engine.dart';
 import 'package:noema_studio/core/job_manager.dart';
+import 'package:noema_studio/models/job.dart' as noema_job;
+import 'package:noema_studio/core/contracts/execution_request.dart'
+    as noema_contracts;
+import 'package:noema_studio/core/contracts/execution_result.dart';
 
 class MockProvider extends Provider {
   @override
@@ -33,6 +37,18 @@ class MockProvider extends Provider {
     required this.capabilities,
     required this.hardwareRequirements,
   });
+
+  @override
+  Future<noema_job.Job> execute(
+    noema_contracts.ExecutionRequest request,
+  ) async => throw UnimplementedError();
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> cancelJob(String jobId) async {}
 }
 
 class FakeHardwareDetector implements HardwareDetector {

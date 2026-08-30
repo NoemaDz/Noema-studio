@@ -21,7 +21,7 @@ class OllamaProvider extends LLMProvider {
   bool get available => true;
 
   @override
-  Set<CapabilityType> get capabilities => {CapabilityType.textGeneration};
+  Set<CapabilityType> get capabilities => {CapabilityType.llm};
 
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();

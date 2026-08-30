@@ -2,6 +2,8 @@ import '../../core/providers/video_provider.dart';
 import '../../core/workflow/workflow_context.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
 
 class GenerateVideoStep extends WorkflowStep<Job> {
   final VideoProvider provider;
@@ -28,7 +30,12 @@ class GenerateVideoStep extends WorkflowStep<Job> {
     }
 
     final options = context.get<Map<String, dynamic>>("options");
-    final job = await provider.submitJob(prompt, imagePath, options: options);
+    final request = ExecutionRequest(
+      capability: CapabilityType.videoGeneration,
+      input: prompt,
+      parameters: {'imagePath': imagePath},
+    );
+    final job = await provider.execute(request);
 
     job.metadata["prompt"] = prompt;
     job.metadata["imagePath"] = imagePath;

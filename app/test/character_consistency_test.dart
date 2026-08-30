@@ -58,16 +58,16 @@ void main() {
 
       final provider =
           noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
-      final refAsset = await provider.downloadAsset(refJob.id);
+      final refAsset = await provider.getResult(refJob.id);
 
-      if (refAsset == null) {
+      if (!refAsset.isSuccess || refAsset.textOutput == null) {
         throw Exception(
           "Failed to generate reference image for Ali! Status: ${refJob.status}",
         );
       }
 
-      final aliImagePath = refAsset;
-      print("Reference image generated at: ${aliImagePath.path}");
+      final aliImagePath = refAsset.textOutput!;
+      print("Reference image generated at: $aliImagePath");
 
       print("2. Building NoemaProject...");
       final character = Character(
@@ -75,7 +75,7 @@ void main() {
         name: "Ali",
         description: "A handsome young man.",
         prompt: "A handsome young man named Ali, short black hair.",
-        imagePath: aliImagePath.path, // IP-Adapter will use this!
+        imagePath: aliImagePath, // IP-Adapter will use this!
       );
 
       final scene1 = Scene(
@@ -122,10 +122,10 @@ void main() {
         print("Pipeline finished successfully!");
 
         print("\n--- [RESULTS] ---");
-        print("Reference: file://${aliImagePath.path}");
+        print("Reference: file://$aliImagePath");
         for (final img in finishedProject.images) {
           print(
-            "Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+            "Scene Image [${img.sceneId}]: file://${img.artifact?.path ?? 'FAILED'}",
           );
         }
       } catch (e) {

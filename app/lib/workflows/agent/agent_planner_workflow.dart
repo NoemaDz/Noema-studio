@@ -62,7 +62,7 @@ class _AgentPlanningStep implements WorkflowStep {
           "${AgentPromptTemplates.directorSystemPrompt}\n\n$prompt";
 
       final request = ExecutionRequest(
-        capability: CapabilityType.textGeneration,
+        capability: CapabilityType.llm,
         input: fullPrompt,
       );
       final job = await provider.execute(request);

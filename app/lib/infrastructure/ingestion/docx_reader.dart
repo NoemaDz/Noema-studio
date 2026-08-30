@@ -3,7 +3,7 @@ import 'package:archive/archive.dart';
 import '../../core/providers/document_ingestion_provider.dart';
 import '../../core/capabilities/capability.dart';
 
-class DocxReader implements DocumentIngestionProvider {
+class DocxReader extends DocumentIngestionProvider {
   @override
   String get id => 'docx_reader';
 

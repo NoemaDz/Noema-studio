@@ -7,10 +7,9 @@ import '../../core/providers/image_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../core/settings/platform_paths.dart';
 import '../../core/plugins/plugin_context.dart';
-import '../../models/asset_type.dart';
 import '../../models/job.dart';
-import '../contracts/execution_request.dart';
-import '../contracts/execution_result.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 
 class OpenAIImageProvider extends ImageProvider {
   final PluginContext context;
@@ -120,34 +119,43 @@ class OpenAIImageProvider extends ImageProvider {
   Future<ExecutionResult> getResult(String jobId) async {
     final job = _jobs[jobId];
     if (job == null) {
-      return ExecutionResult.failure(Exception("Job not found"));
+      return ExecutionResult.failure(
+        JobError(code: 'not_found', message: "Job not found"),
+      );
     }
     if (job.status != JobStatus.completed) {
-      return ExecutionResult.failure(Exception("Job not completed"));
+      return ExecutionResult.failure(
+        JobError(code: 'not_completed', message: "Job not completed"),
+      );
     }
 
     final imageUrl = job.metadata["url"];
     if (imageUrl == null) {
-      return ExecutionResult.failure(Exception("No image URL in metadata"));
+      return ExecutionResult.failure(
+        JobError(code: 'no_url', message: "No image URL in metadata"),
+      );
     }
 
     try {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
-        final fileName = "openai_img_$jobId.png";
-        final localPath = await PlatformPaths.saveTempFile(
-          fileName,
-          response.bodyBytes,
-        );
+        final outputDir = PlatformPaths.instance.getJobOutputPath(jobId);
+        final file = File(p.join(outputDir, "openai_img_$jobId.png"));
+        await file.writeAsBytes(response.bodyBytes);
 
-        return ExecutionResult.success(textOutput: localPath);
+        return ExecutionResult.success(textOutput: file.path);
       } else {
         return ExecutionResult.failure(
-          Exception("Failed to download image: ${response.statusCode}"),
+          JobError(
+            code: 'download_failed',
+            message: "Failed to download image: ${response.statusCode}",
+          ),
         );
       }
     } catch (e) {
-      return ExecutionResult.failure(Exception("Download failed: $e"));
+      return ExecutionResult.failure(
+        JobError(code: 'download_error', message: "Download failed: $e"),
+      );
     }
   }
 

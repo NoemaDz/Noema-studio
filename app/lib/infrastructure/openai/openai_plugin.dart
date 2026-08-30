@@ -23,7 +23,7 @@ class OpenAIProvider extends LLMProvider {
   bool get available => true; // handled at plugin level if needed
 
   @override
-  Set<CapabilityType> get capabilities => {CapabilityType.textGeneration};
+  Set<CapabilityType> get capabilities => {CapabilityType.imageGeneration};
 
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();

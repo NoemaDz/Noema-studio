@@ -61,15 +61,15 @@ void main() {
 
       final provider =
           noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
-      final refAsset = await provider.downloadAsset(refJob.id);
+      final refAsset = await provider.getResult(refJob.id);
 
-      if (refAsset == null) {
+      if (!refAsset.isSuccess || refAsset.textOutput == null) {
         throw Exception(
           "Failed to generate reference image for Sami! Status: \${refJob.status}",
         );
       }
 
-      final samiImagePath = refAsset.path;
+      final samiImagePath = refAsset.textOutput!;
       print("Reference image generated at: \$samiImagePath");
 
       print("2. Building NoemaProject with 10 distinct scenes...");
@@ -123,7 +123,7 @@ void main() {
         print("Reference: file://$samiImagePath");
         for (final img in finishedProject.images) {
           print(
-            "Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+            "Scene Image [${img.sceneId}]: file://${img.artifact?.path ?? 'FAILED'}",
           );
         }
       } catch (e) {

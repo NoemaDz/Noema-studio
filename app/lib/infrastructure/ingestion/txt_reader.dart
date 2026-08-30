@@ -2,7 +2,7 @@ import 'dart:io';
 import '../../core/providers/document_ingestion_provider.dart';
 import '../../core/capabilities/capability.dart';
 
-class TxtReader implements DocumentIngestionProvider {
+class TxtReader extends DocumentIngestionProvider {
   @override
   String get id => 'txt_reader';
 

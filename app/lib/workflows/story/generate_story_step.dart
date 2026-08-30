@@ -26,7 +26,7 @@ class GenerateStoryStep extends WorkflowStep<String> {
     final prompt = await promptService.load("story", {"idea": idea});
 
     final request = ExecutionRequest(
-      capability: CapabilityType.textGeneration,
+      capability: CapabilityType.llm,
       input: prompt,
     );
     final job = await provider.execute(request);

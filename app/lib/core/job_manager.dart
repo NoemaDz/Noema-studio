@@ -109,7 +109,7 @@ class JobManager {
 
     if (job.transitionTo(JobStatus.cancelling)) {
       try {
-        if (registry != null && registry!.has(job.providerId)) {
+        if (registry?.has(job.providerId) == true) {
           final provider = registry!.get(job.providerId);
           if (provider != null) {
             await provider.cancelJob(job.id);

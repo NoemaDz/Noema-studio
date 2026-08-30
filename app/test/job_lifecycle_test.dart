@@ -4,7 +4,9 @@ import 'package:noema_studio/core/job_manager.dart';
 import 'package:noema_studio/core/job_runner.dart';
 import 'package:noema_studio/core/providers/provider_registry.dart';
 import 'package:noema_studio/core/providers/async_provider.dart';
-import 'package:noema_studio/models/asset.dart';
+import 'package:noema_studio/models/artifact.dart';
+import 'package:noema_studio/core/contracts/execution_request.dart';
+import 'package:noema_studio/core/contracts/execution_result.dart';
 import 'package:noema_studio/core/capabilities/capability.dart';
 
 class MockProvider extends AsyncProvider {
@@ -48,7 +50,12 @@ class MockProvider extends AsyncProvider {
   }
 
   @override
-  Future<Asset?> downloadAsset(String jobId) async => null;
+  Future<Job> execute(ExecutionRequest request) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async =>
+      throw UnimplementedError();
 }
 
 void main() {

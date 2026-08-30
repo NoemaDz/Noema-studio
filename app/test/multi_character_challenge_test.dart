@@ -140,7 +140,7 @@ void main() {
         print("\n--- [RESULTS] ---");
         for (final img in finishedProject.images) {
           print(
-            "Scene Image [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+            "Scene Image [${img.sceneId}]: file://${img.artifact?.path ?? 'FAILED'}",
           );
         }
 
@@ -152,12 +152,12 @@ void main() {
         );
         for (final img in finishedProject.images) {
           expect(
-            img.asset,
+            img.artifact,
             isNotNull,
             reason: "Image asset should be successfully generated",
           );
           expect(
-            File(img.asset!.path).existsSync(),
+            File(img.artifact!.path).existsSync(),
             isTrue,
             reason: "Generated file must exist on disk",
           );

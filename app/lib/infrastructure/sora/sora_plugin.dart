@@ -37,6 +37,11 @@ class SoraVideoProvider extends VideoProvider {
 
   @override
   Future<void> cancelJob(String jobId) async {}
+
+  @override
+  Future<JobStatusUpdate> updateJobStatus(Job job) async {
+    return JobStatusUpdate(status: job.status);
+  }
 }
 
 class SoraPlugin extends IPlugin {

@@ -1,7 +1,6 @@
 import 'video_provider.dart';
 import '../../models/job.dart';
 import '../plugins/plugin_context.dart';
-import '../../models/asset.dart';
 import '../capabilities/capability.dart';
 import '../contracts/execution_request.dart';
 import '../contracts/execution_result.dart';

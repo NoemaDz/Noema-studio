@@ -59,16 +59,16 @@ void main() {
 
       final provider =
           noema.bootstrap.providerRegistry.get('comfyui') as AsyncProvider;
-      final refAsset = await provider.downloadAsset(refJob.id);
+      final refAsset = await provider.getResult(refJob.id);
 
-      if (refAsset == null) {
+      if (!refAsset.isSuccess || refAsset.textOutput == null) {
         throw Exception(
           "Failed to generate reference image! Status: ${refJob.status}",
         );
       }
 
-      final samiImagePath = refAsset;
-      print("Reference portrait generated at: ${samiImagePath.path}");
+      final samiImagePath = refAsset.textOutput!;
+      print("Reference portrait generated at: $samiImagePath");
 
       // Step 2: Build project with diverse full-body scenes
       print("2. Building full-body consistency project...");
@@ -78,7 +78,7 @@ void main() {
         description:
             "Handsome young Arab man with short black hair and brown eyes.",
         prompt: "Sami, handsome young Arab man, short black hair, brown eyes.",
-        imagePath: samiImagePath.path,
+        imagePath: samiImagePath,
       );
 
       // Scene A: Traditional outfit in desert — full body wide shot
@@ -136,10 +136,10 @@ void main() {
         print("Pipeline finished successfully!");
 
         print("\n--- [RESULTS] ---");
-        print("Reference Portrait: file://${samiImagePath.path}");
+        print("Reference Portrait: file://$samiImagePath");
         for (final img in finishedProject.images) {
           print(
-            "Scene [${img.sceneId}]: file://${img.asset?.path ?? 'FAILED'}",
+            "Scene [${img.sceneId}]: file://${img.artifact?.path ?? 'FAILED'}",
           );
         }
       } catch (e) {

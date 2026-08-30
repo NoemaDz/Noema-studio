@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../models/job.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
 import '../../main.dart';
 
 import '../../core/providers/proxy_image_provider.dart';
@@ -109,10 +111,11 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
         return;
       }
 
-      final job = await provider.submitJob(
-        prompt,
-        options: {'width': 512, 'height': 512},
+      final request = ExecutionRequest(
+        capability: CapabilityType.imageGeneration,
+        input: prompt,
       );
+      final job = await provider.execute(request);
       noema.bootstrap.jobManager.add(job);
 
       // Poll until done (timeout 3min)

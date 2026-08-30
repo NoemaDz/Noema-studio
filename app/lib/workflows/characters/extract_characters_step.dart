@@ -27,7 +27,7 @@ class ExtractCharactersStep extends WorkflowStep<List<Map<String, dynamic>>> {
     final prompt = await promptService.load("characters", {"story": storyText});
 
     final request = ExecutionRequest(
-      capability: CapabilityType.textGeneration,
+      capability: CapabilityType.llm,
       input: prompt,
     );
     final job = await provider.execute(request);

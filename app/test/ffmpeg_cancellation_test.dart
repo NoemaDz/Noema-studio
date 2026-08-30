@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:noema_studio/infrastructure/ffmpeg/ffmpeg_path_escaper.dart';
 import 'package:noema_studio/infrastructure/ffmpeg/ffmpeg_video_compiler.dart';
 import 'package:noema_studio/core/settings/app_settings.dart';
+import 'package:noema_studio/core/capabilities/capability.dart';
+import 'package:noema_studio/core/contracts/execution_request.dart';
+import 'package:noema_studio/core/contracts/execution_result.dart';
 import 'package:noema_studio/core/providers/video_compiler_provider.dart';
 import 'package:noema_studio/models/job.dart';
 
@@ -45,11 +48,18 @@ void main() {
       await provider.cancelJob(testJobId);
 
       // 2. Start the job, injecting the ID via options
-      final job = await provider.compileVideo(
-        [AudioVideoResource(imagePath: 'non_existent.jpg', audioPaths: [])],
-        'output.mp4',
-        options: {'jobId': testJobId},
+      final request = ExecutionRequest(
+        capability: CapabilityType.videoGeneration,
+        input: 'test',
+        jobId: testJobId,
+        parameters: {
+          'output_path': 'output.mp4',
+          'resources': <AudioVideoResource>[
+            AudioVideoResource(imagePath: 'non_existent.jpg', audioPaths: []),
+          ],
+        },
       );
+      final job = await provider.execute(request);
 
       // 3. Since it was cancelled before Process.start, it must return cancelled immediately
       // without ever spawning the OS process.

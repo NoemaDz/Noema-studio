@@ -3,7 +3,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart';
 import '../../core/providers/document_ingestion_provider.dart';
 import '../../core/capabilities/capability.dart';
 
-class PdfReader implements DocumentIngestionProvider {
+class PdfReader extends DocumentIngestionProvider {
   @override
   String get id => 'pdf_reader';
 

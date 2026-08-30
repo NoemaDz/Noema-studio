@@ -2,6 +2,8 @@ import '../../core/providers/video_compiler_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'package:uuid/uuid.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 
 class MockVideoCompilerProvider extends VideoCompilerProvider {
   @override
@@ -20,20 +22,23 @@ class MockVideoCompilerProvider extends VideoCompilerProvider {
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   @override
-  Future<Job> compileVideo(
-    List<AudioVideoResource> resources,
-    String outputPath, {
-    Map<String, dynamic>? options,
-  }) async {
+  Future<Job> execute(ExecutionRequest request) async {
+    final jobId = request.jobId ?? const Uuid().v4();
+    final outputPath =
+        request.parameters['output_path'] as String? ?? "mock_output.mp4";
     return Job(
-      id: "mock_video_${const Uuid().v4()}",
+      id: jobId,
       providerId: id,
       type: "video_compile",
-      metadata: {"outputPath": outputPath},
       status: JobStatus.completed,
-      progress: 1.0,
       result: outputPath,
+      metadata: {"outputPath": outputPath},
     );
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async {
+    return ExecutionResult.success(textOutput: "mock_output.mp4");
   }
 
   @override

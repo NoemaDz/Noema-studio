@@ -123,14 +123,14 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: widget.image != null && widget.image!.asset != null
-                      ? (widget.image!.asset!.path.startsWith("http")
+                  child: widget.image != null && widget.image!.artifact != null
+                      ? (widget.image!.artifact!.path.startsWith("http")
                             ? Image.network(
-                                widget.image!.asset!.path,
+                                widget.image!.artifact!.path,
                                 fit: BoxFit.cover,
                               )
                             : Image.file(
-                                File(widget.image!.asset!.path),
+                                File(widget.image!.artifact!.path),
                                 fit: BoxFit.cover,
                               ))
                       : widget.scene.imageState == GenerationState.generating
@@ -185,21 +185,21 @@ class _StoryboardCardState extends State<_StoryboardCard> {
                           Row(
                             children: [
                               Icon(
-                                widget.image?.asset != null
+                                widget.image?.artifact != null
                                     ? Icons.image
                                     : Icons.hourglass_empty,
                                 size: 14,
-                                color: widget.image?.asset != null
+                                color: widget.image?.artifact != null
                                     ? Colors.green
                                     : Colors.grey,
                               ),
                               const SizedBox(width: 4),
                               Icon(
-                                widget.audio?.asset != null
+                                widget.audio?.artifact != null
                                     ? Icons.audiotrack
                                     : Icons.hourglass_empty,
                                 size: 14,
-                                color: widget.audio?.asset != null
+                                color: widget.audio?.artifact != null
                                     ? Colors.green
                                     : Colors.grey,
                               ),

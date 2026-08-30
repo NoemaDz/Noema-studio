@@ -27,10 +27,10 @@ class ProjectImages extends StatelessWidget {
                 leading: const Icon(Icons.image),
                 title: Text("Scene ${image.sceneId}"),
                 subtitle: Text(image.prompt),
-                trailing: image.asset == null
+                trailing: image.artifact == null
                     ? const Icon(Icons.hourglass_empty)
                     : const Icon(Icons.visibility),
-                onTap: image.asset == null
+                onTap: image.artifact == null
                     ? null
                     : () {
                         showDialog(
@@ -38,7 +38,7 @@ class ProjectImages extends StatelessWidget {
                           builder: (_) => Dialog(
                             child: InteractiveViewer(
                               child: Image.network(
-                                image.asset!.path,
+                                image.artifact!.path,
                                 fit: BoxFit.contain,
                               ),
                             ),

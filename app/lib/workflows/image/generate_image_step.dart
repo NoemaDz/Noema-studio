@@ -1,7 +1,10 @@
 import '../../core/providers/image_provider.dart';
-import '../../core/workflow/workflow_context.dart';
+import '../../core/job_manager.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
+import '../../core/workflow/workflow_context.dart';
 
 class GenerateImageStep extends WorkflowStep<Job> {
   final ImageProvider provider;
@@ -23,7 +26,11 @@ class GenerateImageStep extends WorkflowStep<Job> {
     }
 
     final options = context.get<Map<String, dynamic>>("options");
-    final job = await provider.submitJob(prompt, options: options);
+    final request = ExecutionRequest(
+      capability: CapabilityType.imageGeneration,
+      input: prompt,
+    );
+    final job = await provider.execute(request);
 
     job.metadata["prompt"] = prompt;
 
