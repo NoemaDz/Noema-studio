@@ -2,6 +2,8 @@ import '../../core/plugins/plugin_context.dart';
 import '../../core/providers/tts_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
+import '../contracts/execution_request.dart';
+import '../contracts/execution_result.dart';
 
 class ProxyTTSProvider extends TTSProvider {
   final PluginContext context;
@@ -23,29 +25,28 @@ class ProxyTTSProvider extends TTSProvider {
   @override
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
-  @override
-  Future<Job> generateAudio(String text, {String? voiceProfile}) {
+  TTSProvider get _activeProvider {
     final activeId = context.appSettings.activeTtsProvider;
-    // Find active provider
-    final provider = context.providers.all.whereType<TTSProvider>().firstWhere(
+    return context.providers.all.whereType<TTSProvider>().firstWhere(
       (p) => p.id == activeId && p.id != "proxy_tts",
       orElse: () => context.providers.all.whereType<TTSProvider>().firstWhere(
         (p) => p.id == 'flutter_tts', // Fallback
       ),
     );
+  }
 
-    return provider.generateAudio(text, voiceProfile: voiceProfile);
+  @override
+  Future<Job> execute(ExecutionRequest request) {
+    return _activeProvider.execute(request);
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) {
+    return _activeProvider.getResult(jobId);
   }
 
   @override
   Future<void> cancelJob(String jobId) {
-    final activeId = context.appSettings.activeTtsProvider;
-    final provider = context.providers.all.whereType<TTSProvider>().firstWhere(
-      (p) => p.id == activeId && p.id != "proxy_tts",
-      orElse: () => context.providers.all.whereType<TTSProvider>().firstWhere(
-        (p) => p.id == 'flutter_tts', // Fallback
-      ),
-    );
-    return provider.cancelJob(jobId);
+    return _activeProvider.cancelJob(jobId);
   }
 }

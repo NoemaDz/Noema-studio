@@ -3,6 +3,8 @@ import '../../models/job.dart';
 import '../plugins/plugin_context.dart';
 import '../../models/asset.dart';
 import '../capabilities/capability.dart';
+import '../contracts/execution_request.dart';
+import '../contracts/execution_result.dart';
 
 class ProxyVideoProvider extends VideoProvider {
   final PluginContext context;
@@ -46,12 +48,8 @@ class ProxyVideoProvider extends VideoProvider {
   }
 
   @override
-  Future<Job> submitJob(
-    String prompt,
-    String imagePath, {
-    Map<String, dynamic>? options,
-  }) {
-    return _activeProvider.submitJob(prompt, imagePath, options: options);
+  Future<Job> execute(ExecutionRequest request) {
+    return _activeProvider.execute(request);
   }
 
   @override
@@ -60,8 +58,8 @@ class ProxyVideoProvider extends VideoProvider {
   }
 
   @override
-  Future<Asset?> downloadAsset(String jobId) {
-    return _activeProvider.downloadAsset(jobId);
+  Future<ExecutionResult> getResult(String jobId) {
+    return _activeProvider.getResult(jobId);
   }
 
   @override

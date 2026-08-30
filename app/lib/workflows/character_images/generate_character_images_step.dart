@@ -5,6 +5,8 @@ import '../../core/job_manager.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
 import '../../models/character.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
 
 class GenerateCharacterImagesStep extends WorkflowStep<void> {
   final ImageProvider provider;
@@ -26,7 +28,13 @@ class GenerateCharacterImagesStep extends WorkflowStep<void> {
     for (final character in project.characters) {
       if (character.prompt == null) continue;
 
-      final job = await provider.submitJob(character.prompt!);
+      final request = ExecutionRequest(
+        capability: CapabilityType.imageGeneration,
+        input: character.prompt!,
+        parameters: {},
+      );
+
+      final job = await provider.execute(request);
 
       job.metadata["title"] = "Generating Character: ${character.name}";
 
@@ -46,9 +54,9 @@ class GenerateCharacterImagesStep extends WorkflowStep<void> {
       final job = jobManager.find(jobId);
 
       if (job != null && job.status == JobStatus.completed) {
-        final asset = await provider.downloadAsset(jobId);
-        if (asset != null) {
-          character.imagePath = asset.path;
+        final execResult = await provider.getResult(jobId);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          character.imagePath = execResult.textOutput!;
         }
       }
     }

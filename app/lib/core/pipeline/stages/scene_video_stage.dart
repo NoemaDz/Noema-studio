@@ -10,6 +10,8 @@ import '../../../models/generated_video.dart';
 import '../../../models/job.dart';
 import '../../../models/scene.dart';
 import '../../settings/app_settings.dart';
+import '../../../models/artifact.dart';
+import '../../../models/artifact_type.dart';
 
 class SceneVideoStage extends PipelineStage {
   @override
@@ -60,14 +62,16 @@ class SceneVideoStage extends PipelineStage {
       orElse: () => null,
     );
 
-    if (image == null || image.asset == null || image.asset.path.isEmpty) {
+    if (image == null ||
+        image.artifact == null ||
+        image.artifact.path.isEmpty) {
       debugPrint(
         'SceneVideoStage: WARNING - No source image found for scene ${scene.id}. Skipping video generation.',
       );
       return;
     }
 
-    context.set('imagePath', image.asset.path);
+    context.set('imagePath', image.artifact.path);
     context.set('options', scene.extras);
 
     try {
@@ -81,7 +85,7 @@ class SceneVideoStage extends PipelineStage {
           GeneratedVideo(
             sceneId: scene.id,
             jobId: job.id,
-            sourceImagePath: image.asset.path,
+            sourceImagePath: image.artifact.path,
           ),
         );
         debugPrint('SceneVideoStage: Scene ${scene.id} video job queued ✓');
@@ -95,16 +99,22 @@ class SceneVideoStage extends PipelineStage {
           );
         }
 
-        final asset = await provider.downloadAsset(job.id);
-        if (asset == null) {
+        final execResult = await provider.getResult(job.id);
+        if (!execResult.isSuccess || execResult.textOutput == null) {
           throw Exception(
-            'Failed to download video asset for scene ${scene.id}.',
+            'Failed to retrieve video artifact for scene ${scene.id}: ${execResult.error?.message ?? 'Unknown error'}',
           );
         }
 
+        final artifact = Artifact(
+          id: job.id,
+          path: execResult.textOutput!,
+          type: ArtifactType.video,
+        );
+
         for (final vid in project.videos) {
           if (vid.jobId == job.id) {
-            vid.asset = asset;
+            vid.artifact = artifact;
             break;
           }
         }

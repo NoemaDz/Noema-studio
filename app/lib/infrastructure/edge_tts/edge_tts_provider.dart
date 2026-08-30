@@ -6,6 +6,8 @@ import '../../core/providers/tts_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import '../../main.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 
 class EdgeTTSProvider extends TTSProvider {
   @override
@@ -24,9 +26,14 @@ class EdgeTTSProvider extends TTSProvider {
   HardwareRequirements get hardwareRequirements =>
       const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
+  final Map<String, ExecutionResult> _results = {};
+
   @override
-  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
-    final jobId = "tts_${const Uuid().v4()}";
+  Future<Job> execute(ExecutionRequest request) async {
+    final jobId = request.jobId ?? "tts_${const Uuid().v4()}";
+    final text = request.input;
+    final voiceProfile = request.parameters['voiceProfile'] as String?;
+
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(
       p.join(appDir.path, "noema", "output", "audio"),
@@ -40,6 +47,23 @@ class EdgeTTSProvider extends TTSProvider {
 
     final voice = voiceProfile ?? noema.bootstrap.appSettings.edgeTtsVoice;
 
+    final job = Job(
+      id: jobId,
+      providerId: id,
+      type: request.capability.name,
+      status: JobStatus.running,
+    );
+
+    _runAsync(job, text, voice, outputPath);
+    return job;
+  }
+
+  Future<void> _runAsync(
+    Job job,
+    String text,
+    String voice,
+    String outputPath,
+  ) async {
     try {
       ProcessResult? result;
       final home = Platform.environment['HOME'] ?? '';
@@ -59,74 +83,64 @@ class EdgeTTSProvider extends TTSProvider {
             result = await Process.run('python3', [
               '-m',
               'edge_tts',
+              '--voice',
+              voice,
               '--text',
               text,
               '--write-media',
               outputPath,
-              '--voice',
-              voice,
             ]);
           } else {
-            print("Trying edge-tts binary at: $binPath");
             result = await Process.run(binPath, [
+              '--voice',
+              voice,
               '--text',
               text,
               '--write-media',
               outputPath,
-              '--voice',
-              voice,
             ]);
           }
 
           if (result.exitCode == 0) {
             break; // Success!
           } else {
-            errors.add(
-              '[$binPath] exitCode: ${result.exitCode}, stderr: ${result.stderr}',
-            );
+            errors.add("$binPath failed: ${result.stderr}");
           }
         } catch (e) {
-          errors.add('[$binPath] exception: $e');
+          errors.add("$binPath execution error: $e");
         }
       }
 
       if (result != null &&
           result.exitCode == 0 &&
           File(outputPath).existsSync()) {
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "audio",
-          metadata: {"text": text},
-          status: JobStatus.completed,
-          progress: 1.0,
-          result: outputPath,
-        );
+        _results[job.id] = ExecutionResult.success(textOutput: outputPath);
+        job.transitionTo(JobStatus.completed);
       } else {
-        print("Edge TTS failed all attempts.");
-        for (var err in errors) {
-          print(err);
-        }
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "audio",
-          status: JobStatus.failed,
-          result:
-              "Edge TTS failed. See console for details. (Did you use Arabic text with an English voice?)",
+        final errorMessage =
+            "Edge TTS failed after trying multiple paths:\n" +
+            errors.join('\n');
+        _results[job.id] = ExecutionResult.failure(
+          JobError(code: 'exec_error', message: errorMessage),
         );
+        job.error = JobError(code: 'exec_error', message: errorMessage);
+        job.transitionTo(JobStatus.failed);
       }
     } catch (e) {
-      print("Edge TTS Exception: $e");
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "audio",
-        status: JobStatus.failed,
-        result:
-            "Exception: $e (Please make sure you have run 'pip install edge-tts')",
+      _results[job.id] = ExecutionResult.failure(
+        JobError(code: 'error', message: e.toString()),
       );
+      job.error = JobError(code: 'error', message: e.toString());
+      job.transitionTo(JobStatus.failed);
     }
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async {
+    return _results[jobId] ??
+        ExecutionResult.failure(
+          JobError(code: 'not_found', message: 'Result not found'),
+        );
   }
 
   @override

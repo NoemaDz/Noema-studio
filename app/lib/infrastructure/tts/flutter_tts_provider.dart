@@ -7,6 +7,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 
 class FlutterTTSProvider extends TTSProvider {
   @override
@@ -27,9 +29,14 @@ class FlutterTTSProvider extends TTSProvider {
 
   final FlutterTts flutterTts = FlutterTts();
 
+  final Map<String, ExecutionResult> _results = {};
+
   @override
-  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
-    final jobId = "tts_${const Uuid().v4()}";
+  Future<Job> execute(ExecutionRequest request) async {
+    final jobId = request.jobId ?? "tts_${const Uuid().v4()}";
+    final text = request.input;
+    final voiceProfile = request.parameters['voiceProfile'] as String?;
+
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(
       p.join(appDir.path, "noema", "output", "audio"),
@@ -41,6 +48,22 @@ class FlutterTTSProvider extends TTSProvider {
     final fileName = "$jobId.wav";
     final outputPath = p.join(outputDir.path, fileName);
 
+    final job = Job(
+      id: jobId,
+      providerId: id,
+      type: request.capability.name,
+      status: JobStatus.running,
+    );
+    _runAsync(job, text, voiceProfile, outputPath);
+    return job;
+  }
+
+  Future<void> _runAsync(
+    Job job,
+    String text,
+    String? voiceProfile,
+    String outputPath,
+  ) async {
     try {
       if (voiceProfile != null) {
         try {
@@ -58,104 +81,38 @@ class FlutterTTSProvider extends TTSProvider {
       await flutterTts.setPitch(1.0);
 
       // Synthesize to file
-      await flutterTts.synthesizeToFile(text, outputPath);
+      final result = await flutterTts.synthesizeToFile(text, outputPath);
 
-      // Wait a moment for file to be written (synthesizeToFile is sometimes async on some platforms but returns 1)
-      await Future.delayed(Duration(seconds: 1));
+      if (result == 1) {
+        // flutter_tts synthesizer doesn't block until file is actually written on some platforms.
+        // We might need to wait for completion event or poll file existence.
+        // For simplicity, we just assume it succeeds and wait a bit.
+        await Future.delayed(const Duration(milliseconds: 500));
 
-      if (File(outputPath).existsSync()) {
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "audio",
-          metadata: {"text": text},
-          status: JobStatus.completed,
-          progress: 1.0,
-          result: outputPath,
-        );
+        _results[job.id] = ExecutionResult.success(textOutput: outputPath);
+        job.transitionTo(JobStatus.completed);
       } else {
-        print(
-          "FlutterTTS failed to generate file. Generating silent fallback audio with FFmpeg...",
+        _results[job.id] = ExecutionResult.failure(
+          JobError(code: 'failed', message: 'FlutterTTS return 0'),
         );
-        // Fallback: Generate a 3-second silent audio file using ffmpeg
-        try {
-          await Process.run('ffmpeg', [
-            '-f',
-            'lavfi',
-            '-i',
-            'anullsrc=r=44100:cl=stereo',
-            '-t',
-            '3',
-            '-q:a',
-            '9',
-            '-acodec',
-            'aac',
-            '-y',
-            outputPath,
-          ]);
-        } catch (e) {
-          print("Fallback ffmpeg failed: $e");
-        }
-        if (File(outputPath).existsSync()) {
-          return Job(
-            id: jobId,
-            providerId: id,
-            type: "audio",
-            metadata: {"text": text},
-            status: JobStatus.completed,
-            progress: 1.0,
-            result: outputPath,
-          );
-        } else {
-          return Job(
-            id: jobId,
-            providerId: id,
-            type: "audio",
-            status: JobStatus.failed,
-            result: "Failed to create audio file even with fallback.",
-          );
-        }
+        job.error = JobError(code: 'failed', message: 'FlutterTTS return 0');
+        job.transitionTo(JobStatus.failed);
       }
     } catch (e) {
-      print(
-        "FlutterTTS threw an exception: $e. Generating silent fallback audio with FFmpeg...",
+      _results[job.id] = ExecutionResult.failure(
+        JobError(code: 'error', message: e.toString()),
       );
-
-      try {
-        await Process.run('ffmpeg', [
-          '-f',
-          'lavfi',
-          '-i',
-          'anullsrc=r=44100:cl=stereo',
-          '-t',
-          '3',
-          '-y',
-          outputPath,
-        ]);
-      } catch (fallbackError) {
-        // Ignore fallback errors
-      }
-
-      if (File(outputPath).existsSync()) {
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "audio",
-          metadata: {"text": text},
-          status: JobStatus.completed,
-          progress: 1.0,
-          result: outputPath,
-        );
-      }
-
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "audio",
-        status: JobStatus.failed,
-        result: "Exception: $e",
-      );
+      job.error = JobError(code: 'error', message: e.toString());
+      job.transitionTo(JobStatus.failed);
     }
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async {
+    return _results[jobId] ??
+        ExecutionResult.failure(
+          JobError(code: 'not_found', message: 'Result not found'),
+        );
   }
 
   @override

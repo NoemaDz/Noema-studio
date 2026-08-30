@@ -11,8 +11,8 @@ import '../models/job.dart';
 import '../core/project_progress.dart';
 import '../core/project_statistics.dart';
 import '../core/project_summary.dart';
-import '../models/asset.dart';
-import '../models/asset_type.dart';
+import '../models/artifact.dart';
+import '../models/artifact_type.dart';
 import 'package:uuid/uuid.dart';
 import '../models/generation_state.dart';
 
@@ -92,10 +92,10 @@ class NoemaProject {
       orElse: () => null,
     );
     if (image == null) return;
-    image.asset = Asset(
+    image.artifact = Artifact(
       id: job.id,
       path: job.result ?? '',
-      type: AssetType.image,
+      type: ArtifactType.image,
     );
   }
 
@@ -105,10 +105,10 @@ class NoemaProject {
       orElse: () => null,
     );
     if (audio == null) return;
-    audio.asset = Asset(
+    audio.artifact = Artifact(
       id: job.id,
       path: job.result ?? '',
-      type: AssetType.audio,
+      type: ArtifactType.audio,
     );
   }
 
@@ -118,10 +118,10 @@ class NoemaProject {
       orElse: () => null,
     );
     if (video == null) return;
-    video.asset = Asset(
+    video.artifact = Artifact(
       id: job.id,
       path: job.result ?? '',
-      type: AssetType.video,
+      type: ArtifactType.video,
     );
   }
 

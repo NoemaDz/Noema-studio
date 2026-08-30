@@ -2,7 +2,8 @@ import '../../core/plugins/plugin_context.dart';
 import '../../core/providers/image_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
-import '../../models/asset.dart';
+import '../contracts/execution_request.dart';
+import '../contracts/execution_result.dart';
 
 class ProxyImageProvider extends ImageProvider {
   final PluginContext context;
@@ -29,14 +30,14 @@ class ProxyImageProvider extends ImageProvider {
     return context.providers.all.whereType<ImageProvider>().firstWhere(
       (p) => p.id == activeId && p.id != "proxy_image",
       orElse: () => context.providers.all.whereType<ImageProvider>().firstWhere(
-        (p) => p.id != "proxy_image",
+        (p) => p.id == 'comfyui',
       ),
     );
   }
 
   @override
-  Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) {
-    return _activeProvider.submitJob(prompt, options: options);
+  Future<Job> execute(ExecutionRequest request) {
+    return _activeProvider.execute(request);
   }
 
   @override
@@ -45,8 +46,8 @@ class ProxyImageProvider extends ImageProvider {
   }
 
   @override
-  Future<Asset?> downloadAsset(String jobId) {
-    return _activeProvider.downloadAsset(jobId);
+  Future<ExecutionResult> getResult(String jobId) {
+    return _activeProvider.getResult(jobId);
   }
 
   @override

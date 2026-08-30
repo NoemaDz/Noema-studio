@@ -1,10 +1,10 @@
 import 'dart:io';
 
-class AssetStorage {
+class ArtifactStorage {
   final Directory root;
 
-  AssetStorage({Directory? root})
-    : root = root ?? Directory("assets/generated");
+  ArtifactStorage({Directory? root})
+    : root = root ?? Directory("artifacts/generated");
 
   Future<void> initialize() async {
     if (!await root.exists()) {

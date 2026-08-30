@@ -9,7 +9,8 @@ import '../../core/settings/platform_paths.dart';
 import '../../core/plugins/plugin_context.dart';
 import '../../models/asset_type.dart';
 import '../../models/job.dart';
-import '../../models/asset.dart';
+import '../contracts/execution_request.dart';
+import '../contracts/execution_result.dart';
 
 class OpenAIImageProvider extends ImageProvider {
   final PluginContext context;
@@ -34,7 +35,8 @@ class OpenAIImageProvider extends ImageProvider {
       const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   @override
-  Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) async {
+  Future<Job> execute(ExecutionRequest request) async {
+    final prompt = request.input;
     final apiKey = context.appSettings.openAiKey;
     final url = context.appSettings.openAiUrl;
 
@@ -115,42 +117,38 @@ class OpenAIImageProvider extends ImageProvider {
   }
 
   @override
-  Future<Asset?> downloadAsset(String jobId) async {
+  Future<ExecutionResult> getResult(String jobId) async {
     final job = _jobs[jobId];
-    if (job == null || job.status != JobStatus.completed) {
-      return null;
+    if (job == null) {
+      return ExecutionResult.failure(Exception("Job not found"));
+    }
+    if (job.status != JobStatus.completed) {
+      return ExecutionResult.failure(Exception("Job not completed"));
     }
 
     final imageUrl = job.metadata["url"];
     if (imageUrl == null) {
-      return null;
+      return ExecutionResult.failure(Exception("No image URL in metadata"));
     }
 
     try {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
-        final outputDir = PlatformPaths.instance.getJobOutputPath(jobId);
-        final file = File(p.join(outputDir, "dalle3_image.png"));
-        await file.writeAsBytes(response.bodyBytes);
+        final fileName = "openai_img_$jobId.png";
+        final localPath = await PlatformPaths.saveTempFile(
+          fileName,
+          response.bodyBytes,
+        );
 
-        // --- OUTPUT VERIFICATION ---
-        if (!await file.exists()) {
-          throw Exception(
-            "Output Verification Failed: File does not exist on disk.",
-          );
-        }
-        final length = await file.length();
-        if (length == 0) {
-          throw Exception("Output Verification Failed: File is 0 bytes.");
-        }
-        // ---------------------------
-
-        return Asset(id: jobId, type: AssetType.image, path: file.path);
+        return ExecutionResult.success(textOutput: localPath);
+      } else {
+        return ExecutionResult.failure(
+          Exception("Failed to download image: ${response.statusCode}"),
+        );
       }
     } catch (e) {
-      print("Failed to download OpenAI image: $e");
+      return ExecutionResult.failure(Exception("Download failed: $e"));
     }
-    return null;
   }
 
   @override

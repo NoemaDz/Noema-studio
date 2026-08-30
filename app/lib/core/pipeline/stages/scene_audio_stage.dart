@@ -8,8 +8,8 @@ import '../../../workflows/audio/audio_workflow.dart';
 import '../../../models/generated_audio.dart';
 import '../../../models/job.dart';
 import '../../../models/scene.dart';
-import '../../../models/asset.dart';
-import '../../../models/asset_type.dart';
+import '../../../models/artifact.dart';
+import '../../../models/artifact_type.dart';
 import '../../cancellation_token.dart';
 import 'package:flutter/foundation.dart';
 
@@ -64,14 +64,23 @@ class SceneAudioStage extends PipelineStage {
         rethrow;
       }
 
-      if (job.status == JobStatus.completed && job.result != null) {
-        audio.asset = Asset(
-          id: job.id,
-          path: job.result!,
-          type: AssetType.audio,
-        );
+      if (job.status == JobStatus.completed) {
+        final execResult = await provider.getResult(job.id);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          audio.artifact = Artifact(
+            id: job.id,
+            path: execResult.textOutput!,
+            type: ArtifactType.audio,
+          );
+        } else {
+          throw Exception(
+            "Audio generation failed: ${execResult.error?.message ?? 'Unknown error'}",
+          );
+        }
       } else {
-        throw Exception("Audio generation failed: ${job.error?.message ?? 'Unknown error'}");
+        throw Exception(
+          "Audio generation failed: ${job.error?.message ?? 'Unknown error'}",
+        );
       }
       project.audios.add(audio);
     }
@@ -117,14 +126,23 @@ class SceneAudioStage extends PipelineStage {
         rethrow;
       }
 
-      if (job.status == JobStatus.completed && job.result != null) {
-        audio.asset = Asset(
-          id: job.id,
-          path: job.result!,
-          type: AssetType.audio,
-        );
+      if (job.status == JobStatus.completed) {
+        final execResult = await provider.getResult(job.id);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          audio.artifact = Artifact(
+            id: job.id,
+            path: execResult.textOutput!,
+            type: ArtifactType.audio,
+          );
+        } else {
+          throw Exception(
+            "Dialogue audio generation failed: ${execResult.error?.message ?? 'Unknown error'}",
+          );
+        }
       } else {
-        throw Exception("Audio generation failed: ${job.error?.message ?? 'Unknown error'}");
+        throw Exception(
+          "Dialogue audio generation failed: ${job.error?.message ?? 'Unknown error'}",
+        );
       }
       project.audios.add(audio);
     }
@@ -157,14 +175,23 @@ class SceneAudioStage extends PipelineStage {
         rethrow;
       }
 
-      if (job.status == JobStatus.completed && job.result != null) {
-        audio.asset = Asset(
-          id: job.id,
-          path: job.result!,
-          type: AssetType.audio,
-        );
+      if (job.status == JobStatus.completed) {
+        final execResult = await provider.getResult(job.id);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          audio.artifact = Artifact(
+            id: job.id,
+            path: execResult.textOutput!,
+            type: ArtifactType.audio,
+          );
+        } else {
+          throw Exception(
+            "Audio generation failed: ${execResult.error?.message ?? 'Unknown error'}",
+          );
+        }
       } else {
-        throw Exception("Audio generation failed: ${job.error?.message ?? 'Unknown error'}");
+        throw Exception(
+          "Audio generation failed: ${job.error?.message ?? 'Unknown error'}",
+        );
       }
       project.audios.add(audio);
     }

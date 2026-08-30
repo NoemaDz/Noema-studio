@@ -13,6 +13,10 @@ import 'package:uuid/uuid.dart';
 
 import '../../application/dependency_manager.dart';
 import '../../core/cancellation_token.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
+import '../../models/artifact.dart';
+import '../../models/artifact_type.dart';
 
 class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   final AppSettings appSettings;
@@ -95,22 +99,35 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   }
 
   @override
-  Future<Job> compileVideo(
+  Future<Job> execute(ExecutionRequest request) async {
+    final resources =
+        request.parameters['resources'] as List<AudioVideoResource>? ?? [];
+    final outputPath =
+        request.parameters['output_path'] as String? ??
+        p.join(appSettings.storagePath, 'video_${Uuid().v4()}.mp4');
+
+    final jobId = request.jobId ?? const Uuid().v4();
+    final job = Job(
+      id: jobId,
+      providerId: id,
+      type: "compileVideo",
+      status: JobStatus.running,
+    );
+
+    _runCompileAsync(job, resources, outputPath);
+    return job;
+  }
+
+  Future<void> _runCompileAsync(
+    Job job,
     List<AudioVideoResource> resources,
-    String outputPath, {
-    Map<String, dynamic>? options,
-  }) async {
-    final jobId = options?['jobId'] as String? ?? "ffmpeg_${const Uuid().v4()}";
+    String outputPath,
+  ) async {
+    final jobId = job.id;
     final ffmpegPath = DependencyManager.instance.ffmpegPath;
 
     if (!available) {
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "video_compile",
-        status: JobStatus.failed,
-        result: "ffmpeg not available",
-      );
+      return;
     }
 
     Directory? tempDir;
@@ -324,5 +341,25 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
         }
       } catch (_) {}
     }
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async {
+    final job = DependencyManager.instance.jobManager.find(jobId);
+    if (job == null) {
+      return ExecutionResult.failure(
+        JobError(code: 'not_found', message: 'Job not found'),
+      );
+    }
+    if (job.status != JobStatus.completed) {
+      return ExecutionResult.failure(
+        JobError(code: 'not_completed', message: 'Job not completed yet'),
+      );
+    }
+
+    // FFmpeg video compiler currently stores the output path directly in job.result.
+    // So we can return it as textOutput or wrap it in an Artifact.
+    // Since VideoCompilationStage uses `job.result` directly for now, we provide it in textOutput.
+    return ExecutionResult.success(textOutput: job.result);
   }
 }

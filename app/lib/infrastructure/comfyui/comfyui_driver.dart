@@ -7,8 +7,8 @@ import 'package:flutter/foundation.dart';
 import '../../core/plugins/plugin_context.dart';
 import '../../models/job.dart';
 import 'package:flutter/services.dart';
-import '../../models/asset.dart';
-import '../../models/asset_type.dart';
+import '../../models/artifact.dart';
+import '../../models/artifact_type.dart';
 import '../../core/retry_policy.dart';
 import '../../core/hardware/hardware_service.dart';
 import 'comfyui_workflow_adapter.dart';
@@ -306,7 +306,7 @@ class ComfyUIDriver {
     return JobStatusUpdate(status: job.status);
   }
 
-  Future<Asset?> downloadAsset(String jobId) async {
+  Future<Artifact?> downloadArtifact(String jobId) async {
     try {
       final retryPolicy = const RetryPolicy(maxRetries: 3);
       final response = await retryPolicy.execute(
@@ -316,7 +316,7 @@ class ComfyUIDriver {
       );
 
       if (response.statusCode != 200) {
-        debugPrint("ComfyUIDriver: downloadAsset history fetch failed");
+        debugPrint("ComfyUIDriver: downloadArtifact history fetch failed");
         return null;
       }
 
@@ -394,10 +394,10 @@ class ComfyUIDriver {
             }
             // ---------------------------
 
-            return Asset(
+            return Artifact(
               id: filename,
               path: localPath,
-              type: isVideo ? AssetType.video : AssetType.image,
+              type: isVideo ? ArtifactType.video : ArtifactType.image,
             );
           }
         }
@@ -407,7 +407,7 @@ class ComfyUIDriver {
         "UnsupportedOutput: No image or video files found in the outputs",
       );
     } catch (e) {
-      debugPrint("ComfyUIDriver Error in downloadAsset: $e");
+      debugPrint("ComfyUIDriver Error in downloadArtifact: $e");
       rethrow;
     }
   }

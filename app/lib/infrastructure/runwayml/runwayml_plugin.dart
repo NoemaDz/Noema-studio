@@ -3,7 +3,8 @@ import '../../core/plugins/plugin_context.dart';
 import '../../core/capabilities/capability.dart';
 import '../../core/providers/video_provider.dart';
 import '../../models/job.dart';
-import '../../models/asset.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 
 class RunwayMLVideoProvider extends VideoProvider {
   @override
@@ -23,21 +24,12 @@ class RunwayMLVideoProvider extends VideoProvider {
       const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   @override
-  Future<Job> submitJob(
-    String prompt,
-    String imagePath, {
-    Map<String, dynamic>? options,
-  }) async {
+  Future<Job> execute(ExecutionRequest request) async {
     throw UnimplementedError("RunwayML Cloud Video generation is coming soon.");
   }
 
   @override
-  Future<JobStatusUpdate> updateJobStatus(Job job) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Asset?> downloadAsset(String jobId) async {
+  Future<ExecutionResult> getResult(String jobId) async {
     throw UnimplementedError();
   }
 

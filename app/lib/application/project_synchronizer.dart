@@ -3,6 +3,8 @@ import '../core/noema_project.dart';
 import '../core/providers/provider_registry.dart';
 import '../core/providers/async_provider.dart';
 import '../models/job.dart';
+import '../models/artifact.dart';
+import '../models/artifact_type.dart';
 import '../core/job_events.dart';
 import '../presentation/state/project_state.dart';
 import '../core/job_manager.dart';
@@ -58,7 +60,17 @@ class ProjectSynchronizer {
     }
 
     if (job.status == JobStatus.completed && job.type == "video_compile") {
-      project.finalVideoPath = job.result;
+      try {
+        final provider = registry.get(job.providerId);
+        final execResult = await provider.getResult(job.id);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          project.finalVideoPath = execResult.textOutput;
+        } else {
+          project.finalVideoPath = job.result;
+        }
+      } catch (_) {
+        project.finalVideoPath = job.result;
+      }
       state.refresh();
       saveProject(project);
       return;
@@ -78,34 +90,37 @@ class ProjectSynchronizer {
     if (job.type == "image") {
       try {
         final provider = registry.get(job.providerId);
-        if (provider is AsyncProvider) {
-          final asset = await provider.downloadAsset(job.id);
-          if (asset != null) {
+        final execResult = await provider.getResult(job.id);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          final artifact = Artifact(
+            id: job.id,
+            path: execResult.textOutput!,
+            type: ArtifactType.image,
+          );
+          debugPrint(
+            "ProjectSynchronizer: project.images contains ${project.images.length} images.",
+          );
+          bool found = false;
+          for (final image in project.images) {
             debugPrint(
-              "ProjectSynchronizer: project.images contains ${project.images.length} images.",
+              "ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}",
             );
-            bool found = false;
-            for (final image in project.images) {
-              debugPrint(
-                "ProjectSynchronizer: Comparing image.jobId=${image.jobId} with job.id=${job.id}",
-              );
-              if (image.jobId == job.id) {
-                image.asset = asset;
-                state.refresh();
-                saveProject(project);
-                debugPrint("ProjectSynchronizer: Assigned asset to image!");
-                found = true;
-                break;
-              }
+            if (image.jobId == job.id) {
+              image.artifact = artifact;
+              state.refresh();
+              saveProject(project);
+              debugPrint("ProjectSynchronizer: Assigned artifact to image!");
+              found = true;
+              break;
             }
-            if (!found) {
-              debugPrint(
-                "ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!",
-              );
-              debugPrint(
-                "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
-              );
-            }
+          }
+          if (!found) {
+            debugPrint(
+              "ProjectSynchronizer: WARNING - No image found with jobId ${job.id}!",
+            );
+            debugPrint(
+              "ProjectSynchronizer: Currently in project.images: ${project.images.map((e) => e.jobId).toList()}",
+            );
           }
         }
       } catch (e) {
@@ -117,24 +132,27 @@ class ProjectSynchronizer {
     if (job.type == "video") {
       try {
         final provider = registry.get(job.providerId);
-        if (provider is AsyncProvider) {
-          final asset = await provider.downloadAsset(job.id);
-          if (asset != null) {
-            bool found = false;
-            for (final video in project.videos) {
-              if (video.jobId == job.id) {
-                video.asset = asset;
-                state.refresh();
-                saveProject(project);
-                found = true;
-                break;
-              }
+        final execResult = await provider.getResult(job.id);
+        if (execResult.isSuccess && execResult.textOutput != null) {
+          final artifact = Artifact(
+            id: job.id,
+            path: execResult.textOutput!,
+            type: ArtifactType.video,
+          );
+          bool found = false;
+          for (final video in project.videos) {
+            if (video.jobId == job.id) {
+              video.artifact = artifact;
+              state.refresh();
+              saveProject(project);
+              found = true;
+              break;
             }
-            if (!found) {
-              debugPrint(
-                "ProjectSynchronizer: WARNING - No video found with jobId ${job.id}!",
-              );
-            }
+          }
+          if (!found) {
+            debugPrint(
+              "ProjectSynchronizer: WARNING - No video found with jobId ${job.id}!",
+            );
           }
         }
       } catch (e) {

@@ -2,8 +2,9 @@ import '../../core/providers/image_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'comfyui_driver.dart';
-import '../../models/asset.dart';
-
+import '../../models/artifact.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 import '../../core/plugins/plugin_context.dart';
 
 class ComfyUIProvider extends ImageProvider {
@@ -31,8 +32,8 @@ class ComfyUIProvider extends ImageProvider {
       const HardwareRequirements(requiresGPU: true, minimumVRAMGB: 6);
 
   @override
-  Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) {
-    return driver.submitJob(prompt, options: options);
+  Future<Job> execute(ExecutionRequest request) {
+    return driver.submitJob(request.input, options: request.parameters);
   }
 
   @override
@@ -41,8 +42,21 @@ class ComfyUIProvider extends ImageProvider {
   }
 
   @override
-  Future<Asset?> downloadAsset(String jobId) {
-    return driver.downloadAsset(jobId);
+  Future<ExecutionResult> getResult(String jobId) async {
+    try {
+      final artifact = await driver.downloadArtifact(jobId);
+      if (artifact != null) {
+        return ExecutionResult.success(artifact: artifact);
+      } else {
+        return ExecutionResult.failure(
+          JobError(code: 'not_found', message: 'Artifact not found'),
+        );
+      }
+    } catch (e) {
+      return ExecutionResult.failure(
+        JobError(code: 'download_failed', message: e.toString()),
+      );
+    }
   }
 
   @override

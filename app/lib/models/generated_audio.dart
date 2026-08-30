@@ -1,11 +1,11 @@
-import 'asset.dart';
+import 'artifact.dart';
 
 class GeneratedAudio {
   final int sceneId;
   final String? characterName;
   final String jobId;
   final String text;
-  Asset? asset;
+  Artifact? artifact;
   String? localPath;
 
   GeneratedAudio({
@@ -13,7 +13,7 @@ class GeneratedAudio {
     this.characterName,
     required this.jobId,
     required this.text,
-    this.asset,
+    this.artifact,
     this.localPath,
   });
 
@@ -23,7 +23,9 @@ class GeneratedAudio {
       characterName: json["characterName"],
       jobId: json["jobId"],
       text: json["text"],
-      asset: json["asset"] != null ? Asset.fromJson(json["asset"]) : null,
+      artifact: json["artifact"] != null
+          ? Artifact.fromJson(json["artifact"])
+          : null,
       localPath: json["localPath"],
     );
   }
@@ -34,7 +36,7 @@ class GeneratedAudio {
       "characterName": characterName,
       "jobId": jobId,
       "text": text,
-      "asset": asset?.toJson(),
+      "artifact": artifact?.toJson(),
       "localPath": localPath,
     };
   }

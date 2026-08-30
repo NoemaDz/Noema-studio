@@ -8,6 +8,8 @@ import '../../core/providers/tts_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import '../../main.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 
 class OpenAITTSProvider extends TTSProvider {
   @override
@@ -26,9 +28,14 @@ class OpenAITTSProvider extends TTSProvider {
   HardwareRequirements get hardwareRequirements =>
       const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
+  final Map<String, ExecutionResult> _results = {};
+
   @override
-  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
-    final jobId = "tts_${const Uuid().v4()}";
+  Future<Job> execute(ExecutionRequest request) async {
+    final jobId = request.jobId ?? "tts_${const Uuid().v4()}";
+    final text = request.input;
+    final voiceProfile = request.parameters['voiceProfile'] as String?;
+
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(
       p.join(appDir.path, "noema", "output", "audio"),
@@ -43,59 +50,84 @@ class OpenAITTSProvider extends TTSProvider {
     final apiKey = noema.bootstrap.appSettings.openAiKey;
     final voice = voiceProfile ?? noema.bootstrap.appSettings.openAiTtsVoice;
 
+    final job = Job(
+      id: jobId,
+      providerId: id,
+      type: request.capability.name,
+      status: JobStatus.running,
+    );
+
     if (apiKey.isEmpty) {
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "audio",
-        status: JobStatus.queued,
-        result: "OpenAI API key is missing.",
+      job.transitionTo(JobStatus.failed);
+      job.error = JobError(
+        code: 'auth_error',
+        message: 'OpenAI API key is missing.',
       );
+      _results[jobId] = ExecutionResult.failure(job.error!);
+      return job;
     }
 
+    _runAsync(job, text, voice, outputPath, apiKey);
+    return job;
+  }
+
+  Future<void> _runAsync(
+    Job job,
+    String text,
+    String voice,
+    String outputPath,
+    String apiKey,
+  ) async {
     try {
-      final response = await http
-          .post(
-            Uri.parse('https://api.openai.com/v1/audio/speech'),
-            headers: {
-              'Authorization': 'Bearer $apiKey',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({'model': 'tts-1', 'input': text, 'voice': voice}),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/audio/speech'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': 'tts-1', // or tts-1-hd
+          'input': text,
+          'voice': voice.toLowerCase(),
+        }),
+      );
 
       if (response.statusCode == 200) {
         final file = File(outputPath);
         await file.writeAsBytes(response.bodyBytes);
 
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "audio",
-          metadata: {"text": text},
-          status: JobStatus.completed,
-          progress: 1.0,
-          result: outputPath,
-        );
+        _results[job.id] = ExecutionResult.success(textOutput: outputPath);
+        job.transitionTo(JobStatus.completed);
       } else {
-        return Job(
-          id: jobId,
-          providerId: id,
-          type: "audio",
-          status: JobStatus.failed,
-          result: "OpenAI TTS failed: ${response.body}",
+        _results[job.id] = ExecutionResult.failure(
+          JobError(
+            code: 'http_error',
+            message:
+                'Failed with status ${response.statusCode}: ${response.body}',
+          ),
         );
+        job.error = JobError(
+          code: 'http_error',
+          message:
+              'Failed with status ${response.statusCode}: ${response.body}',
+        );
+        job.transitionTo(JobStatus.failed);
       }
     } catch (e) {
-      return Job(
-        id: jobId,
-        providerId: id,
-        type: "audio",
-        status: JobStatus.failed,
-        result: "Exception: $e",
+      _results[job.id] = ExecutionResult.failure(
+        JobError(code: 'error', message: e.toString()),
       );
+      job.error = JobError(code: 'error', message: e.toString());
+      job.transitionTo(JobStatus.failed);
     }
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async {
+    return _results[jobId] ??
+        ExecutionResult.failure(
+          JobError(code: 'not_found', message: 'Result not found'),
+        );
   }
 
   @override

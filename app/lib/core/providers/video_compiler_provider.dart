@@ -15,12 +15,4 @@ class AudioVideoResource {
   });
 }
 
-abstract class VideoCompilerProvider extends Provider {
-  Future<Job> compileVideo(
-    List<AudioVideoResource> resources,
-    String outputPath, {
-    Map<String, dynamic>? options,
-  });
-
-  Future<void> cancelJob(String jobId);
-}
+abstract class VideoCompilerProvider extends Provider {}

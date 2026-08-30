@@ -41,7 +41,7 @@ class VideoCompilationStage extends PipelineStage {
         orElse: () => null,
       );
 
-      final mediaPath = video?.asset?.path ?? image?.asset?.path;
+      final mediaPath = video?.artifact?.path ?? image?.artifact?.path;
 
       if (mediaPath == null) {
         throw Exception("Missing image/video for scene ${scene.id}");
@@ -53,8 +53,8 @@ class VideoCompilationStage extends PipelineStage {
 
       // If no audios exist, we skip or handle silently? Let's just gather whatever we have.
       final validAudioPaths = audios
-          .where((aud) => aud.asset?.path != null)
-          .map((aud) => aud.asset!.path)
+          .where((aud) => aud.artifact?.path != null)
+          .map((aud) => aud.artifact!.path)
           .toList();
 
       final subtitleText = audios
@@ -107,10 +107,18 @@ class VideoCompilationStage extends PipelineStage {
     }
 
     if (job.status == JobStatus.failed) {
-      throw Exception("Video compilation failed: ${job.error?.message ?? 'Unknown error'}");
+      throw Exception(
+        "Video compilation failed: ${job.error?.message ?? 'Unknown error'}",
+      );
     }
 
-    // finalVideoPath will be updated when the job completes, similar to how updateAudioFromJob works.
-    project.finalVideoPath = job.result;
+    final execResult = await provider.getResult(job.id);
+    if (!execResult.isSuccess || execResult.textOutput == null) {
+      throw Exception(
+        "Failed to retrieve compiled video path: ${execResult.error?.message}",
+      );
+    }
+
+    project.finalVideoPath = execResult.textOutput;
   }
 }

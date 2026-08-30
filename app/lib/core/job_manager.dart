@@ -111,7 +111,7 @@ class JobManager {
       try {
         if (registry != null && registry!.has(job.providerId)) {
           final provider = registry!.get(job.providerId);
-          if (provider is AsyncProvider) {
+          if (provider != null) {
             await provider.cancelJob(job.id);
           }
         }

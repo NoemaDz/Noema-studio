@@ -3,6 +3,9 @@ import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
+
 class MockTTSProvider extends TTSProvider {
   @override
   String get id => "mock_tts";
@@ -20,21 +23,40 @@ class MockTTSProvider extends TTSProvider {
   HardwareRequirements get hardwareRequirements =>
       const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
-  @override
-  Future<Job> generateAudio(String text, {String? voiceProfile}) async {
-    final jobId = "tts_mock_${const Uuid().v4()}";
+  final Map<String, ExecutionResult> _results = {};
 
-    // Simulate some network delay
-    await Future.delayed(const Duration(seconds: 1));
-    return Job(
+  @override
+  Future<Job> execute(ExecutionRequest request) async {
+    final jobId = request.jobId ?? "tts_mock_${const Uuid().v4()}";
+    final text = request.input;
+    final voiceProfile = request.parameters['voiceProfile'] as String?;
+
+    final job = Job(
       id: jobId,
       providerId: id,
-      type: "audio",
+      type: request.capability.name,
       metadata: {"text": text, "voiceProfile": voiceProfile},
-      status: JobStatus.completed,
-      progress: 1.0,
-      result: "path/to/mock_audio.mp3",
+      status: JobStatus.running,
     );
+
+    _runAsync(job);
+    return job;
+  }
+
+  Future<void> _runAsync(Job job) async {
+    await Future.delayed(const Duration(seconds: 1));
+    _results[job.id] = ExecutionResult.success(
+      textOutput: "path/to/mock_audio.mp3",
+    );
+    job.transitionTo(JobStatus.completed);
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) async {
+    return _results[jobId] ??
+        ExecutionResult.failure(
+          JobError(code: 'not_found', message: 'Result not found'),
+        );
   }
 
   @override

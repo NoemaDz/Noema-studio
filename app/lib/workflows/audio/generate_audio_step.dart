@@ -3,6 +3,9 @@ import '../../core/workflow/workflow_context.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
 
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
+
 class GenerateAudioStep extends WorkflowStep<Job> {
   final TTSProvider provider;
 
@@ -23,8 +26,13 @@ class GenerateAudioStep extends WorkflowStep<Job> {
       throw Exception("Missing text for audio generation");
     }
 
-    final job = await provider.generateAudio(text, voiceProfile: voiceProfile);
+    final request = ExecutionRequest(
+      capability: CapabilityType.tts,
+      input: text,
+      parameters: {if (voiceProfile != null) 'voiceProfile': voiceProfile},
+    );
 
+    final job = await provider.execute(request);
     job.metadata["text"] = text;
 
     return job;

@@ -2,8 +2,9 @@ import '../../core/providers/video_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'comfyui_driver.dart';
-import '../../models/asset.dart';
-
+import '../../models/artifact.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/contracts/execution_result.dart';
 import '../../core/plugins/plugin_context.dart';
 
 class ComfyUIVideoProvider extends VideoProvider {
@@ -31,17 +32,12 @@ class ComfyUIVideoProvider extends VideoProvider {
       const HardwareRequirements(requiresGPU: true, minimumVRAMGB: 8);
 
   @override
-  Future<Job> submitJob(
-    String prompt,
-    String imagePath, {
-    Map<String, dynamic>? options,
-  }) {
-    final opts = options != null
-        ? Map<String, dynamic>.from(options)
+  Future<Job> execute(ExecutionRequest request) {
+    final opts = request.parameters.isNotEmpty
+        ? Map<String, dynamic>.from(request.parameters)
         : <String, dynamic>{};
     opts["is_video"] = true;
-    opts["source_image_path"] = imagePath;
-    return driver.submitJob(prompt, options: opts);
+    return driver.submitJob(request.input, options: opts);
   }
 
   @override
@@ -50,8 +46,21 @@ class ComfyUIVideoProvider extends VideoProvider {
   }
 
   @override
-  Future<Asset?> downloadAsset(String jobId) {
-    return driver.downloadAsset(jobId);
+  Future<ExecutionResult> getResult(String jobId) async {
+    try {
+      final artifact = await driver.downloadArtifact(jobId);
+      if (artifact != null) {
+        return ExecutionResult.success(artifact: artifact);
+      } else {
+        return ExecutionResult.failure(
+          JobError(code: 'not_found', message: 'Artifact not found'),
+        );
+      }
+    } catch (e) {
+      return ExecutionResult.failure(
+        JobError(code: 'download_failed', message: e.toString()),
+      );
+    }
   }
 
   @override

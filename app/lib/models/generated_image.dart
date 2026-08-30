@@ -1,4 +1,4 @@
-import 'asset.dart';
+import 'artifact.dart';
 
 class GeneratedImage {
   final int sceneId;
@@ -7,13 +7,13 @@ class GeneratedImage {
 
   final String prompt;
 
-  Asset? asset;
+  Artifact? artifact;
 
   GeneratedImage({
     required this.sceneId,
     required this.jobId,
     required this.prompt,
-    this.asset,
+    this.artifact,
   });
 
   factory GeneratedImage.fromJson(Map<String, dynamic> json) {
@@ -21,7 +21,9 @@ class GeneratedImage {
       sceneId: json["sceneId"],
       jobId: json["jobId"],
       prompt: json["prompt"],
-      asset: json["asset"] != null ? Asset.fromJson(json["asset"]) : null,
+      artifact: json["artifact"] != null
+          ? Artifact.fromJson(json["artifact"])
+          : null,
     );
   }
 
@@ -30,7 +32,7 @@ class GeneratedImage {
       "sceneId": sceneId,
       "jobId": jobId,
       "prompt": prompt,
-      "asset": asset?.toJson(),
+      "artifact": artifact?.toJson(),
     };
   }
 }

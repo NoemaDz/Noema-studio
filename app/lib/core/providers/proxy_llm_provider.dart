@@ -1,5 +1,9 @@
 import '../../core/plugins/plugin_context.dart';
-import '../../core/providers/llm_provider.dart';
+import 'llm_provider.dart';
+import '../plugins/plugin_context.dart';
+import '../../models/job.dart';
+import '../contracts/execution_request.dart';
+import '../contracts/execution_result.dart';
 import '../../core/capabilities/capability.dart';
 
 class ProxyLLMProvider extends LLMProvider {
@@ -14,22 +18,36 @@ class ProxyLLMProvider extends LLMProvider {
   String get name => "Proxy LLM Provider";
 
   @override
-  bool get available => true;
+  bool get available => _activeProvider.available;
 
   @override
-  Set<CapabilityType> get capabilities => {CapabilityType.llm};
+  Set<CapabilityType> get capabilities => _activeProvider.capabilities;
 
   @override
-  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
+  HardwareRequirements get hardwareRequirements =>
+      _activeProvider.hardwareRequirements;
 
-  @override
-  Future<String> generate(String prompt) {
+  LLMProvider get _activeProvider {
     final activeId = context.appSettings.activeLlmProvider;
-    // Find the provider with this id
     final provider = context.providers.all.whereType<LLMProvider>().firstWhere(
       (p) => p.id == activeId,
       orElse: () => context.providers.getDefault<LLMProvider>(),
     );
-    return provider.generate(prompt);
+    return provider;
+  }
+
+  @override
+  Future<Job> execute(ExecutionRequest request) {
+    return _activeProvider.execute(request);
+  }
+
+  @override
+  Future<ExecutionResult> getResult(String jobId) {
+    return _activeProvider.getResult(jobId);
+  }
+
+  @override
+  Future<void> cancelJob(String jobId) {
+    return _activeProvider.cancelJob(jobId);
   }
 }

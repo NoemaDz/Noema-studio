@@ -3,6 +3,9 @@ import '../../core/workflow/workflow_context.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
 
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
+
 class CompileVideoStep extends WorkflowStep<Job> {
   final VideoCompilerProvider provider;
 
@@ -24,11 +27,16 @@ class CompileVideoStep extends WorkflowStep<Job> {
       throw Exception("Missing resources or outputPath for video compilation");
     }
 
-    final job = await provider.compileVideo(
-      resources,
-      outputPath,
-      options: options,
+    options['resources'] = resources;
+    options['output_path'] = outputPath;
+
+    final request = ExecutionRequest(
+      capability: CapabilityType.videoGeneration,
+      input: "compile_video",
+      parameters: options,
     );
+
+    final job = await provider.execute(request);
 
     return job;
   }

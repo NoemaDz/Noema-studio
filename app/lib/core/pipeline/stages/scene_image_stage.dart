@@ -11,6 +11,8 @@ import '../../../models/job.dart';
 import '../../cancellation_token.dart';
 import '../../../models/character.dart';
 import '../../../models/scene.dart';
+import '../../../models/artifact.dart';
+import '../../../models/artifact_type.dart';
 
 class SceneImageStage extends PipelineStage {
   @override
@@ -85,9 +87,11 @@ class SceneImageStage extends PipelineStage {
         );
 
         // Remove the failed job from the project so it doesn't clutter the UI
-        final failedJobId = project.images.firstWhere((img) => img.sceneId == scene.id).jobId;
+        final failedJobId = project.images
+            .firstWhere((img) => img.sceneId == scene.id)
+            .jobId;
         project.jobIds.remove(failedJobId);
-        // Note: We leave it in JobManager in case other things reference it, 
+        // Note: We leave it in JobManager in case other things reference it,
         // but removing it from project.jobIds hides it from LiveProgressTracker.
 
         // Strip character refs so ComfyUIDriver picks text_to_image workflow
@@ -164,16 +168,22 @@ class SceneImageStage extends PipelineStage {
         );
       }
 
-      final asset = await provider.downloadAsset(job.id);
-      if (asset == null) {
+      final execResult = await provider.getResult(job.id);
+      if (!execResult.isSuccess || execResult.textOutput == null) {
         throw Exception(
-          'Failed to download image asset for scene ${scene.id}.',
+          'Failed to retrieve image artifact for scene ${scene.id}: ${execResult.error?.message ?? 'Unknown error'}',
         );
       }
 
+      final artifact = Artifact(
+        id: job.id,
+        path: execResult.textOutput!,
+        type: ArtifactType.image,
+      );
+
       for (final img in project.images) {
         if (img.jobId == job.id) {
-          img.asset = asset;
+          img.artifact = artifact;
           break;
         }
       }

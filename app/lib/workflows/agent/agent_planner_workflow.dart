@@ -4,6 +4,9 @@ import '../../core/workflow/workflow_context.dart';
 import '../../core/providers/llm_provider.dart';
 import '../../core/agent/agent_prompt_templates.dart';
 import '../../core/utils/json_extractor.dart';
+import '../../core/contracts/execution_request.dart';
+import '../../core/capabilities/capability.dart';
+import '../../models/job.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -58,7 +61,25 @@ class _AgentPlanningStep implements WorkflowStep {
       final fullPrompt =
           "${AgentPromptTemplates.directorSystemPrompt}\n\n$prompt";
 
-      final response = await provider.generate(fullPrompt);
+      final request = ExecutionRequest(
+        capability: CapabilityType.textGeneration,
+        input: fullPrompt,
+      );
+      final job = await provider.execute(request);
+
+      // Wait for job completion
+      while (job.status == JobStatus.pending ||
+          job.status == JobStatus.running) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      if (job.status == JobStatus.failed) {
+        throw Exception(job.error?.message ?? 'LLM Generation failed');
+      }
+
+      final result = await provider.getResult(job.id);
+      final response = result.textOutput ?? "";
+
       print("RAW LLM OUTPUT: $response");
 
       final cleanJson = JsonExtractor.extract(response);

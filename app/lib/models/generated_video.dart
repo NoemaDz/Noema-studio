@@ -1,16 +1,16 @@
-import 'asset.dart';
+import 'artifact.dart';
 
 class GeneratedVideo {
   final int sceneId;
   final String jobId;
   final String sourceImagePath;
-  Asset? asset;
+  Artifact? artifact;
 
   GeneratedVideo({
     required this.sceneId,
     required this.jobId,
     required this.sourceImagePath,
-    this.asset,
+    this.artifact,
   });
 
   factory GeneratedVideo.fromJson(Map<String, dynamic> json) {
@@ -18,7 +18,9 @@ class GeneratedVideo {
       sceneId: json["sceneId"],
       jobId: json["jobId"],
       sourceImagePath: json["sourceImagePath"] ?? '',
-      asset: json["asset"] != null ? Asset.fromJson(json["asset"]) : null,
+      artifact: json["artifact"] != null
+          ? Artifact.fromJson(json["artifact"])
+          : null,
     );
   }
 
@@ -27,7 +29,7 @@ class GeneratedVideo {
       "sceneId": sceneId,
       "jobId": jobId,
       "sourceImagePath": sourceImagePath,
-      "asset": asset?.toJson(),
+      "artifact": artifact?.toJson(),
     };
   }
 }
