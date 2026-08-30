@@ -1,7 +1,7 @@
 class FFmpegPathEscaper {
   /// Escapes paths for use in FFmpeg filter graphs (e.g. subtitles filter)
   static String escapeFilterPath(String path) {
-    // FFmpeg filter paths must have backslashes and colons escaped, 
+    // FFmpeg filter paths must have backslashes and colons escaped,
     // and generally forward slashes work best across platforms.
     return path.replaceAll('\\', '/').replaceAll(':', '\\:');
   }

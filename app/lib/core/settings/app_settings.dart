@@ -159,7 +159,10 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kOpenAiUrl, cleanOpenAiUrl);
     // Save API key securely (NOT in SharedPreferences)
     try {
-      await _secureStorage.write(key: _kOpenAiKeySecure, value: openAiKey.trim());
+      await _secureStorage.write(
+        key: _kOpenAiKeySecure,
+        value: openAiKey.trim(),
+      );
     } catch (_) {} // Ignore in tests
     await prefs.setString(_kOpenAiModel, openAiModel.trim());
     await prefs.setString(_kComfyUIUrl, cleanComfyUIUrl);

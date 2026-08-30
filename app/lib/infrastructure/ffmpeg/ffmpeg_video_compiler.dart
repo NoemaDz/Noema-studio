@@ -141,7 +141,9 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
           final audioListFile = File(p.join(tempDir.path, 'audio_list_$i.txt'));
           final audioListContent = StringBuffer();
           for (final audPath in resource.audioPaths) {
-            audioListContent.writeln("file '${FFmpegPathEscaper.escapeConcatPath(audPath)}'");
+            audioListContent.writeln(
+              "file '${FFmpegPathEscaper.escapeConcatPath(audPath)}'",
+            );
           }
           audioListFile.writeAsStringSync(audioListContent.toString());
 
