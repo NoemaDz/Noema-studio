@@ -40,37 +40,30 @@ class JobMonitor {
           if (job.startedAt != null) {
             final duration = now.difference(job.startedAt!);
             if (duration > timeoutDuration) {
-              manager.applyUpdate(
+              await manager.cancelJob(
                 job.id,
-                JobStatusUpdate(
-                  status: JobStatus.failed,
-                  error: JobError(
-                    code: 'TIMEOUT',
-                    message: 'Job exceeded maximum execution time of ${timeoutDuration.inMinutes} minutes.',
-                  ),
+                finalStatus: JobStatus.failed,
+                error: JobError(
+                  code: 'TIMEOUT',
+                  message: 'Job exceeded maximum execution time of ${timeoutDuration.inMinutes} minutes.',
                 ),
               );
               events.emit(manager.find(job.id)!); // Emit updated job
-              // Also trigger a background cancel
-              manager.cancelJob(job.id);
               continue;
             }
           } else {
             // Check queued timeout if it's stuck in queue forever (e.g. 30 mins)
             final queuedDuration = now.difference(job.createdAt);
             if (queuedDuration > const Duration(minutes: 30)) {
-               manager.applyUpdate(
+              await manager.cancelJob(
                 job.id,
-                JobStatusUpdate(
-                  status: JobStatus.failed,
-                  error: JobError(
-                    code: 'QUEUED_TIMEOUT',
-                    message: 'Job was stuck in queue for too long.',
-                  ),
+                finalStatus: JobStatus.failed,
+                error: JobError(
+                  code: 'QUEUED_TIMEOUT',
+                  message: 'Job was stuck in queue for too long.',
                 ),
               );
               events.emit(manager.find(job.id)!);
-              manager.cancelJob(job.id);
               continue;
             }
           }

@@ -175,4 +175,36 @@ void main() {
       expect(job.status, JobStatus.cancelled);
     });
   });
+
+  group('Progress Semantics', () {
+    test('no progress updates after terminal state', () async {
+      final job = Job(id: '1', providerId: 'mock_provider', type: 'image', status: JobStatus.running);
+      manager.add(job);
+      job.progress = 0.5;
+
+      // Force into terminal state
+      manager.applyUpdate('1', JobStatusUpdate(status: JobStatus.completed, progress: 1.0));
+      expect(job.status, JobStatus.completed);
+      expect(job.progress, 1.0);
+
+      // Attempt to update progress
+      manager.applyUpdate('1', JobStatusUpdate(status: JobStatus.completed, progress: 0.8)); // Illegal? No, transitionTo(completed) from completed fails
+      expect(job.progress, 1.0);
+    });
+
+    test('progress never decreases when real provider progress is supplied', () async {
+      final job = Job(id: '1', providerId: 'mock_provider', type: 'image', status: JobStatus.running);
+      manager.add(job);
+      job.progress = 0.5;
+
+      // Provide higher progress
+      manager.applyUpdate('1', JobStatusUpdate(status: JobStatus.running, progress: 0.6));
+      expect(job.progress, 0.6);
+
+      // Attempt to decrease progress
+      manager.applyUpdate('1', JobStatusUpdate(status: JobStatus.running, progress: 0.4));
+      // Should remain 0.6
+      expect(job.progress, 0.6);
+    });
+  });
 }

@@ -30,7 +30,14 @@ class JobManager {
     if (job == null) return;
 
     if (job.transitionTo(update.status)) {
-      if (update.progress != null) job.progress = update.progress!;
+      if (update.progress != null) {
+        // Enforce monotonic progress: do not allow progress to decrease
+        if (update.progress! >= job.progress) {
+          job.progress = update.progress!;
+        } else {
+           print("WARNING: Ignored progress regression for Job ${job.id}: ${job.progress} -> ${update.progress}");
+        }
+      }
       if (update.result != null) job.result = update.result;
       if (update.error != null) job.error = update.error;
     } else {
@@ -81,7 +88,7 @@ class JobManager {
     }
   }
 
-  Future<void> cancelJob(String id) async {
+  Future<void> cancelJob(String id, {JobStatus finalStatus = JobStatus.cancelled, JobError? error}) async {
     final job = find(id);
     if (job == null) return;
     
@@ -98,7 +105,9 @@ class JobManager {
                     await provider.cancelJob(job.id);
                 }
             }
-            job.transitionTo(JobStatus.cancelled);
+            if (job.transitionTo(finalStatus)) {
+               if (error != null) job.error = error;
+            }
         } catch (e) {
             job.transitionTo(JobStatus.failed);
             job.error = JobError(code: 'CANCEL_FAILED', message: 'Failed to cancel job: $e');

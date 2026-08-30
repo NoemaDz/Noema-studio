@@ -18,18 +18,17 @@ class JobRunner {
       try {
         final update = await provider.updateJobStatus(job);
         
-        // Enhance the update based on our generic logic (like setting progress correctly for terminal states)
+        // Ensure progress is deterministic. Do not fabricate progress for non-terminal states.
+        // If the provider doesn't supply progress, we leave it alone (indeterminate).
         double? newProgress = update.progress;
+        
         switch (update.status) {
           case JobStatus.completed:
             newProgress = 1.0;
             break;
-          case JobStatus.queued:
-            newProgress = 0.05;
-            break;
           case JobStatus.failed:
           case JobStatus.cancelled:
-            newProgress = 0;
+            // Do not override progress to 0 to prevent regression.
             break;
           default:
             break;

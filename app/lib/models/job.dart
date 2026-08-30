@@ -88,13 +88,16 @@ class Job {
     switch (_status) {
       case JobStatus.pending:
         isValid =
-            newStatus == JobStatus.queued || newStatus == JobStatus.cancelled;
+            newStatus == JobStatus.queued || 
+            newStatus == JobStatus.cancelled || 
+            newStatus == JobStatus.cancelling;
         break;
       case JobStatus.queued:
         isValid =
             newStatus == JobStatus.starting ||
             newStatus == JobStatus.running ||
-            newStatus == JobStatus.cancelled;
+            newStatus == JobStatus.cancelled ||
+            newStatus == JobStatus.cancelling;
         break;
       case JobStatus.starting:
         isValid =
