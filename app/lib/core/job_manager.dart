@@ -35,13 +35,17 @@ class JobManager {
         if (update.progress! >= job.progress) {
           job.progress = update.progress!;
         } else {
-           print("WARNING: Ignored progress regression for Job ${job.id}: ${job.progress} -> ${update.progress}");
+          print(
+            "WARNING: Ignored progress regression for Job ${job.id}: ${job.progress} -> ${update.progress}",
+          );
         }
       }
       if (update.result != null) job.result = update.result;
       if (update.error != null) job.error = update.error;
     } else {
-      print("WARNING: Illegal transition attempted for Job ${job.id} to ${update.status}");
+      print(
+        "WARNING: Illegal transition attempted for Job ${job.id} to ${update.status}",
+      );
     }
   }
 
@@ -88,30 +92,39 @@ class JobManager {
     }
   }
 
-  Future<void> cancelJob(String id, {JobStatus finalStatus = JobStatus.cancelled, JobError? error}) async {
+  Future<void> cancelJob(
+    String id, {
+    JobStatus finalStatus = JobStatus.cancelled,
+    JobError? error,
+  }) async {
     final job = find(id);
     if (job == null) return;
-    
+
     // Only cancel if it's currently pending, queued, starting, running, or retrying.
-    if (job.status == JobStatus.completed || job.status == JobStatus.failed || job.status == JobStatus.cancelled) {
-        return; 
+    if (job.status == JobStatus.completed ||
+        job.status == JobStatus.failed ||
+        job.status == JobStatus.cancelled) {
+      return;
     }
-    
+
     if (job.transitionTo(JobStatus.cancelling)) {
-        try {
-            if (registry != null && registry!.has(job.providerId)) {
-                final provider = registry!.get(job.providerId);
-                if (provider is AsyncProvider) {
-                    await provider.cancelJob(job.id);
-                }
-            }
-            if (job.transitionTo(finalStatus)) {
-               if (error != null) job.error = error;
-            }
-        } catch (e) {
-            job.transitionTo(JobStatus.failed);
-            job.error = JobError(code: 'CANCEL_FAILED', message: 'Failed to cancel job: $e');
+      try {
+        if (registry != null && registry!.has(job.providerId)) {
+          final provider = registry!.get(job.providerId);
+          if (provider is AsyncProvider) {
+            await provider.cancelJob(job.id);
+          }
         }
+        if (job.transitionTo(finalStatus)) {
+          if (error != null) job.error = error;
+        }
+      } catch (e) {
+        job.transitionTo(JobStatus.failed);
+        job.error = JobError(
+          code: 'CANCEL_FAILED',
+          message: 'Failed to cancel job: $e',
+        );
+      }
     }
   }
 

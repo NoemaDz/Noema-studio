@@ -16,7 +16,12 @@ class JobMonitor {
 
   final Duration timeoutDuration;
 
-  JobMonitor(this.runner, this.manager, this.events, {this.timeoutDuration = const Duration(minutes: 10)});
+  JobMonitor(
+    this.runner,
+    this.manager,
+    this.events, {
+    this.timeoutDuration = const Duration(minutes: 10),
+  });
 
   void start() {
     _isRunning = true;
@@ -45,7 +50,8 @@ class JobMonitor {
                 finalStatus: JobStatus.failed,
                 error: JobError(
                   code: 'TIMEOUT',
-                  message: 'Job exceeded maximum execution time of ${timeoutDuration.inMinutes} minutes.',
+                  message:
+                      'Job exceeded maximum execution time of ${timeoutDuration.inMinutes} minutes.',
                 ),
               );
               events.emit(manager.find(job.id)!); // Emit updated job

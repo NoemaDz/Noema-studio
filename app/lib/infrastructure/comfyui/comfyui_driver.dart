@@ -263,13 +263,15 @@ class ComfyUIDriver {
               String errorMessage;
               try {
                 final messages = jobHistory['status']['messages'] as List;
-                errorMessage = ComfyUIErrorParser.parseError(messages).toString();
+                errorMessage = ComfyUIErrorParser.parseError(
+                  messages,
+                ).toString();
               } catch (e) {
                 errorMessage = "Failed to parse ComfyUI error: $e";
               }
               return JobStatusUpdate(
-                status: JobStatus.failed, 
-                error: JobError(code: 'COMFYUI_ERROR', message: errorMessage)
+                status: JobStatus.failed,
+                error: JobError(code: 'COMFYUI_ERROR', message: errorMessage),
               );
             }
           }
@@ -293,11 +295,14 @@ class ComfyUIDriver {
     if (currentNotFound > 3) {
       _notFoundCounts.remove(job.id);
       return JobStatusUpdate(
-        status: JobStatus.failed, 
-        error: JobError(code: 'COMFYUI_NOT_FOUND', message: 'Job not found in ComfyUI queue or history after 3 polls.')
+        status: JobStatus.failed,
+        error: JobError(
+          code: 'COMFYUI_NOT_FOUND',
+          message: 'Job not found in ComfyUI queue or history after 3 polls.',
+        ),
       );
     }
-    
+
     return JobStatusUpdate(status: job.status);
   }
 

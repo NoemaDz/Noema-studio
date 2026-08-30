@@ -35,6 +35,7 @@ class JobStatusUpdate {
     this.error,
   });
 }
+
 enum JobStatus {
   pending,
   queued,
@@ -59,7 +60,7 @@ class Job {
   String? result;
   JobError? error;
   Map<String, dynamic> metadata;
-  
+
   final DateTime createdAt;
   DateTime? startedAt;
   DateTime? completedAt;
@@ -88,8 +89,8 @@ class Job {
     switch (_status) {
       case JobStatus.pending:
         isValid =
-            newStatus == JobStatus.queued || 
-            newStatus == JobStatus.cancelled || 
+            newStatus == JobStatus.queued ||
+            newStatus == JobStatus.cancelled ||
             newStatus == JobStatus.cancelling;
         break;
       case JobStatus.queued:
@@ -132,16 +133,16 @@ class Job {
 
     if (isValid) {
       _status = newStatus;
-      
+
       // Update timestamps automatically based on state transition
       if (newStatus == JobStatus.running && startedAt == null) {
         startedAt = DateTime.now();
-      } else if (newStatus == JobStatus.completed || 
-                 newStatus == JobStatus.failed || 
-                 newStatus == JobStatus.cancelled) {
+      } else if (newStatus == JobStatus.completed ||
+          newStatus == JobStatus.failed ||
+          newStatus == JobStatus.cancelled) {
         completedAt ??= DateTime.now();
       }
-      
+
       return true;
     } else {
       // Return false to indicate illegal transition instead of throwing to prevent crashing the UI/polling loops
@@ -173,9 +174,15 @@ class Job {
       result: json["result"],
       error: json["error"] != null ? JobError.fromJson(json["error"]) : null,
       metadata: Map<String, dynamic>.from(json["metadata"] ?? {}),
-      createdAt: json["createdAt"] != null ? DateTime.parse(json["createdAt"]) : null,
-      startedAt: json["startedAt"] != null ? DateTime.parse(json["startedAt"]) : null,
-      completedAt: json["completedAt"] != null ? DateTime.parse(json["completedAt"]) : null,
+      createdAt: json["createdAt"] != null
+          ? DateTime.parse(json["createdAt"])
+          : null,
+      startedAt: json["startedAt"] != null
+          ? DateTime.parse(json["startedAt"])
+          : null,
+      completedAt: json["completedAt"] != null
+          ? DateTime.parse(json["completedAt"])
+          : null,
     );
   }
 
