@@ -1,5 +1,6 @@
 import '../../core/providers/video_compiler_provider.dart';
 import '../../models/job.dart';
+import 'package:uuid/uuid.dart';
 
 class MockVideoCompilerProvider extends VideoCompilerProvider {
   @override
@@ -18,7 +19,7 @@ class MockVideoCompilerProvider extends VideoCompilerProvider {
     Map<String, dynamic>? options,
   }) async {
     return Job(
-      id: "mock_video_${DateTime.now().millisecondsSinceEpoch}",
+      id: "mock_video_${const Uuid().v4()}",
       providerId: id,
       type: "video_compile",
       metadata: {"outputPath": outputPath},

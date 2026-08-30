@@ -2,6 +2,7 @@ import 'noema.dart';
 import 'noema_project.dart';
 import '../models/story.dart' as import_story;
 import 'dart:async';
+import 'package:uuid/uuid.dart';
 
 class ProjectController {
   final Noema noema;
@@ -15,7 +16,7 @@ class ProjectController {
   //==================================
   Future<NoemaProject> createProject(String idea) async {
     final p = NoemaProject(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       idea: idea,
       story: import_story.Story(title: "Generating...", scenes: []),
     );

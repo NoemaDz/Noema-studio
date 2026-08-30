@@ -5,6 +5,7 @@ import '../../models/job.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class FlutterTTSProvider extends TTSProvider {
   @override
@@ -20,7 +21,7 @@ class FlutterTTSProvider extends TTSProvider {
 
   @override
   Future<Job> generateAudio(String text, {String? voiceProfile}) async {
-    final jobId = "tts_${DateTime.now().millisecondsSinceEpoch}";
+    final jobId = "tts_${const Uuid().v4()}";
     final appDir = await getApplicationSupportDirectory();
     final outputDir = Directory(
       p.join(appDir.path, "noema", "output", "audio"),

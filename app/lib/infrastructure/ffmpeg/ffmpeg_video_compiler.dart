@@ -5,9 +5,13 @@ import '../../models/job.dart';
 import 'ffmpeg_effect_builder.dart';
 import 'ffmpeg_path_escaper.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart';
 import '../../core/settings/app_settings.dart';
 
+import 'package:uuid/uuid.dart';
+
 import '../../application/dependency_manager.dart';
+import '../../core/cancellation_token.dart';
 
 class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   final AppSettings appSettings;
@@ -26,6 +30,9 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   final Map<String, Process> _runningProcesses = {};
   final Set<String> _cancelledJobs = {};
 
+  @visibleForTesting
+  List<String> get activeJobIds => _runningProcesses.keys.toList();
+
   @override
   Future<void> cancelJob(String jobId) async {
     _cancelledJobs.add(jobId);
@@ -41,6 +48,13 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     List<String> args,
   ) async {
     final process = await Process.start(executable, args);
+
+    // Check if cancelled during startup
+    if (_cancelledJobs.contains(jobId)) {
+      process.kill(ProcessSignal.sigkill);
+      throw CancelledException();
+    }
+
     _runningProcesses[jobId] = process;
 
     final List<int> stdoutBytes = [];
@@ -74,7 +88,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     String outputPath, {
     Map<String, dynamic>? options,
   }) async {
-    final jobId = "ffmpeg_${DateTime.now().millisecondsSinceEpoch}";
+    final jobId = "ffmpeg_${const Uuid().v4()}";
     final ffmpegPath = DependencyManager.instance.ffmpegPath;
 
     if (!available) {

@@ -7,6 +7,7 @@ import 'package:noema_studio/infrastructure/openai/openai_image_plugin.dart';
 import 'package:noema_studio/infrastructure/tts/flutter_tts_plugin.dart';
 import 'package:noema_studio/infrastructure/ffmpeg/ffmpeg_plugin.dart';
 import 'package:noema_studio/core/plugins/core_pipeline_plugin.dart';
+import 'package:uuid/uuid.dart';
 import 'package:noema_studio/core/plugins/ingestion_plugin.dart';
 
 import 'package:noema_studio/models/job.dart';
@@ -41,7 +42,7 @@ void main() async {
 
     print("Generating project (this may take a few minutes)...");
     final p = NoemaProject(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       idea: text,
       story: Story(title: "Simulating", scenes: []),
     );

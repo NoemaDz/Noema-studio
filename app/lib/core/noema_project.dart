@@ -13,6 +13,7 @@ import '../core/project_statistics.dart';
 import '../core/project_summary.dart';
 import '../models/asset.dart';
 import '../models/asset_type.dart';
+import 'package:uuid/uuid.dart';
 import '../models/generation_state.dart';
 
 /// The single canonical domain model for a Noema production project.
@@ -154,7 +155,7 @@ class NoemaProject {
 
   factory NoemaProject.fromJson(Map<String, dynamic> json) {
     final project = NoemaProject(
-      id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: json['id'] ?? const Uuid().v4(),
       title: json['title'] as String?,
       idea: json['idea'] as String,
       language: json['language'] as String? ?? 'en',

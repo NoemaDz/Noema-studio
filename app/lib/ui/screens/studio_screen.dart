@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:uuid/uuid.dart';
 import '../../main.dart'; // To access global `noema`
 import '../../application/project_synchronizer.dart';
 import '../../application/comfyui_runner_service.dart';
@@ -75,7 +76,7 @@ class _StudioScreenState extends State<StudioScreen> {
 
     try {
       final p = NoemaProject(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: const Uuid().v4(),
         idea: _ideaController.text,
         story: import_story.Story(title: "Generating...", scenes: []),
       );

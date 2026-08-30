@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 import '../../core/providers/image_provider.dart';
 import '../../core/settings/platform_paths.dart';
 import '../../core/plugins/plugin_context.dart';
@@ -33,7 +34,7 @@ class OpenAIImageProvider extends ImageProvider {
       throw Exception("OpenAI API key is missing");
     }
 
-    final jobId = DateTime.now().millisecondsSinceEpoch.toString();
+    final jobId = const Uuid().v4();
     final job = Job(
       id: jobId,
       providerId: id,

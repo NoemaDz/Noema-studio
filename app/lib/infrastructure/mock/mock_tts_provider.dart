@@ -1,5 +1,6 @@
 import '../../core/providers/tts_provider.dart';
 import '../../models/job.dart';
+import 'package:uuid/uuid.dart';
 
 class MockTTSProvider extends TTSProvider {
   @override
@@ -13,7 +14,7 @@ class MockTTSProvider extends TTSProvider {
 
   @override
   Future<Job> generateAudio(String text, {String? voiceProfile}) async {
-    final jobId = "tts_mock_${DateTime.now().millisecondsSinceEpoch}";
+    final jobId = "tts_mock_${const Uuid().v4()}";
 
     // Simulate some network delay
     await Future.delayed(const Duration(seconds: 1));
