@@ -3,7 +3,7 @@ import '../../core/plugins/plugin_context.dart';
 import 'mock_tts_provider.dart';
 import 'mock_video_compiler_provider.dart';
 
-class MockMediaPlugin implements IPlugin {
+class MockMediaPlugin extends IPlugin {
   @override
   String get name => 'Mock Media Providers';
 

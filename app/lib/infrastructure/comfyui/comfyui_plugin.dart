@@ -3,7 +3,7 @@ import '../../core/plugins/plugin_context.dart';
 import 'comfyui_provider.dart';
 import 'comfyui_video_provider.dart';
 
-class ComfyUIPlugin implements IPlugin {
+class ComfyUIPlugin extends IPlugin {
   @override
   String get name => 'ComfyUI Image Generator';
 

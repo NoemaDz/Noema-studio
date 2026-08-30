@@ -19,7 +19,7 @@ import '../../infrastructure/edge_tts/edge_tts_provider.dart'
     as import_edge_tts;
 import '../providers/video_compiler_provider.dart';
 
-class CorePipelinePlugin implements IPlugin {
+class CorePipelinePlugin extends IPlugin {
   @override
   String get name => 'Core Pipeline';
 

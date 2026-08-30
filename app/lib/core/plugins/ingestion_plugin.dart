@@ -5,7 +5,7 @@ import '../../infrastructure/ingestion/pdf_reader.dart';
 import '../../infrastructure/ingestion/txt_reader.dart';
 import '../../infrastructure/ingestion/docx_reader.dart';
 
-class IngestionPlugin implements IPlugin {
+class IngestionPlugin extends IPlugin {
   @override
   String get name => 'Document Ingestion';
 

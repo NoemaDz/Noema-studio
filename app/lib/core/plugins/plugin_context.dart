@@ -3,6 +3,7 @@ import '../pipeline/pipeline_registry.dart';
 import '../workflow/workflow_engine.dart';
 import '../settings/app_settings.dart';
 import '../job_manager.dart';
+import '../capabilities/capability_resolver.dart';
 
 class PluginContext {
   final ProviderRegistry providers;
@@ -10,6 +11,7 @@ class PluginContext {
   final WorkflowEngine engine;
   final AppSettings appSettings;
   final JobManager jobManager;
+  final CapabilityResolver capabilityResolver;
 
   PluginContext({
     required this.providers,
@@ -17,5 +19,6 @@ class PluginContext {
     required this.engine,
     required this.appSettings,
     required this.jobManager,
+    required this.capabilityResolver,
   });
 }

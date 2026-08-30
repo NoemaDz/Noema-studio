@@ -59,6 +59,7 @@ class AppSettings extends ChangeNotifier {
   bool get autoDetectHardware => _autoDetectHardware;
   String get imageResolution => _imageResolution;
   bool get enableVideoGeneration => _enableVideoGeneration;
+  int? get mockVramGB => null; // Mock property for hardware testing
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();

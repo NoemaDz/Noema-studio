@@ -2,7 +2,7 @@ import '../../core/plugins/plugin_interface.dart';
 import '../../core/plugins/plugin_context.dart';
 import 'ffmpeg_video_compiler.dart';
 
-class FFmpegPlugin implements IPlugin {
+class FFmpegPlugin extends IPlugin {
   @override
   String get name => 'FFmpeg Video Compiler';
 

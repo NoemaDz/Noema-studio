@@ -2,7 +2,7 @@ import '../../core/plugins/plugin_interface.dart';
 import '../../core/plugins/plugin_context.dart';
 import 'openai_image_provider.dart';
 
-class OpenAIImagePlugin implements IPlugin {
+class OpenAIImagePlugin extends IPlugin {
   @override
   String get name => 'OpenAI Image Generator';
 

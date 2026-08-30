@@ -23,6 +23,12 @@ class ProviderRegistry {
     return provider as T;
   }
 
+  T? getOrNull<T extends Provider>(String id) {
+    final provider = _providers[id];
+    if (provider == null) return null;
+    return provider as T;
+  }
+
   T getDefault<T extends Provider>() {
     for (final provider in _providers.values) {
       if (provider is T) {

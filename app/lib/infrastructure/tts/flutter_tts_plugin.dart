@@ -2,7 +2,7 @@ import '../../core/plugins/plugin_interface.dart';
 import '../../core/plugins/plugin_context.dart';
 import 'flutter_tts_provider.dart';
 
-class FlutterTTSPlugin implements IPlugin {
+class FlutterTTSPlugin extends IPlugin {
   @override
   String get name => 'Flutter TTS';
 

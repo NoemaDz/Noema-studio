@@ -2,6 +2,7 @@ import 'video_provider.dart';
 import '../../models/job.dart';
 import '../plugins/plugin_context.dart';
 import '../../models/asset.dart';
+import '../capabilities/capability.dart';
 
 class ProxyVideoProvider extends VideoProvider {
   final PluginContext context;
@@ -18,12 +19,23 @@ class ProxyVideoProvider extends VideoProvider {
   bool get available => true;
 
   VideoProvider get _activeProvider {
-    final providerId = context
-        .appSettings
-        .activeImageProvider; // We reuse the active provider setting or add activeVideoProvider
-    // For now, if activeImageProvider is "comfyui", we use "comfyui_video"
-    final targetId = "${providerId}_video";
-    final provider = context.providers.get<VideoProvider>(targetId);
+    final preferredId = "${context.appSettings.activeImageProvider}_video";
+    final capability = VideoGenerationCapability(
+      requiresGPU: true,
+      requiredVRAMGB: 8,
+    );
+
+    final provider = context.capabilityResolver.resolve(
+      capability,
+      preferredProviderId: preferredId,
+    );
+
+    if (provider == null || provider is! VideoProvider) {
+      throw Exception(
+        "No suitable video provider found for the current hardware capabilities.",
+      );
+    }
+
     return provider;
   }
 

@@ -8,6 +8,7 @@ import 'providers/llm_provider.dart';
 import 'plugins/plugin_manager.dart';
 import 'plugins/plugin_context.dart';
 import 'plugins/plugin_interface.dart';
+import 'capabilities/capability_resolver.dart';
 import 'pipeline/pipeline_registry.dart';
 import 'workflow/workflow_engine.dart';
 import 'job_runner.dart';
@@ -58,12 +59,21 @@ class Bootstrap {
     appSettings = AppSettings();
 
     jobManager = JobManager();
+    final hardwareContext = HardwareContext(
+      totalVRAMGB: appSettings.mockVramGB ?? 6,
+    );
+    final capabilityResolver = CapabilityResolver(
+      providerRegistry,
+      hardwareContext,
+    );
+
     pluginContext = PluginContext(
       providers: providerRegistry,
       pipelines: pipelineRegistry,
       engine: workflowEngine,
       appSettings: appSettings,
       jobManager: jobManager,
+      capabilityResolver: capabilityResolver,
     );
 
     pluginManager = PluginManager(context: pluginContext);

@@ -21,7 +21,7 @@ class OpenAIProvider extends LLMProvider {
   }
 }
 
-class OpenAIPlugin implements IPlugin {
+class OpenAIPlugin extends IPlugin {
   @override
   String get name => 'OpenAI API Plugin';
 
