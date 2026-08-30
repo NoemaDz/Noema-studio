@@ -8,55 +8,57 @@ class JobRunner {
 
   JobRunner(this.registry);
 
-  Future<void> update(Job job) async {
+  Future<JobStatusUpdate?> update(Job job) async {
     if (!registry.has(job.providerId)) {
-      return;
+      return null;
     }
 
     final provider = registry.get(job.providerId);
     if (provider is AsyncProvider) {
       try {
-        await provider.updateJobStatus(job);
-
-        switch (job.status) {
+        final update = await provider.updateJobStatus(job);
+        
+        // Enhance the update based on our generic logic (like setting progress correctly for terminal states)
+        double? newProgress = update.progress;
+        switch (update.status) {
           case JobStatus.completed:
-            job.progress = 1.0;
+            newProgress = 1.0;
             break;
-
-          case JobStatus.running:
-          case JobStatus.starting:
-          case JobStatus.retrying:
-          case JobStatus.cancelling:
-            // We will no longer artificially increment progress.
-            // In the future, this should fetch real progress from the provider.
-            break;
-
           case JobStatus.queued:
-            job.progress = 0.05;
+            newProgress = 0.05;
             break;
-
           case JobStatus.failed:
           case JobStatus.cancelled:
-            job.progress = 0;
+            newProgress = 0;
             break;
-
-          case JobStatus.pending:
+          default:
             break;
         }
+
         // Clear transient failure count on success
         _transientFailures.remove(job.id);
+        
+        return JobStatusUpdate(
+            status: update.status, 
+            progress: newProgress, 
+            result: update.result, 
+            error: update.error
+        );
       } catch (e) {
         final currentFailures = (_transientFailures[job.id] ?? 0) + 1;
         _transientFailures[job.id] = currentFailures;
 
         if (currentFailures >= 5) {
-          job.transitionTo(JobStatus.failed);
-          job.result = "Failed to update job status after 5 retries: $e";
           _transientFailures.remove(job.id);
+          return JobStatusUpdate(
+              status: JobStatus.failed, 
+              error: JobError(code: 'MAX_RETRIES_EXCEEDED', message: "Failed to update job status after 5 retries: $e")
+          );
         }
-        // A network or transient error occurred. We leave the job in its current state
-        // so the system will retry polling it again on the next tick.
+        // A network or transient error occurred. Return null to indicate no state change, retry next tick.
+        return null;
       }
     }
+    return null;
   }
 }

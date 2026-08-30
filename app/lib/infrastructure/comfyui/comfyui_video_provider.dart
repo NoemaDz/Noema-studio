@@ -45,7 +45,7 @@ class ComfyUIVideoProvider extends VideoProvider {
   }
 
   @override
-  Future<void> updateJobStatus(Job job) {
+  Future<JobStatusUpdate> updateJobStatus(Job job) {
     return driver.updateJobStatus(job);
   }
 

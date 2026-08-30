@@ -1,9 +1,14 @@
 import 'dart:async';
 import '../models/job.dart';
+import 'providers/provider_registry.dart';
+import 'providers/async_provider.dart';
 import 'cancellation_token.dart';
 
 class JobManager {
+  final ProviderRegistry? registry;
   final List<Job> _jobs = [];
+
+  JobManager({this.registry});
 
   List<Job> get jobs => List.unmodifiable(_jobs);
 
@@ -17,6 +22,19 @@ class JobManager {
       return _jobs.firstWhere((e) => e.id == id);
     } catch (_) {
       return null;
+    }
+  }
+
+  void applyUpdate(String id, JobStatusUpdate update) {
+    final job = find(id);
+    if (job == null) return;
+
+    if (job.transitionTo(update.status)) {
+      if (update.progress != null) job.progress = update.progress!;
+      if (update.result != null) job.result = update.result;
+      if (update.error != null) job.error = update.error;
+    } else {
+      print("WARNING: Illegal transition attempted for Job ${job.id} to ${update.status}");
     }
   }
 
@@ -53,13 +71,38 @@ class JobManager {
     }
   }
 
-  void fail(String id, String error) {
+  void fail(String id, JobError error) {
     final job = find(id);
 
     if (job != null) {
       if (job.transitionTo(JobStatus.failed)) {
-        job.result = error;
+        job.error = error;
       }
+    }
+  }
+
+  Future<void> cancelJob(String id) async {
+    final job = find(id);
+    if (job == null) return;
+    
+    // Only cancel if it's currently pending, queued, starting, running, or retrying.
+    if (job.status == JobStatus.completed || job.status == JobStatus.failed || job.status == JobStatus.cancelled) {
+        return; 
+    }
+    
+    if (job.transitionTo(JobStatus.cancelling)) {
+        try {
+            if (registry != null && registry!.has(job.providerId)) {
+                final provider = registry!.get(job.providerId);
+                if (provider is AsyncProvider) {
+                    await provider.cancelJob(job.id);
+                }
+            }
+            job.transitionTo(JobStatus.cancelled);
+        } catch (e) {
+            job.transitionTo(JobStatus.failed);
+            job.error = JobError(code: 'CANCEL_FAILED', message: 'Failed to cancel job: $e');
+        }
     }
   }
 

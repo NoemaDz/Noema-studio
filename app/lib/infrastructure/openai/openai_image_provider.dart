@@ -102,13 +102,16 @@ class OpenAIImageProvider extends ImageProvider {
   }
 
   @override
-  Future<void> updateJobStatus(Job job) async {
+  Future<JobStatusUpdate> updateJobStatus(Job job) async {
     final knownJob = _jobs[job.id];
     if (knownJob != null) {
-      job.forceStatus(knownJob.status);
-      job.result = knownJob.result;
-      job.metadata = knownJob.metadata;
+      return JobStatusUpdate(
+        status: knownJob.status,
+        result: knownJob.result,
+        error: knownJob.error,
+      );
     }
+    return JobStatusUpdate(status: job.status);
   }
 
   @override

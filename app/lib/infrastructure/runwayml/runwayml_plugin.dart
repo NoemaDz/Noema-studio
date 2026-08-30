@@ -32,7 +32,7 @@ class RunwayMLVideoProvider extends VideoProvider {
   }
 
   @override
-  Future<void> updateJobStatus(Job job) async {
+  Future<JobStatusUpdate> updateJobStatus(Job job) async {
     throw UnimplementedError();
   }
 

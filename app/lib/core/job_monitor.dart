@@ -14,7 +14,9 @@ class JobMonitor {
   bool _isPolling = false;
   bool _isRunning = false;
 
-  JobMonitor(this.runner, this.manager, this.events);
+  final Duration timeoutDuration;
+
+  JobMonitor(this.runner, this.manager, this.events, {this.timeoutDuration = const Duration(minutes: 10)});
 
   void start() {
     _isRunning = true;
@@ -33,12 +35,52 @@ class JobMonitor {
               job.status == JobStatus.failed) {
             continue;
           }
-          await runner.update(job);
+          // Timeout check
+          final now = DateTime.now();
+          if (job.startedAt != null) {
+            final duration = now.difference(job.startedAt!);
+            if (duration > timeoutDuration) {
+              manager.applyUpdate(
+                job.id,
+                JobStatusUpdate(
+                  status: JobStatus.failed,
+                  error: JobError(
+                    code: 'TIMEOUT',
+                    message: 'Job exceeded maximum execution time of ${timeoutDuration.inMinutes} minutes.',
+                  ),
+                ),
+              );
+              events.emit(manager.find(job.id)!); // Emit updated job
+              // Also trigger a background cancel
+              manager.cancelJob(job.id);
+              continue;
+            }
+          } else {
+            // Check queued timeout if it's stuck in queue forever (e.g. 30 mins)
+            final queuedDuration = now.difference(job.createdAt);
+            if (queuedDuration > const Duration(minutes: 30)) {
+               manager.applyUpdate(
+                job.id,
+                JobStatusUpdate(
+                  status: JobStatus.failed,
+                  error: JobError(
+                    code: 'QUEUED_TIMEOUT',
+                    message: 'Job was stuck in queue for too long.',
+                  ),
+                ),
+              );
+              events.emit(manager.find(job.id)!);
+              manager.cancelJob(job.id);
+              continue;
+            }
+          }
 
-          manager.updateStatus(job.id, job.status);
-          manager.updateProgress(job.id, job.progress);
+          final update = await runner.update(job);
 
-          events.emit(job);
+          if (update != null) {
+            manager.applyUpdate(job.id, update);
+            events.emit(manager.find(job.id)!);
+          }
         }
       } finally {
         _isPolling = false;

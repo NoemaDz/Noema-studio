@@ -40,7 +40,7 @@ class ProxyImageProvider extends ImageProvider {
   }
 
   @override
-  Future<void> updateJobStatus(Job job) {
+  Future<JobStatusUpdate> updateJobStatus(Job job) {
     return _activeProvider.updateJobStatus(job);
   }
 

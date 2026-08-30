@@ -225,7 +225,7 @@ class ComfyUIDriver {
     return json["name"] as String;
   }
 
-  Future<void> updateJobStatus(Job job) async {
+  Future<JobStatusUpdate> updateJobStatus(Job job) async {
     try {
       final queueResponse = await http
           .get(Uri.parse("$baseUrl/queue"))
@@ -236,12 +236,10 @@ class ComfyUIDriver {
         final pending = queueData["queue_pending"] as List;
 
         if (running.any((q) => q[1] == job.id)) {
-          job.transitionTo(JobStatus.running);
-          return;
+          return JobStatusUpdate(status: JobStatus.running);
         }
         if (pending.any((q) => q[1] == job.id)) {
-          job.transitionTo(JobStatus.queued);
-          return;
+          return JobStatusUpdate(status: JobStatus.queued);
         }
       }
 
@@ -258,24 +256,26 @@ class ComfyUIDriver {
             final completed = jobHistory['status']['completed'] == true;
 
             if (statusStr == 'success' && completed) {
-              job.transitionTo(JobStatus.completed);
               _notFoundCounts.remove(job.id);
-              return;
+              return JobStatusUpdate(status: JobStatus.completed);
             } else if (statusStr == 'error') {
-              job.transitionTo(JobStatus.failed);
               _notFoundCounts.remove(job.id);
+              String errorMessage;
               try {
                 final messages = jobHistory['status']['messages'] as List;
-                job.result = ComfyUIErrorParser.parseError(messages).toString();
+                errorMessage = ComfyUIErrorParser.parseError(messages).toString();
               } catch (e) {
-                job.result = "Failed to parse ComfyUI error: $e";
+                errorMessage = "Failed to parse ComfyUI error: $e";
               }
-              return;
+              return JobStatusUpdate(
+                status: JobStatus.failed, 
+                error: JobError(code: 'COMFYUI_ERROR', message: errorMessage)
+              );
             }
           }
           // If we reach here, we found the job in history but it's not strictly successful or error.
           // Leave the job state as is (polling).
-          return;
+          return JobStatusUpdate(status: job.status);
         }
       }
     } catch (e) {
@@ -291,11 +291,14 @@ class ComfyUIDriver {
     _notFoundCounts[job.id] = currentNotFound;
 
     if (currentNotFound > 3) {
-      job.transitionTo(JobStatus.failed);
-      job.result = "Job not found in queue or history after 3 polls";
       _notFoundCounts.remove(job.id);
+      return JobStatusUpdate(
+        status: JobStatus.failed, 
+        error: JobError(code: 'COMFYUI_NOT_FOUND', message: 'Job not found in ComfyUI queue or history after 3 polls.')
+      );
     }
-    // Else, leave as is (polling).
+    
+    return JobStatusUpdate(status: job.status);
   }
 
   Future<Asset?> downloadAsset(String jobId) async {

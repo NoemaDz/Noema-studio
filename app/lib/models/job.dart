@@ -1,5 +1,40 @@
 // ignore_for_file: prefer_initializing_formals
 
+class JobError {
+  final String code;
+  final String message;
+  final dynamic details;
+
+  JobError({required this.code, required this.message, this.details});
+
+  factory JobError.fromJson(Map<String, dynamic> json) {
+    return JobError(
+      code: json['code'] as String,
+      message: json['message'] as String,
+      details: json['details'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'code': code,
+    'message': message,
+    if (details != null) 'details': details,
+  };
+}
+
+class JobStatusUpdate {
+  final JobStatus status;
+  final double? progress;
+  final String? result;
+  final JobError? error;
+
+  JobStatusUpdate({
+    required this.status,
+    this.progress,
+    this.result,
+    this.error,
+  });
+}
 enum JobStatus {
   pending,
   queued,
@@ -22,7 +57,12 @@ class Job {
 
   double progress;
   String? result;
+  JobError? error;
   Map<String, dynamic> metadata;
+  
+  final DateTime createdAt;
+  DateTime? startedAt;
+  DateTime? completedAt;
 
   Job({
     required this.id,
@@ -31,8 +71,13 @@ class Job {
     JobStatus status = JobStatus.pending,
     this.progress = 0,
     this.result,
+    this.error,
     Map<String, dynamic>? metadata,
+    DateTime? createdAt,
+    this.startedAt,
+    this.completedAt,
   }) : _status = status,
+       createdAt = createdAt ?? DateTime.now(),
        metadata = metadata ?? <String, dynamic>{};
 
   /// State Machine: enforces valid transitions between job states.
@@ -84,6 +129,16 @@ class Job {
 
     if (isValid) {
       _status = newStatus;
+      
+      // Update timestamps automatically based on state transition
+      if (newStatus == JobStatus.running && startedAt == null) {
+        startedAt = DateTime.now();
+      } else if (newStatus == JobStatus.completed || 
+                 newStatus == JobStatus.failed || 
+                 newStatus == JobStatus.cancelled) {
+        completedAt ??= DateTime.now();
+      }
+      
       return true;
     } else {
       // Return false to indicate illegal transition instead of throwing to prevent crashing the UI/polling loops
@@ -113,7 +168,11 @@ class Job {
       status: parseStatus(json["status"]),
       progress: (json["progress"] as num?)?.toDouble() ?? 0.0,
       result: json["result"],
+      error: json["error"] != null ? JobError.fromJson(json["error"]) : null,
       metadata: Map<String, dynamic>.from(json["metadata"] ?? {}),
+      createdAt: json["createdAt"] != null ? DateTime.parse(json["createdAt"]) : null,
+      startedAt: json["startedAt"] != null ? DateTime.parse(json["startedAt"]) : null,
+      completedAt: json["completedAt"] != null ? DateTime.parse(json["completedAt"]) : null,
     );
   }
 
@@ -124,8 +183,12 @@ class Job {
       "type": type,
       "status": _status.name,
       "progress": progress,
-      "result": result,
+      if (result != null) "result": result,
+      if (error != null) "error": error!.toJson(),
       "metadata": metadata,
+      "createdAt": createdAt.toIso8601String(),
+      if (startedAt != null) "startedAt": startedAt!.toIso8601String(),
+      if (completedAt != null) "completedAt": completedAt!.toIso8601String(),
     };
   }
 }
