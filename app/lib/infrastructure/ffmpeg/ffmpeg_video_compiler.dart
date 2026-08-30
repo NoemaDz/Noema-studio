@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import '../../core/providers/video_compiler_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'ffmpeg_effect_builder.dart';
 import 'ffmpeg_path_escaper.dart';
@@ -27,6 +28,12 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   @override
   bool get available => true; // DependencyManager ensures it's available
 
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
+
   final Map<String, Process> _runningProcesses = {};
   final Set<String> _cancelledJobs = {};
 
@@ -47,9 +54,14 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     String executable,
     List<String> args,
   ) async {
+    // PRE-FLIGHT CHECK: Check if cancelled before starting the process
+    if (_cancelledJobs.contains(jobId)) {
+      throw CancelledException();
+    }
+
     final process = await Process.start(executable, args);
 
-    // Check if cancelled during startup
+    // Check again in case it was cancelled exactly during Process.start await
     if (_cancelledJobs.contains(jobId)) {
       process.kill(ProcessSignal.sigkill);
       throw CancelledException();
@@ -88,7 +100,7 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     String outputPath, {
     Map<String, dynamic>? options,
   }) async {
-    final jobId = "ffmpeg_${const Uuid().v4()}";
+    final jobId = options?['jobId'] as String? ?? "ffmpeg_${const Uuid().v4()}";
     final ffmpegPath = DependencyManager.instance.ffmpegPath;
 
     if (!available) {

@@ -1,4 +1,5 @@
 import '../../core/providers/video_compiler_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,6 +12,12 @@ class MockVideoCompilerProvider extends VideoCompilerProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   @override
   Future<Job> compileVideo(

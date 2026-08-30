@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import '../../core/providers/document_ingestion_provider.dart';
+import '../../core/capabilities/capability.dart';
 
 class PdfReader implements DocumentIngestionProvider {
   @override
@@ -11,6 +12,12 @@ class PdfReader implements DocumentIngestionProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
   @override
   List<String> get supportedExtensions => ['pdf'];
 

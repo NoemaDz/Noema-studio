@@ -1,4 +1,5 @@
 import '../../core/providers/image_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'comfyui_driver.dart';
 import '../../models/asset.dart';
@@ -21,6 +22,13 @@ class ComfyUIProvider extends ImageProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.imageGeneration};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: true, minimumVRAMGB: 6);
 
   @override
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) {

@@ -1,5 +1,15 @@
 enum CapabilityType { imageGeneration, videoGeneration, tts, lipSync, sfx }
 
+class HardwareRequirements {
+  final bool requiresGPU;
+  final int minimumVRAMGB;
+
+  const HardwareRequirements({
+    this.requiresGPU = false,
+    this.minimumVRAMGB = 0,
+  });
+}
+
 abstract class Capability {
   CapabilityType get type;
   bool get requiresGPU;

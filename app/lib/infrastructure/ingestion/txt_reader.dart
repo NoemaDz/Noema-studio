@@ -1,5 +1,6 @@
 import 'dart:io';
 import '../../core/providers/document_ingestion_provider.dart';
+import '../../core/capabilities/capability.dart';
 
 class TxtReader implements DocumentIngestionProvider {
   @override
@@ -10,6 +11,12 @@ class TxtReader implements DocumentIngestionProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
   @override
   List<String> get supportedExtensions => ['txt'];
 

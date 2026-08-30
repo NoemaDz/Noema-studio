@@ -35,47 +35,28 @@ void main() {
       // was implemented in ffmpeg_video_compiler.dart (Lines 269-277).
     });
 
-    test('Real FFmpeg process cancellation integration test', () async {
+    test('Deterministic cancellation semantics (Pre-flight check)', () async {
       final settings = AppSettings();
       final provider = FFmpegVideoCompilerProvider(settings);
 
-      // Create dummy files to ensure FFmpeg at least starts and doesn't instantly exit due to missing files
-      // We don't need real images/audio because we will cancel it almost immediately.
-      // Actually, if files don't exist, FFmpeg exits immediately, which might be faster than our cancel call.
-      // Let's create a temporary dummy image to keep FFmpeg busy for a moment.
-      // Wait, FFmpeg can generate a test source itself without inputs, but compileVideo hardcodes the args.
-      // If FFmpeg fails immediately, compileVideo will throw, and if we cancelled it in the meantime, it might still return cancelled.
-      // Let's rely on the race condition hardening we just added!
+      const testJobId = 'test_deterministic_job_123';
 
-      final future = provider.compileVideo([
-        AudioVideoResource(imagePath: 'non_existent.jpg', audioPaths: []),
-      ], 'output.mp4');
+      // 1. Cancel the job BEFORE it even starts (pre-flight check will catch this)
+      await provider.cancelJob(testJobId);
 
-      // Wait a tiny bit to let Process.start begin
-      await Future.delayed(const Duration(milliseconds: 50));
-
-      // Get the active job ID
-      final activeIds = provider.activeJobIds;
-      if (activeIds.isNotEmpty) {
-        final jobId = activeIds.first;
-        await provider.cancelJob(jobId);
-      } else {
-        // If it hasn't populated yet, we can't easily cancel by ID.
-        // But our hardening says if we add it to _cancelledJobs, it will be killed after startup.
-        // We can't know the ID though unless we know it beforehand.
-        // This is tricky in a black-box test. Let's just pass.
-      }
-
-      final job = await future;
-
-      // Even if it failed because files don't exist, we just want to ensure it didn't crash the isolate.
-      // If we managed to cancel it, it would be JobStatus.cancelled. Otherwise failed.
-      expect(
-        job.status == JobStatus.cancelled || job.status == JobStatus.failed,
-        isTrue,
+      // 2. Start the job, injecting the ID via options
+      final job = await provider.compileVideo(
+        [AudioVideoResource(imagePath: 'non_existent.jpg', audioPaths: [])],
+        'output.mp4',
+        options: {'jobId': testJobId},
       );
 
-      // Ensure temp files from this job are cleaned up (handled by compileVideo finally block)
+      // 3. Since it was cancelled before Process.start, it must return cancelled immediately
+      // without ever spawning the OS process.
+      expect(job.status, equals(JobStatus.cancelled));
+      expect(job.result, equals('Job cancelled by user'));
+
+      // Active jobs should be empty
       expect(provider.activeJobIds, isEmpty);
     });
   });

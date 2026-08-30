@@ -3,9 +3,17 @@ import '../providers/provider_registry.dart';
 import 'capability.dart';
 
 class HardwareContext {
+  final bool hasGPU;
   final int totalVRAMGB;
+  final String os;
+  final bool hasCUDA;
 
-  HardwareContext({required this.totalVRAMGB});
+  const HardwareContext({
+    required this.hasGPU,
+    required this.totalVRAMGB,
+    required this.os,
+    required this.hasCUDA,
+  });
 }
 
 class CapabilityResolver {
@@ -30,14 +38,9 @@ class CapabilityResolver {
       );
     }
 
-    // Iterate through all available providers supporting the capability
-    // (For now, we just hardcode the fallback logic to find a cloud provider)
-
-    // Naive fallback mechanism: Find the first provider that ends with '_video' (if it's video)
-    // and meets the requirements.
+    // 1. Iterate through all available providers supporting the capability
     for (final provider in registry.all) {
-      if (capability.type == CapabilityType.videoGeneration &&
-          provider.id.endsWith('_video')) {
+      if (provider.capabilities.contains(capability.type)) {
         if (_meetsHardwareRequirements(provider, capability)) {
           return provider;
         }
@@ -50,21 +53,12 @@ class CapabilityResolver {
   bool _meetsHardwareRequirements(Provider provider, Capability capability) {
     if (!provider.available) return false;
 
-    // Currently, we assume cloud providers (e.g. runwayml, sora) require 0 VRAM
-    // Local providers (e.g. comfyui) require > 0 VRAM
-    // Since we don't have a formal way to query a provider's required VRAM yet,
-    // we'll use a heuristic: if the provider name contains "Cloud", it requires 0 VRAM.
-    // Otherwise, we enforce the capability's required VRAM.
+    final req = provider.hardwareRequirements;
 
-    final requiresGPU =
-        !provider.id.startsWith('runway') &&
-        !provider.id.startsWith('sora') &&
-        !provider.id.startsWith('mock');
+    // Strict hardware checks based on declared requirements
+    if (req.requiresGPU && !hardware.hasGPU) return false;
+    if (hardware.totalVRAMGB < req.minimumVRAMGB) return false;
 
-    if (requiresGPU) {
-      return hardware.totalVRAMGB >= capability.requiredVRAMGB;
-    }
-
-    return true; // Cloud/Mock always pass hardware constraints
+    return true;
   }
 }

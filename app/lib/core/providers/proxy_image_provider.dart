@@ -1,5 +1,6 @@
-import '../plugins/plugin_context.dart';
-import 'image_provider.dart';
+import '../../core/plugins/plugin_context.dart';
+import '../../core/providers/image_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import '../../models/asset.dart';
 
@@ -16,6 +17,12 @@ class ProxyImageProvider extends ImageProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   ImageProvider get _activeProvider {
     final activeId = context.appSettings.activeImageProvider;

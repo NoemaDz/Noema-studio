@@ -1,5 +1,6 @@
-import '../plugins/plugin_context.dart';
-import 'tts_provider.dart';
+import '../../core/plugins/plugin_context.dart';
+import '../../core/providers/tts_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 
 class ProxyTTSProvider extends TTSProvider {
@@ -15,6 +16,12 @@ class ProxyTTSProvider extends TTSProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   @override
   Future<Job> generateAudio(String text, {String? voiceProfile}) {

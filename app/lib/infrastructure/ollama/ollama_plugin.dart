@@ -4,6 +4,9 @@ import 'ollama_provider.dart';
 
 class OllamaPlugin extends IPlugin {
   @override
+  String get id => 'ollama_llm';
+
+  @override
   String get name => 'Ollama LLM';
 
   @override

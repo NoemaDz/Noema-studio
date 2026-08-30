@@ -1,4 +1,5 @@
 import '../../core/providers/video_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'comfyui_driver.dart';
 import '../../models/asset.dart';
@@ -21,6 +22,13 @@ class ComfyUIVideoProvider extends VideoProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.videoGeneration};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: true, minimumVRAMGB: 8);
 
   @override
   Future<Job> submitJob(

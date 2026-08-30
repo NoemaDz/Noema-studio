@@ -1,4 +1,5 @@
 import '../../core/providers/tts_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,6 +12,13 @@ class MockTTSProvider extends TTSProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.tts};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   @override
   Future<Job> generateAudio(String text, {String? voiceProfile}) async {

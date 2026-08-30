@@ -4,6 +4,9 @@ import 'ffmpeg_video_compiler.dart';
 
 class FFmpegPlugin extends IPlugin {
   @override
+  String get id => 'ffmpeg_plugin';
+
+  @override
   String get name => 'FFmpeg Video Compiler';
 
   @override

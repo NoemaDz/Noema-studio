@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/providers/tts_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import '../../main.dart';
 
@@ -14,7 +15,14 @@ class EdgeTTSProvider extends TTSProvider {
   String get name => "Microsoft Edge TTS (Free)";
 
   @override
-  bool get available => true;
+  bool get available => true; // Edge TTS requires no API key
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.tts};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   @override
   Future<Job> generateAudio(String text, {String? voiceProfile}) async {

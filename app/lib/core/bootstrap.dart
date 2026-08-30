@@ -60,7 +60,10 @@ class Bootstrap {
 
     jobManager = JobManager();
     final hardwareContext = HardwareContext(
+      hasGPU: true, // We assume standard devs have a GPU, mocked for now
       totalVRAMGB: appSettings.mockVramGB ?? 6,
+      os: 'linux', // Mocked
+      hasCUDA: true, // Mocked
     );
     final capabilityResolver = CapabilityResolver(
       providerRegistry,

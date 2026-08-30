@@ -18,6 +18,12 @@ class ProxyVideoProvider extends VideoProvider {
   @override
   bool get available => true;
 
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
+
   VideoProvider get _activeProvider {
     final preferredId = "${context.appSettings.activeImageProvider}_video";
     final capability = VideoGenerationCapability(

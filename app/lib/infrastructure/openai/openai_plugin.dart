@@ -1,6 +1,7 @@
 import '../../core/plugins/plugin_interface.dart';
 import '../../core/plugins/plugin_context.dart';
 import '../../core/providers/llm_provider.dart';
+import '../../core/capabilities/capability.dart';
 import 'openai_driver.dart';
 
 class OpenAIProvider extends LLMProvider {
@@ -13,7 +14,13 @@ class OpenAIProvider extends LLMProvider {
   String get name => 'Generic OpenAI Compatible API';
 
   @override
-  bool get available => true; // Always available, errors out if no connection
+  bool get available => true; // handled at plugin level if needed
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   @override
   Future<String> generate(String prompt) async {
@@ -22,6 +29,9 @@ class OpenAIProvider extends LLMProvider {
 }
 
 class OpenAIPlugin extends IPlugin {
+  @override
+  String get id => 'openai_api';
+
   @override
   String get name => 'OpenAI API Plugin';
 

@@ -4,6 +4,9 @@ import 'flutter_tts_provider.dart';
 
 class FlutterTTSPlugin extends IPlugin {
   @override
+  String get id => 'flutter_tts';
+
+  @override
   String get name => 'Flutter TTS';
 
   @override

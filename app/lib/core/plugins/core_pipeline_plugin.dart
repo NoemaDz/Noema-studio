@@ -21,6 +21,9 @@ import '../providers/video_compiler_provider.dart';
 
 class CorePipelinePlugin extends IPlugin {
   @override
+  String get id => 'core_pipeline';
+
+  @override
   String get name => 'Core Pipeline';
 
   @override

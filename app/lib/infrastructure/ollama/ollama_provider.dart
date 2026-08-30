@@ -1,4 +1,5 @@
 import '../../core/providers/llm_provider.dart';
+import '../../core/capabilities/capability.dart';
 import 'ollama_driver.dart';
 
 class OllamaProvider extends LLMProvider {
@@ -12,6 +13,12 @@ class OllamaProvider extends LLMProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   @override
   Future<String> generate(String prompt) {

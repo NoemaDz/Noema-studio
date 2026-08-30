@@ -5,6 +5,9 @@ import 'mock_video_compiler_provider.dart';
 
 class MockMediaPlugin extends IPlugin {
   @override
+  String get id => 'mock_media';
+
+  @override
   String get name => 'Mock Media Providers';
 
   @override

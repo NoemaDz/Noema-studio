@@ -5,6 +5,9 @@ import 'comfyui_video_provider.dart';
 
 class ComfyUIPlugin extends IPlugin {
   @override
+  String get id => 'comfyui_plugin';
+
+  @override
   String get name => 'ComfyUI Image Generator';
 
   @override

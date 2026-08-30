@@ -1,5 +1,6 @@
 import '../../core/plugins/plugin_interface.dart';
 import '../../core/plugins/plugin_context.dart';
+import '../../core/capabilities/capability.dart';
 import '../../core/providers/video_provider.dart';
 import '../../models/job.dart';
 import '../../models/asset.dart';
@@ -13,6 +14,13 @@ class RunwayMLVideoProvider extends VideoProvider {
 
   @override
   bool get available => true; // Needs API Key check in the future
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.videoGeneration};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   @override
   Future<Job> submitJob(

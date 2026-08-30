@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../core/providers/tts_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path/path.dart' as p;
@@ -15,7 +16,14 @@ class FlutterTTSProvider extends TTSProvider {
   String get name => "Flutter TTS (Local)";
 
   @override
-  bool get available => true;
+  bool get available => true; // usually always true on supported platforms
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.tts};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   final FlutterTts flutterTts = FlutterTts();
 

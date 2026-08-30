@@ -7,6 +7,9 @@ import '../../infrastructure/ingestion/docx_reader.dart';
 
 class IngestionPlugin extends IPlugin {
   @override
+  String get id => 'ingestion_plugin';
+
+  @override
   String get name => 'Document Ingestion';
 
   @override

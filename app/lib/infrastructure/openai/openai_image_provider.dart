@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import '../../core/providers/image_provider.dart';
+import '../../core/capabilities/capability.dart';
 import '../../core/settings/platform_paths.dart';
 import '../../core/plugins/plugin_context.dart';
 import '../../models/asset_type.dart';
@@ -24,6 +25,13 @@ class OpenAIImageProvider extends ImageProvider {
 
   @override
   bool get available => context.appSettings.openAiKey.isNotEmpty;
+
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.imageGeneration};
+
+  @override
+  HardwareRequirements get hardwareRequirements =>
+      const HardwareRequirements(requiresGPU: false, minimumVRAMGB: 0);
 
   @override
   Future<Job> submitJob(String prompt, {Map<String, dynamic>? options}) async {

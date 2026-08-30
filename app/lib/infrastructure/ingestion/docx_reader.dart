@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:archive/archive.dart';
 import '../../core/providers/document_ingestion_provider.dart';
+import '../../core/capabilities/capability.dart';
 
 class DocxReader implements DocumentIngestionProvider {
   @override
@@ -11,6 +12,12 @@ class DocxReader implements DocumentIngestionProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
   @override
   List<String> get supportedExtensions => ['docx'];
 

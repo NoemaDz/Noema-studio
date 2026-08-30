@@ -1,7 +1,7 @@
 import 'plugin_context.dart';
 
 abstract class IPlugin {
-  String get id => name.toLowerCase().replaceAll(' ', '_');
+  String get id;
   String get name;
   String get version => "1.0.0";
 

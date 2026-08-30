@@ -1,5 +1,6 @@
-import '../plugins/plugin_context.dart';
-import 'llm_provider.dart';
+import '../../core/plugins/plugin_context.dart';
+import '../../core/providers/llm_provider.dart';
+import '../../core/capabilities/capability.dart';
 
 class ProxyLLMProvider extends LLMProvider {
   final PluginContext context;
@@ -14,6 +15,12 @@ class ProxyLLMProvider extends LLMProvider {
 
   @override
   bool get available => true;
+
+  @override
+  Set<CapabilityType> get capabilities => {};
+
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   @override
   Future<String> generate(String prompt) {
