@@ -83,6 +83,13 @@ class SceneImageStage extends PipelineStage {
           'SceneImageStage: IPAdapter model missing for scene ${scene.id}. '
           'Retrying with text_to_image fallback (no character refs)...',
         );
+
+        // Remove the failed job from the project so it doesn't clutter the UI
+        final failedJobId = project.images.firstWhere((img) => img.sceneId == scene.id).jobId;
+        project.jobIds.remove(failedJobId);
+        // Note: We leave it in JobManager in case other things reference it, 
+        // but removing it from project.jobIds hides it from LiveProgressTracker.
+
         // Strip character refs so ComfyUIDriver picks text_to_image workflow
         scene.extras['characters'] = <Map<String, dynamic>>[];
         final fallbackContext = WorkflowContext();
