@@ -41,7 +41,9 @@ class ProjectPipeline {
     required this.registry,
     required this.jobManager,
     PipelineEngine? engine,
-  }) : engine = engine ?? PipelineEngine(maxConcurrentTasks: 4, maxConcurrentGPUTasks: 1);
+  }) : engine =
+           engine ??
+           PipelineEngine(maxConcurrentTasks: 4, maxConcurrentGPUTasks: 1);
 
   /// Runs the initial planning phases (Story, Characters, Scene Prompts).
   /// This stops before any heavy generation happens.

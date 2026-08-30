@@ -1,6 +1,6 @@
 name: noema_studio
 description: "An AI-native production studio for orchestrating local and cloud AI models across the creative pipeline."
-version: 0.1.0-alpha.1
+version: 1.0.0-rc.1
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 

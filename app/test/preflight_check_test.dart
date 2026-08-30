@@ -8,31 +8,37 @@ void main() {
         "input": {
           "required": {
             "model": ["MODEL"],
-            "seed": ["INT", {"default": 0}],
-            "steps": ["INT", {"default": 20}],
-          }
-        }
+            "seed": [
+              "INT",
+              {"default": 0},
+            ],
+            "steps": [
+              "INT",
+              {"default": 20},
+            ],
+          },
+        },
       },
       "CheckpointLoaderSimple": {
         "input": {
           "required": {
             "ckpt_name": [
               ["v1-5-pruned-emaonly.safetensors", "sd_xl_base_1.0.safetensors"],
-              {"image_folder": "checkpoints"}
-            ]
-          }
-        }
+              {"image_folder": "checkpoints"},
+            ],
+          },
+        },
       },
       "IPAdapterUnifiedLoader": {
         "input": {
           "required": {
             "ipadapter_file": [
               ["ip-adapter_sd15.safetensors"],
-              {"image_folder": "ipadapter"}
-            ]
-          }
-        }
-      }
+              {"image_folder": "ipadapter"},
+            ],
+          },
+        },
+      },
     };
 
     test('validates correct workflow prompt', () async {
@@ -41,17 +47,21 @@ void main() {
       final prompt = {
         "3": {
           "class_type": "KSampler",
-          "inputs": {"seed": 12345, "steps": 20}
+          "inputs": {"seed": 12345, "steps": 20},
         },
         "4": {
           "class_type": "CheckpointLoaderSimple",
-          "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
-        }
+          "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"},
+        },
       };
 
       // Manually inject cache for testing
       // (Testing validateWorkflow against mock object_info structure)
-      final result = await _validateWithMockInfo(checker, mockObjectInfo, prompt);
+      final result = await _validateWithMockInfo(
+        checker,
+        mockObjectInfo,
+        prompt,
+      );
       expect(result.isOk, isTrue);
     });
 
@@ -59,13 +69,14 @@ void main() {
       final checker = ComfyUIPreflightChecker(baseUrl: "http://127.0.0.1:8188");
 
       final prompt = {
-        "10": {
-          "class_type": "NonExistentNodeClass",
-          "inputs": {}
-        }
+        "10": {"class_type": "NonExistentNodeClass", "inputs": {}},
       };
 
-      final result = await _validateWithMockInfo(checker, mockObjectInfo, prompt);
+      final result = await _validateWithMockInfo(
+        checker,
+        mockObjectInfo,
+        prompt,
+      );
       expect(result.isOk, isFalse);
       expect(result.missingNode, "NonExistentNodeClass");
     });
@@ -76,11 +87,15 @@ void main() {
       final prompt = {
         "4": {
           "class_type": "CheckpointLoaderSimple",
-          "inputs": {"ckpt_name": "missing_model_file.safetensors"}
-        }
+          "inputs": {"ckpt_name": "missing_model_file.safetensors"},
+        },
       };
 
-      final result = await _validateWithMockInfo(checker, mockObjectInfo, prompt);
+      final result = await _validateWithMockInfo(
+        checker,
+        mockObjectInfo,
+        prompt,
+      );
       expect(result.isOk, isFalse);
       expect(result.missingModel, "missing_model_file.safetensors");
       expect(result.inputName, "ckpt_name");
@@ -130,9 +145,12 @@ extension on ComfyUIPreflightChecker {
 
         if (requiredInputs.containsKey(paramName)) {
           final paramSpec = requiredInputs[paramName];
-          if (paramSpec is List && paramSpec.isNotEmpty && paramSpec[0] is List) {
+          if (paramSpec is List &&
+              paramSpec.isNotEmpty &&
+              paramSpec[0] is List) {
             final availableModels = (paramSpec[0] as List).cast<String>();
-            if (availableModels.isNotEmpty && !availableModels.contains(paramValue)) {
+            if (availableModels.isNotEmpty &&
+                !availableModels.contains(paramValue)) {
               return PreflightCheckResult.missingModel(
                 nodeClass: classType,
                 input: paramName,

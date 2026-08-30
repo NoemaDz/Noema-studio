@@ -89,9 +89,7 @@ class _CharacterTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: cs.surfaceContainerHighest.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: cs.primary.withValues(alpha: 0.15),
-              ),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.15)),
             ),
             child: Row(
               children: [
@@ -124,7 +122,9 @@ class _CharacterTile extends StatelessWidget {
                       Text(
                         character.description,
                         style: const TextStyle(
-                            color: Colors.white54, fontSize: 12),
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -137,8 +137,11 @@ class _CharacterTile extends StatelessWidget {
                     message: 'Voice: ${character.voiceProfile}',
                     child: Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: Icon(Icons.record_voice_over,
-                          size: 14, color: cs.secondary),
+                      child: Icon(
+                        Icons.record_voice_over,
+                        size: 14,
+                        color: cs.secondary,
+                      ),
                     ),
                   ),
                 if (hasImage)
@@ -146,12 +149,14 @@ class _CharacterTile extends StatelessWidget {
                     message: 'Has test image',
                     child: Padding(
                       padding: const EdgeInsets.only(right: 6),
-                      child: Icon(Icons.image_outlined,
-                          size: 14, color: cs.secondary),
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 14,
+                        color: cs.secondary,
+                      ),
                     ),
                   ),
-                Icon(Icons.edit_outlined,
-                    size: 16, color: Colors.white30),
+                Icon(Icons.edit_outlined, size: 16, color: Colors.white30),
               ],
             ),
           ),

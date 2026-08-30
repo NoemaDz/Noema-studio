@@ -48,7 +48,7 @@ class JobRunner {
       } catch (e) {
         final currentFailures = (_transientFailures[job.id] ?? 0) + 1;
         _transientFailures[job.id] = currentFailures;
-        
+
         if (currentFailures >= 5) {
           job.transitionTo(JobStatus.failed);
           job.result = "Failed to update job status after 5 retries: $e";

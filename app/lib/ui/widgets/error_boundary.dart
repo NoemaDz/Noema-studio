@@ -28,7 +28,11 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
           _errorDetails = details;
         });
       }
-      CrashLogger.logCrash(details.exception, details.stack, context: 'WIDGET_BUILD_ERROR');
+      CrashLogger.logCrash(
+        details.exception,
+        details.stack,
+        context: 'WIDGET_BUILD_ERROR',
+      );
       if (oldHandler != null) oldHandler(details);
     };
   }
@@ -36,7 +40,8 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
   void _resetErrorState() {
     setState(() {
       _errorDetails = null;
-      _childKey = UniqueKey(); // Forces unmount and remount of child widget tree
+      _childKey =
+          UniqueKey(); // Forces unmount and remount of child widget tree
     });
   }
 
@@ -51,19 +56,26 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
           decoration: BoxDecoration(
             color: const Color(0xFF141B2D),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5), width: 1),
+            border: Border.all(
+              color: Colors.redAccent.withValues(alpha: 0.5),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 16,
                 spreadRadius: 4,
-              )
+              ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 48),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.redAccent,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               const Text(
                 "UI Error Encountered",
@@ -86,8 +98,13 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text("Recover Subtree"),
@@ -105,9 +122,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     if (_errorDetails != null) {
       return _buildErrorCard(_errorDetails!);
     }
-    return KeyedSubtree(
-      key: _childKey,
-      child: widget.child,
-    );
+    return KeyedSubtree(key: _childKey, child: widget.child);
   }
 }

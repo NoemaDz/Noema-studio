@@ -9,7 +9,7 @@ enum JobStatus {
   cancelling,
   cancelled,
   completed,
-  failed
+  failed,
 }
 
 class Job {
@@ -32,8 +32,8 @@ class Job {
     this.progress = 0,
     this.result,
     Map<String, dynamic>? metadata,
-  })  : _status = status,
-        metadata = metadata ?? <String, dynamic>{};
+  }) : _status = status,
+       metadata = metadata ?? <String, dynamic>{};
 
   /// State Machine: enforces valid transitions between job states.
   bool transitionTo(JobStatus newStatus) {
@@ -42,25 +42,37 @@ class Job {
     bool isValid = false;
     switch (_status) {
       case JobStatus.pending:
-        isValid = newStatus == JobStatus.queued || newStatus == JobStatus.cancelled;
+        isValid =
+            newStatus == JobStatus.queued || newStatus == JobStatus.cancelled;
         break;
       case JobStatus.queued:
-        isValid = newStatus == JobStatus.starting || newStatus == JobStatus.running || newStatus == JobStatus.cancelled;
+        isValid =
+            newStatus == JobStatus.starting ||
+            newStatus == JobStatus.running ||
+            newStatus == JobStatus.cancelled;
         break;
       case JobStatus.starting:
-        isValid = newStatus == JobStatus.running || newStatus == JobStatus.failed || newStatus == JobStatus.cancelling;
+        isValid =
+            newStatus == JobStatus.running ||
+            newStatus == JobStatus.failed ||
+            newStatus == JobStatus.cancelling;
         break;
       case JobStatus.running:
-        isValid = newStatus == JobStatus.completed ||
+        isValid =
+            newStatus == JobStatus.completed ||
             newStatus == JobStatus.failed ||
             newStatus == JobStatus.cancelling ||
             newStatus == JobStatus.retrying;
         break;
       case JobStatus.retrying:
-        isValid = newStatus == JobStatus.running || newStatus == JobStatus.failed || newStatus == JobStatus.cancelling;
+        isValid =
+            newStatus == JobStatus.running ||
+            newStatus == JobStatus.failed ||
+            newStatus == JobStatus.cancelling;
         break;
       case JobStatus.cancelling:
-        isValid = newStatus == JobStatus.cancelled || newStatus == JobStatus.failed;
+        isValid =
+            newStatus == JobStatus.cancelled || newStatus == JobStatus.failed;
         break;
       case JobStatus.completed:
       case JobStatus.failed:

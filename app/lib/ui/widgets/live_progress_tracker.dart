@@ -108,7 +108,8 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
         break;
     }
 
-    final isCanCancel = job.status == JobStatus.queued ||
+    final isCanCancel =
+        job.status == JobStatus.queued ||
         job.status == JobStatus.starting ||
         job.status == JobStatus.running;
 
@@ -136,15 +137,25 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
                     ),
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: color.withValues(alpha: 0.4), width: 0.5),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.4),
+                          width: 0.5,
+                        ),
                       ),
                       child: Text(
                         statusBadge,
-                        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -162,7 +173,10 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    noema.bootstrap.jobManager.updateStatus(job.id, JobStatus.cancelling);
+                    noema.bootstrap.jobManager.updateStatus(
+                      job.id,
+                      JobStatus.cancelling,
+                    );
                   },
                 ),
               ],
@@ -211,11 +225,17 @@ class _LiveProgressTrackerState extends State<LiveProgressTracker> {
                     },
                   ),
           ),
-          if (job.result != null && (job.status == JobStatus.failed || job.status == JobStatus.retrying)) ...[
+          if (job.result != null &&
+              (job.status == JobStatus.failed ||
+                  job.status == JobStatus.retrying)) ...[
             const SizedBox(height: 4),
             Text(
               job.result!,
-              style: TextStyle(fontSize: 11, color: color, fontStyle: FontStyle.italic),
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontStyle: FontStyle.italic,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),

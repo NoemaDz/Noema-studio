@@ -8,12 +8,12 @@ void main() {
       'name': 'Bob',
       'description': 'A man',
       'imageState': 'draft',
-      'voiceProfile': 'en-US-GuyNeural'
+      'voiceProfile': 'en-US-GuyNeural',
     };
-    
+
     final character = Character.fromJson(json);
     expect(character.voiceProfile, 'en-US-GuyNeural');
-    
+
     final out = character.toJson();
     expect(out['voiceProfile'], 'en-US-GuyNeural');
   });

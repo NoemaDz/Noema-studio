@@ -22,7 +22,7 @@ void main() {
     'Integration Failover Test: Cancel mid-generation and resume (State Persistence)',
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
-      
+
       SharedPreferences.setMockInitialValues({
         'performance_mode': 'fast',
         'auto_detect_hardware': false,
@@ -81,9 +81,9 @@ void main() {
       project.characters.add(char);
 
       print("2. Starting Production Pipeline WITH CANCELLATION...");
-      
+
       final token1 = CancellationToken();
-      
+
       // Cancel the pipeline after exactly 5 seconds.
       // This will interrupt the RetryPolicy waiting for ComfyUI.
       Future.delayed(const Duration(seconds: 5), () {
@@ -93,50 +93,80 @@ void main() {
 
       bool caughtCancel = false;
       try {
-        await noema.generateProduction(project, cancellationToken: token1, onUpdate: (status) {
-          print("PIPELINE UPDATE: $status");
-        });
+        await noema.generateProduction(
+          project,
+          cancellationToken: token1,
+          onUpdate: (status) {
+            print("PIPELINE UPDATE: $status");
+          },
+        );
       } on CancelledException {
         caughtCancel = true;
         print("✅ Pipeline successfully caught CancelledException and halted.");
       } catch (e) {
         fail("Pipeline failed with unexpected error: $e");
       }
-      
-      expect(caughtCancel, isTrue, reason: "Pipeline should have thrown CancelledException.");
-      
+
+      expect(
+        caughtCancel,
+        isTrue,
+        reason: "Pipeline should have thrown CancelledException.",
+      );
+
       int completedImages = project.images.length;
       int completedAudios = project.audios.length;
-      
-      print("Partial State Saved: $completedImages images, $completedAudios audios.");
-      expect(completedImages, lessThan(10), reason: "Pipeline should not have finished all scenes.");
+
+      print(
+        "Partial State Saved: $completedImages images, $completedAudios audios.",
+      );
+      expect(
+        completedImages,
+        lessThan(10),
+        reason: "Pipeline should not have finished all scenes.",
+      );
       expect(project.projectState, isNot(GenerationState.completed));
-      
+
       print("\n3. Resuming Production Pipeline from where it left off...");
-      
+
       final token2 = CancellationToken();
       try {
-        await noema.generateProduction(project, cancellationToken: token2, onUpdate: (status) {
-          print("RESUME UPDATE: $status");
-        });
+        await noema.generateProduction(
+          project,
+          cancellationToken: token2,
+          onUpdate: (status) {
+            print("RESUME UPDATE: $status");
+          },
+        );
       } catch (e) {
         fail("Resumed Pipeline failed: $e");
       }
-      
+
       print("✅ Resumed Pipeline finished successfully!");
-      
-      expect(project.images.length, equals(10), reason: "All 10 images should be generated.");
-      expect(project.audios.length, equals(10), reason: "All 10 audios should be generated.");
+
+      expect(
+        project.images.length,
+        equals(10),
+        reason: "All 10 images should be generated.",
+      );
+      expect(
+        project.audios.length,
+        equals(10),
+        reason: "All 10 audios should be generated.",
+      );
       expect(project.projectState, equals(GenerationState.completed));
-      expect(project.finalVideoPath, isNotNull, reason: "Final video should be compiled.");
-      
+      expect(
+        project.finalVideoPath,
+        isNotNull,
+        reason: "Final video should be compiled.",
+      );
+
       print("\n--- [RESULTS] ---");
       print("Final Video: ${project.finalVideoPath}");
-      
+
       noema.bootstrap.jobMonitor.stop();
       print("--- [FAILOVER CHALLENGE END] ---");
     },
-    skip: Platform.environment.containsKey('CI') ? 'Requires local ComfyUI to be running' : false,
+    skip: 'Requires Local ComfyUI Backend',
     timeout: const Timeout(Duration(minutes: 60)),
   );
 }

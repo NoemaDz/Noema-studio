@@ -254,7 +254,9 @@ class _StudioScreenState extends State<StudioScreen> {
         // Restore any previously active jobs into the JobManager
         if (project.savedJobs.isNotEmpty) {
           noema.bootstrap.jobManager.restoreJobs(project.savedJobs);
-          debugPrint('StudioScreen: Restored ${project.savedJobs.length} saved jobs.');
+          debugPrint(
+            'StudioScreen: Restored ${project.savedJobs.length} saved jobs.',
+          );
         }
 
         final synchronizer = ProjectSynchronizer(

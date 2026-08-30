@@ -56,7 +56,7 @@ class VideoCompilationStage extends PipelineStage {
           .where((aud) => aud.asset?.path != null)
           .map((aud) => aud.asset!.path)
           .toList();
-          
+
       final subtitleText = audios
           .map((aud) => aud.text)
           .where((text) => text.trim().isNotEmpty)
@@ -99,7 +99,9 @@ class VideoCompilationStage extends PipelineStage {
     try {
       await jobManager.waitForCompletion(job.id, token: cancellationToken);
     } on CancelledException {
-      debugPrint('VideoCompilationStage: Cancellation requested, killing job ${job.id} on provider.');
+      debugPrint(
+        'VideoCompilationStage: Cancellation requested, killing job ${job.id} on provider.',
+      );
       await provider.cancelJob(job.id);
       rethrow;
     }

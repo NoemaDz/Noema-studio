@@ -18,9 +18,7 @@ import 'package:noema_studio/main.dart';
 void main() {
   test(
     'Multi-Character Challenge — 1, 2, and 3 Characters with Regional Prompting',
-    skip: Platform.environment.containsKey('CI')
-        ? 'Requires local ComfyUI to be running'
-        : false,
+    skip: 'Requires Local ComfyUI Backend',
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       SharedPreferences.setMockInitialValues({
@@ -59,8 +57,12 @@ void main() {
       final char3Path = "test/assets/char3.jpg";
 
       // Dynamically skip if we don't have the assets downloaded locally
-      if (!File(char1Path).existsSync() || !File(char2Path).existsSync() || !File(char3Path).existsSync()) {
-        print("Skipping Multi-Character Challenge because local test assets are missing.");
+      if (!File(char1Path).existsSync() ||
+          !File(char2Path).existsSync() ||
+          !File(char3Path).existsSync()) {
+        print(
+          "Skipping Multi-Character Challenge because local test assets are missing.",
+        );
         return;
       }
       final char1 = Character(
@@ -98,7 +100,8 @@ void main() {
         ),
         Scene(
           id: 2,
-          description: "Man 1 and Woman sitting together on a park bench. Man 1 on the left, Woman on the right.",
+          description:
+              "Man 1 and Woman sitting together on a park bench. Man 1 on the left, Woman on the right.",
           narration: "",
           dialogue: [],
           characterNames: ["Man 1", "Woman"],
@@ -106,11 +109,16 @@ void main() {
         ),
         Scene(
           id: 3,
-          description: "Man 1, Woman, and Man 2 standing in a modern office. Man 1 on the left, Woman in the center, Man 2 on the right.",
+          description:
+              "Man 1, Woman, and Man 2 standing in a modern office. Man 1 on the left, Woman in the center, Man 2 on the right.",
           narration: "",
           dialogue: [],
           characterNames: ["Man 1", "Woman", "Man 2"],
-          characterPositions: {"Man 1": "left", "Woman": "center", "Man 2": "right"},
+          characterPositions: {
+            "Man 1": "left",
+            "Woman": "center",
+            "Man 2": "right",
+          },
         ),
       ];
 
@@ -122,7 +130,9 @@ void main() {
 
       project.characters.addAll([char1, char2, char3]);
 
-      print("Executing Production Pipeline (Generating 3 Multi-character Scenes)...");
+      print(
+        "Executing Production Pipeline (Generating 3 Multi-character Scenes)...",
+      );
       try {
         final finishedProject = await noema.generateProduction(project);
         print("Pipeline finished successfully!");
@@ -135,10 +145,22 @@ void main() {
         }
 
         // Assertions for a true test
-        expect(finishedProject.images.length, 3, reason: "Expected 3 generated images");
+        expect(
+          finishedProject.images.length,
+          3,
+          reason: "Expected 3 generated images",
+        );
         for (final img in finishedProject.images) {
-          expect(img.asset, isNotNull, reason: "Image asset should be successfully generated");
-          expect(File(img.asset!.path).existsSync(), isTrue, reason: "Generated file must exist on disk");
+          expect(
+            img.asset,
+            isNotNull,
+            reason: "Image asset should be successfully generated",
+          );
+          expect(
+            File(img.asset!.path).existsSync(),
+            isTrue,
+            reason: "Generated file must exist on disk",
+          );
         }
       } catch (e) {
         fail("Pipeline failed: $e");

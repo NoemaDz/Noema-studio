@@ -89,18 +89,20 @@ class AgentPlannerStage extends PipelineStage {
     int charId = 1;
     for (final c in charactersData) {
       if (c is Map<String, dynamic>) {
-        characters.add(Character(
-          id: 'char_${charId++}',
-          name: c["name"] ?? "Unknown",
-          description: c["description"] ?? "",
-          prompt: c["prompt"] ?? "",
-          voiceProfile: c["voiceProfile"],
-        ));
+        characters.add(
+          Character(
+            id: 'char_${charId++}',
+            name: c["name"] ?? "Unknown",
+            description: c["description"] ?? "",
+            prompt: c["prompt"] ?? "",
+            voiceProfile: c["voiceProfile"],
+          ),
+        );
       }
     }
 
     project.story = Story(title: title, scenes: scenes);
-    
+
     // Completely replace existing characters with Director's Cast
     project.characters.clear();
     project.characters.addAll(characters);

@@ -26,10 +26,8 @@ class CharacterEditorDialog extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
-      builder: (_) => CharacterEditorDialog(
-        character: character,
-        onSaved: onSaved,
-      ),
+      builder: (_) =>
+          CharacterEditorDialog(character: character, onSaved: onSaved),
     );
   }
 
@@ -66,10 +64,10 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.character.name);
-    _descController =
-        TextEditingController(text: widget.character.description);
-    _promptController =
-        TextEditingController(text: widget.character.prompt ?? '');
+    _descController = TextEditingController(text: widget.character.description);
+    _promptController = TextEditingController(
+      text: widget.character.prompt ?? '',
+    );
     _selectedVoice = widget.character.voiceProfile;
     _generatedImagePath = widget.character.imagePath;
 
@@ -107,9 +105,7 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
           .whereType<ProxyImageProvider>()
           .firstOrNull;
       if (provider == null) {
-        setState(
-          () => _generateError = 'Image provider not available.',
-        );
+        setState(() => _generateError = 'Image provider not available.');
         return;
       }
 
@@ -120,12 +116,12 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
       noema.bootstrap.jobManager.add(job);
 
       // Poll until done (timeout 3min)
-      final deadline =
-          DateTime.now().add(const Duration(minutes: 3));
+      final deadline = DateTime.now().add(const Duration(minutes: 3));
       while (DateTime.now().isBefore(deadline)) {
         await Future.delayed(const Duration(seconds: 2));
         await provider.updateJobStatus(job);
-        if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
+        if (job.status == JobStatus.completed ||
+            job.status == JobStatus.failed) {
           break;
         }
       }
@@ -137,7 +133,9 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
           widget.character.imagePath = job.result;
         });
       } else {
-        setState(() => _generateError = job.result ?? 'Image generation failed.');
+        setState(
+          () => _generateError = job.result ?? 'Image generation failed.',
+        );
       }
     } catch (e) {
       setState(() => _generateError = e.toString());
@@ -169,7 +167,10 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: cs.primary.withValues(alpha: 0.3), width: 1),
+          border: Border.all(
+            color: cs.primary.withValues(alpha: 0.3),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: cs.primary.withValues(alpha: 0.2),
@@ -222,13 +223,17 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Edit Character',
-                            style: tt.titleLarge?.copyWith(
-                                color: cs.primary,
-                                fontWeight: FontWeight.bold)),
-                        Text(_nameController.text,
-                            style: tt.bodySmall
-                                ?.copyWith(color: Colors.white54)),
+                        Text(
+                          'Edit Character',
+                          style: tt.titleLarge?.copyWith(
+                            color: cs.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          _nameController.text,
+                          style: tt.bodySmall?.copyWith(color: Colors.white54),
+                        ),
                       ],
                     ),
                   ),
@@ -270,45 +275,53 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                                             width: 40,
                                             height: 40,
                                             decoration: BoxDecoration(
-                                              color: cs.primary
-                                                  .withValues(alpha: 0.2),
+                                              color: cs.primary.withValues(
+                                                alpha: 0.2,
+                                              ),
                                               shape: BoxShape.circle,
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: cs.primary
-                                                      .withValues(alpha: 0.5),
-                                                  blurRadius:
-                                                      _glowAnim.value,
+                                                  color: cs.primary.withValues(
+                                                    alpha: 0.5,
+                                                  ),
+                                                  blurRadius: _glowAnim.value,
                                                 ),
                                               ],
                                             ),
-                                            child: const CircularProgressIndicator(
-                                                strokeWidth: 2),
+                                            child:
+                                                const CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
                                           ),
                                         ),
                                         const SizedBox(height: 8),
-                                        Text('Generating...',
-                                            style: tt.labelSmall?.copyWith(
-                                                color: Colors.white54)),
+                                        Text(
+                                          'Generating...',
+                                          style: tt.labelSmall?.copyWith(
+                                            color: Colors.white54,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   )
                                 : _generatedImagePath != null &&
-                                        File(_generatedImagePath!)
-                                            .existsSync()
-                                    ? Image.file(
-                                        File(_generatedImagePath!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Container(
-                                        color: cs.surfaceContainerHighest,
-                                        child: Center(
-                                          child: Icon(Icons.person,
-                                              size: 60,
-                                              color: cs.primary
-                                                  .withValues(alpha: 0.4)),
+                                      File(_generatedImagePath!).existsSync()
+                                ? Image.file(
+                                    File(_generatedImagePath!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    color: cs.surfaceContainerHighest,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: cs.primary.withValues(
+                                          alpha: 0.4,
                                         ),
                                       ),
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -316,10 +329,13 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Visual Prompt',
-                                  style: tt.labelMedium?.copyWith(
-                                      color: cs.primary,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                'Visual Prompt',
+                                style: tt.labelMedium?.copyWith(
+                                  color: cs.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               TextField(
                                 controller: _promptController,
@@ -328,24 +344,23 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                                   hintText:
                                       'e.g. A young woman with red hair, blue eyes, wearing a black jacket...',
                                   filled: true,
-                                  fillColor:
-                                      cs.surfaceContainerHighest.withValues(alpha: 0.7),
+                                  fillColor: cs.surfaceContainerHighest
+                                      .withValues(alpha: 0.7),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide(
-                                        color:
-                                            cs.primary.withValues(alpha: 0.3)),
+                                      color: cs.primary.withValues(alpha: 0.3),
+                                    ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide(
-                                        color:
-                                            cs.primary.withValues(alpha: 0.2)),
+                                      color: cs.primary.withValues(alpha: 0.2),
+                                    ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        BorderSide(color: cs.primary),
+                                    borderSide: BorderSide(color: cs.primary),
                                   ),
                                 ),
                               ),
@@ -358,10 +373,12 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                                       ? null
                                       : _generateTestImage,
                                   style: FilledButton.styleFrom(
-                                    backgroundColor:
-                                        cs.primary.withValues(alpha: 0.85),
+                                    backgroundColor: cs.primary.withValues(
+                                      alpha: 0.85,
+                                    ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
+                                      vertical: 12,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -371,25 +388,32 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                                           width: 16,
                                           height: 16,
                                           child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white),
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
                                         )
-                                      : const Icon(Icons.auto_awesome,
-                                          size: 18),
+                                      : const Icon(
+                                          Icons.auto_awesome,
+                                          size: 18,
+                                        ),
                                   label: Text(
                                     _isGeneratingImage
                                         ? 'Generating...'
                                         : '⚡ Generate Test Image',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
                               if (_generateError != null) ...[
                                 const SizedBox(height: 8),
-                                Text(_generateError!,
-                                    style: tt.labelSmall
-                                        ?.copyWith(color: Colors.red)),
+                                Text(
+                                  _generateError!,
+                                  style: tt.labelSmall?.copyWith(
+                                    color: Colors.red,
+                                  ),
+                                ),
                               ],
                             ],
                           ),
@@ -402,10 +426,13 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                     const SizedBox(height: 16),
 
                     // Description
-                    Text('Description',
-                        style: tt.labelMedium?.copyWith(
-                            color: cs.primary,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      'Description',
+                      style: tt.labelMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _descController,
@@ -413,17 +440,20 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                       decoration: InputDecoration(
                         hintText: 'Brief character description...',
                         filled: true,
-                        fillColor:
-                            cs.surfaceContainerHighest.withValues(alpha: 0.7),
+                        fillColor: cs.surfaceContainerHighest.withValues(
+                          alpha: 0.7,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                              color: cs.primary.withValues(alpha: 0.3)),
+                            color: cs.primary.withValues(alpha: 0.3),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                              color: cs.primary.withValues(alpha: 0.2)),
+                            color: cs.primary.withValues(alpha: 0.2),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -437,23 +467,32 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                     // Voice profile
                     Row(
                       children: [
-                        Icon(Icons.record_voice_over,
-                            color: cs.primary, size: 18),
+                        Icon(
+                          Icons.record_voice_over,
+                          color: cs.primary,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
-                        Text('Voice Profile',
-                            style: tt.labelMedium?.copyWith(
-                                color: cs.primary,
-                                fontWeight: FontWeight.bold)),
+                        Text(
+                          'Voice Profile',
+                          style: tt.labelMedium?.copyWith(
+                            color: cs.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest.withValues(alpha: 0.7),
+                        color: cs.surfaceContainerHighest.withValues(
+                          alpha: 0.7,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: cs.primary.withValues(alpha: 0.2)),
+                          color: cs.primary.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String?>(
@@ -464,14 +503,20 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                           items: [
                             DropdownMenuItem<String?>(
                               value: null,
-                              child: Text('🔇 Use App Default',
-                                  style: tt.bodyMedium
-                                      ?.copyWith(color: Colors.white54)),
+                              child: Text(
+                                '🔇 Use App Default',
+                                style: tt.bodyMedium?.copyWith(
+                                  color: Colors.white54,
+                                ),
+                              ),
                             ),
-                            ..._voiceOptions.map((v) => DropdownMenuItem<String>( // ignore: unnecessary_underscores
-                                  value: v.$1,
-                                  child: Text(v.$2),
-                                )),
+                            ..._voiceOptions.map(
+                              (v) => DropdownMenuItem<String>(
+                                // ignore: unnecessary_underscores
+                                value: v.$1,
+                                child: Text(v.$2),
+                              ),
+                            ),
                           ],
                           onChanged: (val) =>
                               setState(() => _selectedVoice = val),
@@ -485,8 +530,7 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
 
             // ── Footer ──────────────────────────────────────────────────
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(color: cs.primary.withValues(alpha: 0.15)),
@@ -497,22 +541,28 @@ class _CharacterEditorDialogState extends State<CharacterEditorDialog>
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text('Cancel',
-                        style: TextStyle(color: Colors.white54)),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white54),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   FilledButton.icon(
                     onPressed: _save,
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     icon: const Icon(Icons.save, size: 18),
-                    label: const Text('Save Character',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Save Character',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),

@@ -72,7 +72,8 @@ class SceneImageStage extends PipelineStage {
       // machine, retry transparently with text_to_image (no characters).
       // This makes the app "Plug & Play" regardless of model availability.
       final errorStr = e.toString();
-      final isIpAdapterError = errorStr.contains('modelNotFound') ||
+      final isIpAdapterError =
+          errorStr.contains('modelNotFound') ||
           errorStr.contains('IPAdapter') ||
           errorStr.contains('IPAdapterUnifiedLoader') ||
           errorStr.contains('ip_adapter');
@@ -90,7 +91,9 @@ class SceneImageStage extends PipelineStage {
         try {
           await _submitAndWait(workflow, fallbackContext, scene, project);
         } catch (fallbackErr) {
-          debugPrint('SceneImageStage: Fallback also failed for scene ${scene.id}: $fallbackErr');
+          debugPrint(
+            'SceneImageStage: Fallback also failed for scene ${scene.id}: $fallbackErr',
+          );
           rethrow;
         }
       } else {
@@ -115,7 +118,9 @@ class SceneImageStage extends PipelineStage {
       project.jobIds.add(job.id);
 
       // Only add a new GeneratedImage entry if not already tracked
-      final alreadyTracked = project.images.any((img) => img.sceneId == scene.id);
+      final alreadyTracked = project.images.any(
+        (img) => img.sceneId == scene.id,
+      );
       if (!alreadyTracked) {
         project.images.add(
           GeneratedImage(
@@ -139,7 +144,9 @@ class SceneImageStage extends PipelineStage {
       try {
         await jobManager.waitForCompletion(job.id, token: cancellationToken);
       } on CancelledException {
-        debugPrint('SceneImageStage: Cancellation requested, killing job ${job.id} on provider.');
+        debugPrint(
+          'SceneImageStage: Cancellation requested, killing job ${job.id} on provider.',
+        );
         await provider.cancelJob(job.id);
         rethrow;
       }
@@ -152,7 +159,9 @@ class SceneImageStage extends PipelineStage {
 
       final asset = await provider.downloadAsset(job.id);
       if (asset == null) {
-        throw Exception('Failed to download image asset for scene ${scene.id}.');
+        throw Exception(
+          'Failed to download image asset for scene ${scene.id}.',
+        );
       }
 
       for (final img in project.images) {

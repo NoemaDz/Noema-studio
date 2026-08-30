@@ -71,7 +71,9 @@ class _AgentPlanningStep implements WorkflowStep {
         }
 
         if (decoded.containsKey("characters") && i == 0) {
-          allCharacters = List<Map<String, dynamic>>.from(decoded["characters"]);
+          allCharacters = List<Map<String, dynamic>>.from(
+            decoded["characters"],
+          );
         }
 
         if (decoded.containsKey("scenes")) {
@@ -97,7 +99,11 @@ class _AgentPlanningStep implements WorkflowStep {
       }
     }
 
-    return {"title": storyTitle, "characters": allCharacters, "scenes": allScenes};
+    return {
+      "title": storyTitle,
+      "characters": allCharacters,
+      "scenes": allScenes,
+    };
   }
 
   Map<String, dynamic>? _safeDecode(String jsonStr) {

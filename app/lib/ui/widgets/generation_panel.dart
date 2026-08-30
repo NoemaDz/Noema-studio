@@ -71,8 +71,8 @@ class GenerationPanel extends StatelessWidget {
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
-                    hintText: noema.bootstrap.appSettings.enableVideoGeneration 
-                        ? "Describe the video you want to generate..." 
+                    hintText: noema.bootstrap.appSettings.enableVideoGeneration
+                        ? "Describe the video you want to generate..."
                         : "Describe the image you want to generate...",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -82,7 +82,7 @@ class GenerationPanel extends StatelessWidget {
                   ),
                   enabled: !isGenerating,
                 );
-              }
+              },
             ),
           ),
           const SizedBox(height: 24),
@@ -300,11 +300,13 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
                 : null,
           ),
           child: FilledButton.icon(
-            onPressed: widget.isGenerating ? widget.onCancel : widget.onGenerate,
+            onPressed: widget.isGenerating
+                ? widget.onCancel
+                : widget.onGenerate,
             style: FilledButton.styleFrom(
-              backgroundColor: widget.isGenerating 
-                ? Theme.of(context).colorScheme.error 
-                : Theme.of(context).colorScheme.primary,
+              backgroundColor: widget.isGenerating
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -322,12 +324,18 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
             label: ListenableBuilder(
               listenable: noema.bootstrap.appSettings,
               builder: (context, _) {
-                final isVideo = noema.bootstrap.appSettings.enableVideoGeneration;
+                final isVideo =
+                    noema.bootstrap.appSettings.enableVideoGeneration;
                 return Text(
-                  widget.isGenerating ? "Cancel Generation" : (isVideo ? "Generate Video" : "Generate Image"),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  widget.isGenerating
+                      ? "Cancel Generation"
+                      : (isVideo ? "Generate Video" : "Generate Image"),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 );
-              }
+              },
             ),
           ),
         );

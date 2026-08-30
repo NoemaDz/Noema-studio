@@ -14,7 +14,7 @@ class MockTTSProvider extends TTSProvider {
   @override
   Future<Job> generateAudio(String text, {String? voiceProfile}) async {
     final jobId = "tts_mock_${DateTime.now().millisecondsSinceEpoch}";
-    
+
     // Simulate some network delay
     await Future.delayed(const Duration(seconds: 1));
     return Job(

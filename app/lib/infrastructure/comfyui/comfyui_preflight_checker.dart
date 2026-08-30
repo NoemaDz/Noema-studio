@@ -10,28 +10,29 @@ class PreflightCheckResult {
   final String? message;
 
   const PreflightCheckResult.success()
-      : isOk = true,
-        missingNode = null,
-        missingModel = null,
-        inputName = null,
-        message = null;
+    : isOk = true,
+      missingNode = null,
+      missingModel = null,
+      inputName = null,
+      message = null;
 
   const PreflightCheckResult.missingNode(String nodeClass)
-      : isOk = false,
-        missingNode = nodeClass,
-        missingModel = null,
-        inputName = null,
-        message = "Missing node type in ComfyUI: '$nodeClass'";
+    : isOk = false,
+      missingNode = nodeClass,
+      missingModel = null,
+      inputName = null,
+      message = "Missing node type in ComfyUI: '$nodeClass'";
 
   const PreflightCheckResult.missingModel({
     required String nodeClass,
     required String input,
     required String model,
-  })  : isOk = false,
-        missingNode = null,
-        missingModel = model,
-        inputName = input,
-        message = "Model '$model' for input '$input' in node '$nodeClass' is not installed on ComfyUI server";
+  }) : isOk = false,
+       missingNode = null,
+       missingModel = model,
+       inputName = input,
+       message =
+           "Model '$model' for input '$input' in node '$nodeClass' is not installed on ComfyUI server";
 }
 
 class ComfyUIPreflightChecker {
@@ -42,7 +43,9 @@ class ComfyUIPreflightChecker {
   ComfyUIPreflightChecker({required this.baseUrl});
 
   /// Fetches `/object_info` from ComfyUI server. Caches for 1 minute.
-  Future<Map<String, dynamic>> fetchObjectInfo({bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> fetchObjectInfo({
+    bool forceRefresh = false,
+  }) async {
     if (!forceRefresh &&
         _objectInfoCache != null &&
         _lastFetch != null &&
@@ -81,7 +84,10 @@ class ComfyUIPreflightChecker {
   }
 
   /// Validates a full API prompt (workflow JSON map) against installed nodes & models.
-  Future<PreflightCheckResult> validateWorkflow(Map<String, dynamic> promptJson, {bool isRetry = false}) async {
+  Future<PreflightCheckResult> validateWorkflow(
+    Map<String, dynamic> promptJson, {
+    bool isRetry = false,
+  }) async {
     final objectInfo = await fetchObjectInfo(forceRefresh: isRetry);
 
     for (final entry in promptJson.entries) {
@@ -116,15 +122,20 @@ class ComfyUIPreflightChecker {
         final paramName = inputEntry.key;
         final paramValue = inputEntry.value;
 
-        if (paramValue is! String) continue; // Only check string values (filenames)
+        if (paramValue is! String) {
+          continue; // Only check string values (filenames)
+        }
 
         if (requiredInputs.containsKey(paramName)) {
           final paramSpec = requiredInputs[paramName];
           // ComfyUI object_info format: [ ["model1.safetensors", "model2.safetensors"], { ... } ]
-          if (paramSpec is List && paramSpec.isNotEmpty && paramSpec[0] is List) {
+          if (paramSpec is List &&
+              paramSpec.isNotEmpty &&
+              paramSpec[0] is List) {
             final availableModels = (paramSpec[0] as List).cast<String>();
             // If models list is non-empty and does not contain requested file
-            if (availableModels.isNotEmpty && !availableModels.contains(paramValue)) {
+            if (availableModels.isNotEmpty &&
+                !availableModels.contains(paramValue)) {
               if (!isRetry) {
                 // Self-healing: force refresh cache in case model file was just placed on server
                 return validateWorkflow(promptJson, isRetry: true);

@@ -68,7 +68,11 @@ class ProjectGenerationService {
     return project;
   }
 
-  Future<NoemaProject> generateProduction(NoemaProject project, {CancellationToken? cancellationToken, Function(String)? onUpdate}) async {
+  Future<NoemaProject> generateProduction(
+    NoemaProject project, {
+    CancellationToken? cancellationToken,
+    Function(String)? onUpdate,
+  }) async {
     final synchronizer = ProjectSynchronizer(
       project: project,
       registry: providerRegistry,

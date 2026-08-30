@@ -18,11 +18,16 @@ class CrashLogger {
   }
 
   /// Logs an unhandled exception or crash with timestamp and stack trace.
-  static Future<void> logCrash(dynamic error, StackTrace? stackTrace, {String context = 'GLOBAL'}) async {
+  static Future<void> logCrash(
+    dynamic error,
+    StackTrace? stackTrace, {
+    String context = 'GLOBAL',
+  }) async {
     try {
       final file = await _file;
       final timestamp = DateTime.now().toIso8601String();
-      final logEntry = '''
+      final logEntry =
+          '''
 ================================================================================
 [$timestamp] CRASH DETECTED [$context]
 Error: $error

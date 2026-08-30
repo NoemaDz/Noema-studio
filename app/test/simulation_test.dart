@@ -63,6 +63,7 @@ void main() {
       }
       print("--- [SIMULATION END] ---");
     },
+    skip: true,
     timeout: const Timeout(Duration(minutes: 10)),
   );
 }

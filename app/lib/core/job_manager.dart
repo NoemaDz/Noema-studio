@@ -27,7 +27,9 @@ class JobManager {
       if (!job.transitionTo(status)) {
         // Log illegal transition attempt
         // TODO: use structured logging later
-        print("WARNING: Illegal transition attempted for Job ${job.id} to $status");
+        print(
+          "WARNING: Illegal transition attempted for Job ${job.id} to $status",
+        );
       }
     }
   }
@@ -91,11 +93,14 @@ class JobManager {
   /// These are the jobs that should be saved in the project file
   /// so they can be resumed if the app restarts.
   List<Job> snapshotActiveJobs() {
-    return _jobs.where((job) =>
-      job.status != JobStatus.completed &&
-      job.status != JobStatus.failed &&
-      job.status != JobStatus.cancelled
-    ).toList();
+    return _jobs
+        .where(
+          (job) =>
+              job.status != JobStatus.completed &&
+              job.status != JobStatus.failed &&
+              job.status != JobStatus.cancelled,
+        )
+        .toList();
   }
 
   Future<void> waitForCompletion(String id, {CancellationToken? token}) async {

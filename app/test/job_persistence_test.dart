@@ -58,11 +58,31 @@ void main() {
   group('JobManager Persistence', () {
     test('snapshotActiveJobs returns only non-terminal jobs', () {
       final manager = JobManager();
-      manager.add(Job(id: '1', providerId: 'p', type: 'image', status: JobStatus.running));
-      manager.add(Job(id: '2', providerId: 'p', type: 'image', status: JobStatus.completed));
-      manager.add(Job(id: '3', providerId: 'p', type: 'image', status: JobStatus.failed));
-      manager.add(Job(id: '4', providerId: 'p', type: 'image', status: JobStatus.queued));
-      manager.add(Job(id: '5', providerId: 'p', type: 'image', status: JobStatus.cancelled));
+      manager.add(
+        Job(id: '1', providerId: 'p', type: 'image', status: JobStatus.running),
+      );
+      manager.add(
+        Job(
+          id: '2',
+          providerId: 'p',
+          type: 'image',
+          status: JobStatus.completed,
+        ),
+      );
+      manager.add(
+        Job(id: '3', providerId: 'p', type: 'image', status: JobStatus.failed),
+      );
+      manager.add(
+        Job(id: '4', providerId: 'p', type: 'image', status: JobStatus.queued),
+      );
+      manager.add(
+        Job(
+          id: '5',
+          providerId: 'p',
+          type: 'image',
+          status: JobStatus.cancelled,
+        ),
+      );
 
       final snapshot = manager.snapshotActiveJobs();
 
@@ -85,9 +105,30 @@ void main() {
 
     test('round-trip: snapshot -> serialize -> deserialize -> restore', () {
       final manager = JobManager();
-      manager.add(Job(id: 'abc', providerId: 'comfyui', type: 'image', status: JobStatus.running));
-      manager.add(Job(id: 'def', providerId: 'comfyui', type: 'video', status: JobStatus.queued));
-      manager.add(Job(id: 'ghi', providerId: 'comfyui', type: 'image', status: JobStatus.completed));
+      manager.add(
+        Job(
+          id: 'abc',
+          providerId: 'comfyui',
+          type: 'image',
+          status: JobStatus.running,
+        ),
+      );
+      manager.add(
+        Job(
+          id: 'def',
+          providerId: 'comfyui',
+          type: 'video',
+          status: JobStatus.queued,
+        ),
+      );
+      manager.add(
+        Job(
+          id: 'ghi',
+          providerId: 'comfyui',
+          type: 'image',
+          status: JobStatus.completed,
+        ),
+      );
 
       // Step 1: Snapshot active jobs
       final snapshot = manager.snapshotActiveJobs();
@@ -106,7 +147,10 @@ void main() {
       expect(newManager.jobs.length, 2);
       expect(newManager.find('abc')?.status, JobStatus.running);
       expect(newManager.find('def')?.status, JobStatus.queued);
-      expect(newManager.find('ghi'), isNull); // completed should NOT be restored
+      expect(
+        newManager.find('ghi'),
+        isNull,
+      ); // completed should NOT be restored
     });
   });
 }

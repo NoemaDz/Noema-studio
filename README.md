@@ -57,7 +57,7 @@ Noema Studio has officially reached **Release Candidate 1 (RC 1)** status. All c
 | **Crash Recovery & Panic** | Stable (RC 1) | Global `CrashLogger` (`noema_crash.log`) and UI `ErrorBoundary` preventing red screens. |
 | **VRAM Emergency Cleanup** | Stable (RC 1) | Sends `/free` and `/interrupt` signals to ComfyUI on cancellation or error. |
 | **Character Generation** | Beta Candidate | Regional attention and IPAdapter composite character consistency. |
-| **Image-to-Video (I2V)** | Beta Candidate | SVD integration via ComfyUI with hardware performance profiles. |
+| **Image-to-Video (I2V)** | Env Limited | Local SVD requires >6GB VRAM. Cloud providers pending. |
 | **Multi-Voice (TTS)** | Beta Candidate | Character Voice Profiles mapped to speech synthesis. |
 | **Video Compilation** | Beta Candidate | Intelligent FFmpeg looping and audio sync. |
 

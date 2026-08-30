@@ -123,7 +123,9 @@ class OpenAIImageProvider extends ImageProvider {
 
         // --- OUTPUT VERIFICATION ---
         if (!await file.exists()) {
-          throw Exception("Output Verification Failed: File does not exist on disk.");
+          throw Exception(
+            "Output Verification Failed: File does not exist on disk.",
+          );
         }
         final length = await file.length();
         if (length == 0) {
@@ -141,13 +143,15 @@ class OpenAIImageProvider extends ImageProvider {
 
   @override
   Future<void> cancelJob(String jobId) async {
-    // NOTE: This is a logical cancellation. 
+    // NOTE: This is a logical cancellation.
     // The HTTP request to OpenAI is synchronous and cannot be easily cancelled
     // midway using the standard http package without a dedicated CancelToken/Client.
     // Setting the job to failed ensures the PipelineEngine moves on and ignores the result.
     if (_jobs.containsKey(jobId)) {
       final job = _jobs[jobId]!;
-      if (job.status == JobStatus.running || job.status == JobStatus.queued || job.status == JobStatus.starting) {
+      if (job.status == JobStatus.running ||
+          job.status == JobStatus.queued ||
+          job.status == JobStatus.starting) {
         job.transitionTo(JobStatus.cancelled);
         job.metadata["error"] = "Cancelled by user";
       }

@@ -53,7 +53,8 @@ PreflightCheckResult _validate(
         final paramSpec = requiredInputs[paramName];
         if (paramSpec is List && paramSpec.isNotEmpty && paramSpec[0] is List) {
           final availableModels = (paramSpec[0] as List).cast<String>();
-          if (availableModels.isNotEmpty && !availableModels.contains(paramValue)) {
+          if (availableModels.isNotEmpty &&
+              !availableModels.contains(paramValue)) {
             return PreflightCheckResult.missingModel(
               nodeClass: classType,
               input: paramName,
@@ -82,47 +83,79 @@ void main() {
     });
 
     test('Retry path: running→retrying→running→completed', () {
-      final job = Job(id: 'sm-2', providerId: 'comfyui', type: 'image',
-          status: JobStatus.running);
+      final job = Job(
+        id: 'sm-2',
+        providerId: 'comfyui',
+        type: 'image',
+        status: JobStatus.running,
+      );
       expect(job.transitionTo(JobStatus.retrying), isTrue);
       expect(job.transitionTo(JobStatus.running), isTrue);
       expect(job.transitionTo(JobStatus.completed), isTrue);
     });
 
     test('Cancellation path: running→cancelling→cancelled', () {
-      final job = Job(id: 'sm-3', providerId: 'comfyui', type: 'image',
-          status: JobStatus.running);
+      final job = Job(
+        id: 'sm-3',
+        providerId: 'comfyui',
+        type: 'image',
+        status: JobStatus.running,
+      );
       expect(job.transitionTo(JobStatus.cancelling), isTrue);
       expect(job.transitionTo(JobStatus.cancelled), isTrue);
       expect(job.status, JobStatus.cancelled);
     });
 
     test('Terminal state blocks further transitions', () {
-      final completedJob = Job(id: 'sm-4', providerId: 'comfyui', type: 'image',
-          status: JobStatus.completed);
-      expect(completedJob.transitionTo(JobStatus.running), isFalse,
-          reason: 'completed is terminal — no re-entry');
+      final completedJob = Job(
+        id: 'sm-4',
+        providerId: 'comfyui',
+        type: 'image',
+        status: JobStatus.completed,
+      );
+      expect(
+        completedJob.transitionTo(JobStatus.running),
+        isFalse,
+        reason: 'completed is terminal — no re-entry',
+      );
 
-      final cancelledJob = Job(id: 'sm-5', providerId: 'comfyui', type: 'image',
-          status: JobStatus.cancelled);
-      expect(cancelledJob.transitionTo(JobStatus.pending), isFalse,
-          reason: 'cancelled is terminal — no re-entry');
+      final cancelledJob = Job(
+        id: 'sm-5',
+        providerId: 'comfyui',
+        type: 'image',
+        status: JobStatus.cancelled,
+      );
+      expect(
+        cancelledJob.transitionTo(JobStatus.pending),
+        isFalse,
+        reason: 'cancelled is terminal — no re-entry',
+      );
     });
 
     test('Invalid skip transition (pending→completed) is blocked', () {
       final job = Job(id: 'sm-6', providerId: 'comfyui', type: 'image');
-      expect(job.transitionTo(JobStatus.completed), isFalse,
-          reason: 'Cannot skip intermediate states');
+      expect(
+        job.transitionTo(JobStatus.completed),
+        isFalse,
+        reason: 'Cannot skip intermediate states',
+      );
       expect(job.status, JobStatus.pending);
     });
 
     test('All JobStatus values round-trip through JSON', () {
       for (final status in JobStatus.values) {
-        final job = Job(id: 'rt-${status.name}', providerId: 'p', type: 't',
-            status: status);
+        final job = Job(
+          id: 'rt-${status.name}',
+          providerId: 'p',
+          type: 't',
+          status: status,
+        );
         final restored = Job.fromJson(job.toJson());
-        expect(restored.status, status,
-            reason: 'JSON round-trip failed for status: $status');
+        expect(
+          restored.status,
+          status,
+          reason: 'JSON round-trip failed for status: $status',
+        );
       }
     });
   });
@@ -131,38 +164,88 @@ void main() {
   group('[RC1] ② Job Persistence & Crash Recovery', () {
     test('snapshotActiveJobs returns only non-terminal jobs', () {
       final m = JobManager();
-      m.add(Job(id: '1', providerId: 'p', type: 'image', status: JobStatus.running));
-      m.add(Job(id: '2', providerId: 'p', type: 'image', status: JobStatus.queued));
-      m.add(Job(id: '3', providerId: 'p', type: 'image', status: JobStatus.completed));
-      m.add(Job(id: '4', providerId: 'p', type: 'image', status: JobStatus.failed));
-      m.add(Job(id: '5', providerId: 'p', type: 'image', status: JobStatus.cancelled));
+      m.add(
+        Job(id: '1', providerId: 'p', type: 'image', status: JobStatus.running),
+      );
+      m.add(
+        Job(id: '2', providerId: 'p', type: 'image', status: JobStatus.queued),
+      );
+      m.add(
+        Job(
+          id: '3',
+          providerId: 'p',
+          type: 'image',
+          status: JobStatus.completed,
+        ),
+      );
+      m.add(
+        Job(id: '4', providerId: 'p', type: 'image', status: JobStatus.failed),
+      );
+      m.add(
+        Job(
+          id: '5',
+          providerId: 'p',
+          type: 'image',
+          status: JobStatus.cancelled,
+        ),
+      );
 
       final snap = m.snapshotActiveJobs();
-      expect(snap.length, 2,
-          reason: 'Only running(1) + queued(2) should be snapshotted');
+      expect(
+        snap.length,
+        2,
+        reason: 'Only running(1) + queued(2) should be snapshotted',
+      );
       expect(snap.map((j) => j.id).toSet(), {'1', '2'});
     });
 
     test('Full round-trip: crash simulation → restart → state restored', () {
       // Session A: pre-crash
       final mgr = JobManager();
-      mgr.add(Job(id: 'alive', providerId: 'c', type: 'image', status: JobStatus.running));
-      mgr.add(Job(id: 'done',  providerId: 'c', type: 'video', status: JobStatus.completed));
-      mgr.add(Job(id: 'wait',  providerId: 'c', type: 'image', status: JobStatus.queued));
+      mgr.add(
+        Job(
+          id: 'alive',
+          providerId: 'c',
+          type: 'image',
+          status: JobStatus.running,
+        ),
+      );
+      mgr.add(
+        Job(
+          id: 'done',
+          providerId: 'c',
+          type: 'video',
+          status: JobStatus.completed,
+        ),
+      );
+      mgr.add(
+        Job(
+          id: 'wait',
+          providerId: 'c',
+          type: 'image',
+          status: JobStatus.queued,
+        ),
+      );
 
-      final snapshot  = mgr.snapshotActiveJobs();
-      final jsonList  = snapshot.map((j) => j.toJson()).toList();
+      final snapshot = mgr.snapshotActiveJobs();
+      final jsonList = snapshot.map((j) => j.toJson()).toList();
 
       // Session B: post-restart (simulate app restart)
-      final freshMgr  = JobManager();
+      final freshMgr = JobManager();
       freshMgr.restoreJobs(jsonList.map((j) => Job.fromJson(j)).toList());
 
-      expect(freshMgr.jobs.length, 2,
-          reason: 'Completed job must NOT be restored after crash');
+      expect(
+        freshMgr.jobs.length,
+        2,
+        reason: 'Completed job must NOT be restored after crash',
+      );
       expect(freshMgr.find('alive')?.status, JobStatus.running);
       expect(freshMgr.find('wait')?.status, JobStatus.queued);
-      expect(freshMgr.find('done'), isNull,
-          reason: 'Completed jobs are never persisted');
+      expect(
+        freshMgr.find('done'),
+        isNull,
+        reason: 'Completed jobs are never persisted',
+      );
     });
 
     test('restoreJobs skips duplicate IDs (idempotent)', () {
@@ -182,8 +265,11 @@ void main() {
         'type': 'image',
         'status': 'status_from_year_2030_that_doesnt_exist_yet',
       });
-      expect(job.status, JobStatus.pending,
-          reason: 'Unknown statuses must degrade to pending without crashing');
+      expect(
+        job.status,
+        JobStatus.pending,
+        reason: 'Unknown statuses must degrade to pending without crashing',
+      );
     });
   });
 
@@ -194,7 +280,10 @@ void main() {
       expect(token.isCancelled, isFalse);
       token.cancel();
       expect(token.isCancelled, isTrue);
-      expect(() => token.throwIfCancelled(), throwsA(isA<CancelledException>()));
+      expect(
+        () => token.throwIfCancelled(),
+        throwsA(isA<CancelledException>()),
+      );
     });
 
     test('Listener fires immediately when cancel() called', () {
@@ -210,8 +299,11 @@ void main() {
       final token = CancellationToken()..cancel();
       bool fired = false;
       token.addListener(() => fired = true);
-      expect(fired, isTrue,
-          reason: 'Late listeners on cancelled token must fire synchronously');
+      expect(
+        fired,
+        isTrue,
+        reason: 'Late listeners on cancelled token must fire synchronously',
+      );
     });
 
     test('cancel() is idempotent — listeners fire only once', () {
@@ -233,46 +325,69 @@ void main() {
       expect(count, 0);
     });
 
-    test('CancelledException propagates correctly through async chain', () async {
-      final token = CancellationToken();
-      bool caught = false;
+    test(
+      'CancelledException propagates correctly through async chain',
+      () async {
+        final token = CancellationToken();
+        bool caught = false;
 
-      Future<void> step3() async => token.throwIfCancelled();
-      Future<void> step2() async => await step3();
-      Future<void> step1() async => await step2();
+        Future<void> step3() async => token.throwIfCancelled();
+        Future<void> step2() async => await step3();
+        Future<void> step1() async => await step2();
 
-      token.cancel();
-      try {
-        await step1();
-      } on CancelledException {
-        caught = true;
-      }
-      expect(caught, isTrue, reason: 'CancelledException must bubble up the async chain');
-    });
+        token.cancel();
+        try {
+          await step1();
+        } on CancelledException {
+          caught = true;
+        }
+        expect(
+          caught,
+          isTrue,
+          reason: 'CancelledException must bubble up the async chain',
+        );
+      },
+    );
   });
 
   // ── 4. NoemaException Error Classification ────────────────────────────────
   group('[RC1] ④ NoemaException Error Classification', () {
     test('Retryable errors: outOfMemory, networkError, providerBusy', () {
       expect(
-          NoemaException.fromType(NoemaErrorType.outOfMemory, 'OOM').isRetryable,
-          isTrue);
+        NoemaException.fromType(NoemaErrorType.outOfMemory, 'OOM').isRetryable,
+        isTrue,
+      );
       expect(
-          NoemaException.fromType(NoemaErrorType.networkError, 'Timeout').isRetryable,
-          isTrue);
+        NoemaException.fromType(
+          NoemaErrorType.networkError,
+          'Timeout',
+        ).isRetryable,
+        isTrue,
+      );
     });
 
     test('Non-retryable errors: modelNotFound, authenticationError', () {
       expect(
-          NoemaException.fromType(NoemaErrorType.modelNotFound, 'Not found').isRetryable,
-          isFalse);
+        NoemaException.fromType(
+          NoemaErrorType.modelNotFound,
+          'Not found',
+        ).isRetryable,
+        isFalse,
+      );
       expect(
-          NoemaException.fromType(NoemaErrorType.authenticationError, 'Auth').isRetryable,
-          isFalse);
+        NoemaException.fromType(
+          NoemaErrorType.authenticationError,
+          'Auth',
+        ).isRetryable,
+        isFalse,
+      );
     });
 
     test('toString returns human-readable message', () {
-      final ex = NoemaException.fromType(NoemaErrorType.networkError, 'Connection refused');
+      final ex = NoemaException.fromType(
+        NoemaErrorType.networkError,
+        'Connection refused',
+      );
       expect(ex.toString(), contains('Connection refused'));
     });
   });
@@ -284,25 +399,30 @@ void main() {
         'input': {
           'required': {
             'ckpt_name': [
-              ['sd_xl_base_1.0.safetensors', 'v1-5-pruned-emaonly.safetensors']
+              ['sd_xl_base_1.0.safetensors', 'v1-5-pruned-emaonly.safetensors'],
             ],
-          }
-        }
+          },
+        },
       },
       'KSampler': {
         'input': {
           'required': {
             'model': ['MODEL'],
-            'steps': ['INT', {'default': 20}],
-          }
-        }
+            'steps': [
+              'INT',
+              {'default': 20},
+            ],
+          },
+        },
       },
       'ImageOnlyCheckpointLoader': {
         'input': {
           'required': {
-            'ckpt_name': [['svd_xt.safetensors', 'svd_xt_1_1.safetensors']]
-          }
-        }
+            'ckpt_name': [
+              ['svd_xt.safetensors', 'svd_xt_1_1.safetensors'],
+            ],
+          },
+        },
       },
     };
 
@@ -318,7 +438,11 @@ void main() {
         },
       };
       final result = _validate(schema, prompt);
-      expect(result.isOk, isTrue, reason: 'Valid workflow should pass preflight');
+      expect(
+        result.isOk,
+        isTrue,
+        reason: 'Valid workflow should pass preflight',
+      );
     });
 
     test('Missing node class fails preflight', () {

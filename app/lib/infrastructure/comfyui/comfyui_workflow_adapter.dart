@@ -87,7 +87,7 @@ class ComfyUIWorkflowAdapter {
       final charData = characters[i] as Map<String, dynamic>;
       final fullPath = charData['imagePath'] as String;
       final position = charData['position'] as String? ?? 'center';
-      
+
       _characterPositions[i] = position;
 
       String filename = fullPath;
@@ -148,11 +148,21 @@ class ComfyUIWorkflowAdapter {
     }
 
     if (options.containsKey('motion')) {
-      setInputByClass('SVD_img2vid_Conditioning', 'motion_bucket_id', options['motion'], firstOnly: true);
+      setInputByClass(
+        'SVD_img2vid_Conditioning',
+        'motion_bucket_id',
+        options['motion'],
+        firstOnly: true,
+      );
     }
 
     if (options.containsKey('augmentation')) {
-      setInputByClass('SVD_img2vid_Conditioning', 'augmentation_level', options['augmentation'], firstOnly: true);
+      setInputByClass(
+        'SVD_img2vid_Conditioning',
+        'augmentation_level',
+        options['augmentation'],
+        firstOnly: true,
+      );
     }
   }
 
@@ -185,17 +195,17 @@ class ComfyUIWorkflowAdapter {
         activeCharacters++;
       }
     }
-    
+
     // If no characters, default to 1 to avoid division by zero
     if (activeCharacters == 0) activeCharacters = 1;
 
     // Update region masks depending on position
     final regionWidth = w ~/ activeCharacters;
-    
+
     for (int i = 0; i < 3; i++) {
       final pos = _characterPositions[i];
       int x = 0;
-      
+
       if (activeCharacters == 1) {
         // Full screen mask for single character to prevent confining IPAdapter
         x = 0;
@@ -207,7 +217,11 @@ class ComfyUIWorkflowAdapter {
         x = w - regionWidth;
       }
 
-      setInputByTitle('Region Mask ${i + 1}', 'width', activeCharacters == 1 ? w : regionWidth);
+      setInputByTitle(
+        'Region Mask ${i + 1}',
+        'width',
+        activeCharacters == 1 ? w : regionWidth,
+      );
       setInputByTitle('Region Mask ${i + 1}', 'height', h);
       setInputByTitle('Composite Mask ${i + 1}', 'x', x);
     }
@@ -225,7 +239,11 @@ class ComfyUIWorkflowAdapter {
 
     if (activeCharacters > 1) {
       // For multiple characters, PLUS model takes too much VRAM. Downgrade to STANDARD.
-      setInputByTitle('IPAdapter Unified Loader', 'preset', 'STANDARD (medium strength)');
+      setInputByTitle(
+        'IPAdapter Unified Loader',
+        'preset',
+        'STANDARD (medium strength)',
+      );
       // Also downgrade Ultra to Balanced to remove PersonDetailer and save VRAM
       if (profile == PerformanceProfile.ultra) {
         profile = PerformanceProfile.balanced;
@@ -239,7 +257,12 @@ class ComfyUIWorkflowAdapter {
 
     // --- I2V VRAM Safeguard ---
     // SVD needs a lot of VRAM for 24 frames. Downgrade to 14 frames if not ultra.
-    setInputByClass('SVD_img2vid_Conditioning', 'video_frames', 14, firstOnly: true);
+    setInputByClass(
+      'SVD_img2vid_Conditioning',
+      'video_frames',
+      14,
+      firstOnly: true,
+    );
 
     String? vaeDecodeNodeId;
     String? saveImageNodeId;

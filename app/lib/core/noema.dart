@@ -59,8 +59,16 @@ class Noema {
     return projectGenerationService.generatePlanning(project);
   }
 
-  Future<NoemaProject> generateProduction(NoemaProject project, {CancellationToken? cancellationToken, Function(String)? onUpdate}) {
-    return projectGenerationService.generateProduction(project, cancellationToken: cancellationToken, onUpdate: onUpdate);
+  Future<NoemaProject> generateProduction(
+    NoemaProject project, {
+    CancellationToken? cancellationToken,
+    Function(String)? onUpdate,
+  }) {
+    return projectGenerationService.generateProduction(
+      project,
+      cancellationToken: cancellationToken,
+      onUpdate: onUpdate,
+    );
   }
 
   //===========================================

@@ -28,7 +28,7 @@ class JobMonitor {
         final activeJobs = manager.jobs.toList();
         for (final job in activeJobs) {
           if (!_isRunning) break; // Early exit if stopped mid-poll
-          
+
           if (job.status == JobStatus.completed ||
               job.status == JobStatus.failed) {
             continue;

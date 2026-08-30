@@ -97,7 +97,9 @@ class SceneVideoStage extends PipelineStage {
 
         final asset = await provider.downloadAsset(job.id);
         if (asset == null) {
-          throw Exception('Failed to download video asset for scene ${scene.id}.');
+          throw Exception(
+            'Failed to download video asset for scene ${scene.id}.',
+          );
         }
 
         for (final vid in project.videos) {

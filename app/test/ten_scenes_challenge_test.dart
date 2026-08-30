@@ -19,9 +19,7 @@ import 'package:noema_studio/main.dart';
 void main() {
   test(
     '10 Scenes Challenge — Different poses and clothes (IP-Adapter + Detailer)',
-    skip: Platform.environment.containsKey('CI')
-        ? 'Requires local ComfyUI to be running'
-        : false,
+    skip: 'Requires Local ComfyUI Backend',
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       SharedPreferences.setMockInitialValues({

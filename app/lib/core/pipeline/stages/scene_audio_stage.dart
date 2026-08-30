@@ -57,7 +57,9 @@ class SceneAudioStage extends PipelineStage {
       try {
         await jobManager.waitForCompletion(job.id, token: cancellationToken);
       } on CancelledException {
-        debugPrint('SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.');
+        debugPrint(
+          'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
+        );
         await provider.cancelJob(job.id);
         rethrow;
       }
@@ -89,7 +91,7 @@ class SceneAudioStage extends PipelineStage {
 
       context.set("text", dialogueLine.text);
       context.set("characterName", dialogueLine.characterName);
-      
+
       if (character != null && character.voiceProfile != null) {
         context.set("voiceProfile", character.voiceProfile!);
       }
@@ -108,7 +110,9 @@ class SceneAudioStage extends PipelineStage {
       try {
         await jobManager.waitForCompletion(job.id, token: cancellationToken);
       } on CancelledException {
-        debugPrint('SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.');
+        debugPrint(
+          'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
+        );
         await provider.cancelJob(job.id);
         rethrow;
       }
@@ -146,7 +150,9 @@ class SceneAudioStage extends PipelineStage {
       try {
         await jobManager.waitForCompletion(job.id, token: cancellationToken);
       } on CancelledException {
-        debugPrint('SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.');
+        debugPrint(
+          'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
+        );
         await provider.cancelJob(job.id);
         rethrow;
       }

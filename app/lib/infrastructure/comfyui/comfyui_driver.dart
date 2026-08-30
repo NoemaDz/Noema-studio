@@ -31,7 +31,8 @@ class ComfyUIDriver {
     // Check if we have characters for IP-Adapter (only for images)
     final List<dynamic>? characters = options?["characters"];
     // Bypass IP-Adapter on 'fast' profile (low VRAM) to avoid OOM and missing heavy models
-    final bool useIpAdapter = !isVideo &&
+    final bool useIpAdapter =
+        !isVideo &&
         characters != null &&
         characters.isNotEmpty &&
         context.appSettings.performanceMode != PerformanceProfile.fast;
@@ -41,7 +42,8 @@ class ComfyUIDriver {
     if (useIpAdapter) {
       if (characters.length > 3) {
         throw Exception(
-            "Maximum 3 characters supported for regional identity per scene. Found ${characters.length}.");
+          "Maximum 3 characters supported for regional identity per scene. Found ${characters.length}.",
+        );
       }
       for (final char in characters) {
         final path = char["imagePath"] as String;
@@ -125,22 +127,33 @@ class ComfyUIDriver {
     // --- PRE-FLIGHT CHECK ---
     try {
       final preflightChecker = ComfyUIPreflightChecker(baseUrl: baseUrl);
-      final preflightResult = await preflightChecker.validateWorkflow(adapter.toJson());
+      final preflightResult = await preflightChecker.validateWorkflow(
+        adapter.toJson(),
+      );
 
       if (!preflightResult.isOk) {
-        final missingStr = preflightResult.missingNode ?? preflightResult.missingModel ?? '';
-        final isIpAdapterMissing = useIpAdapter &&
-            (missingStr.contains('IPAdapter') || missingStr.toLowerCase().contains('ipadapter'));
+        final missingStr =
+            preflightResult.missingNode ?? preflightResult.missingModel ?? '';
+        final isIpAdapterMissing =
+            useIpAdapter &&
+            (missingStr.contains('IPAdapter') ||
+                missingStr.toLowerCase().contains('ipadapter'));
 
         if (isIpAdapterMissing) {
           debugPrint(
             'ComfyUIDriver Pre-flight: IPAdapter missing (${preflightResult.message}). Falling back to text_to_image.',
           );
-          final fallbackWorkflow = await rootBundle.loadString("assets/workflows/text_to_image_api.json");
-          final fallbackAdapter = ComfyUIWorkflowAdapter(jsonDecode(fallbackWorkflow));
+          final fallbackWorkflow = await rootBundle.loadString(
+            "assets/workflows/text_to_image_api.json",
+          );
+          final fallbackAdapter = ComfyUIWorkflowAdapter(
+            jsonDecode(fallbackWorkflow),
+          );
           fallbackAdapter.setPrompt(prompt);
           fallbackAdapter.setResolution(resolution);
-          fallbackAdapter.applyPerformanceProfile(context.appSettings.performanceMode);
+          fallbackAdapter.applyPerformanceProfile(
+            context.appSettings.performanceMode,
+          );
           if (options != null) fallbackAdapter.applyOptions(options);
 
           return _postPrompt(fallbackAdapter.toJson(), isVideo: isVideo);
@@ -152,14 +165,21 @@ class ComfyUIDriver {
         );
       }
     } catch (e) {
-      if (e is NoemaException && e.type == NoemaErrorType.modelNotFound) rethrow;
-      debugPrint("ComfyUIDriver Pre-flight Check warning (proceeding to prompt submission): $e");
+      if (e is NoemaException && e.type == NoemaErrorType.modelNotFound) {
+        rethrow;
+      }
+      debugPrint(
+        "ComfyUIDriver Pre-flight Check warning (proceeding to prompt submission): $e",
+      );
     }
 
     return _postPrompt(adapter.toJson(), isVideo: isVideo);
   }
 
-  Future<Job> _postPrompt(Map<String, dynamic> promptJson, {required bool isVideo}) async {
+  Future<Job> _postPrompt(
+    Map<String, dynamic> promptJson, {
+    required bool isVideo,
+  }) async {
     final retryPolicy = const RetryPolicy(maxRetries: 3);
 
     final response = await retryPolicy.execute(
@@ -232,11 +252,11 @@ class ComfyUIDriver {
         final historyData = jsonDecode(historyResponse.body);
         if (historyData.containsKey(job.id)) {
           final jobHistory = historyData[job.id];
-          
+
           if (jobHistory['status'] != null) {
             final statusStr = jobHistory['status']['status_str'];
             final completed = jobHistory['status']['completed'] == true;
-            
+
             if (statusStr == 'success' && completed) {
               job.transitionTo(JobStatus.completed);
               _notFoundCounts.remove(job.id);
@@ -269,7 +289,7 @@ class ComfyUIDriver {
     // Instead of failing immediately, we allow a few retries because it might be transitioning from queue to history.
     final currentNotFound = (_notFoundCounts[job.id] ?? 0) + 1;
     _notFoundCounts[job.id] = currentNotFound;
-    
+
     if (currentNotFound > 3) {
       job.transitionTo(JobStatus.failed);
       job.result = "Job not found in queue or history after 3 polls";
@@ -297,7 +317,7 @@ class ComfyUIDriver {
       if (!data.containsKey(jobId)) {
         throw Exception("HistoryMissing: Job $jobId not found in history data");
       }
-      
+
       final jobData = data[jobId] as Map<String, dynamic>;
       if (!jobData.containsKey("outputs") || jobData["outputs"] == null) {
         throw Exception("OutputMissing: No outputs found for job $jobId");
@@ -308,13 +328,14 @@ class ComfyUIDriver {
       debugPrint("ComfyUIDriver: Checking outputs... ${outputs.keys}");
       for (final node in outputs.values) {
         if (node is! Map) continue;
-        
+
         debugPrint("ComfyUIDriver: Node keys: ${node.keys}");
-        
+
         final images = node["images"] as List?;
         final gifs = node["gifs"] as List?;
-        
-        if ((images != null && images.isNotEmpty) || (gifs != null && gifs.isNotEmpty)) {
+
+        if ((images != null && images.isNotEmpty) ||
+            (gifs != null && gifs.isNotEmpty)) {
           final isVideo = gifs != null && gifs.isNotEmpty;
           final filename = isVideo
               ? gifs[0]["filename"]
@@ -346,15 +367,22 @@ class ComfyUIDriver {
 
             // --- OUTPUT VERIFICATION ---
             if (!await file.exists()) {
-              throw Exception("Output Verification Failed: File does not exist on disk.");
+              throw Exception(
+                "Output Verification Failed: File does not exist on disk.",
+              );
             }
             final length = await file.length();
             if (length == 0) {
               throw Exception("Output Verification Failed: File is 0 bytes.");
             }
             final ext = p.extension(localPath).toLowerCase();
-            if (ext != '.png' && ext != '.mp4' && ext != '.webp' && ext != '.gif') {
-              throw Exception("Output Verification Failed: Invalid extension '$ext'.");
+            if (ext != '.png' &&
+                ext != '.mp4' &&
+                ext != '.webp' &&
+                ext != '.gif') {
+              throw Exception(
+                "Output Verification Failed: Invalid extension '$ext'.",
+              );
             }
             // ---------------------------
 
@@ -366,8 +394,10 @@ class ComfyUIDriver {
           }
         }
       }
-      
-      throw Exception("UnsupportedOutput: No image or video files found in the outputs");
+
+      throw Exception(
+        "UnsupportedOutput: No image or video files found in the outputs",
+      );
     } catch (e) {
       debugPrint("ComfyUIDriver Error in downloadAsset: $e");
       rethrow;

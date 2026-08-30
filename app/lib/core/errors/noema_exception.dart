@@ -33,7 +33,11 @@ class NoemaException implements Exception {
   }
 
   /// Helper factory to automatically set isRetryable based on error type
-  factory NoemaException.fromType(NoemaErrorType type, String message, {dynamic originalError}) {
+  factory NoemaException.fromType(
+    NoemaErrorType type,
+    String message, {
+    dynamic originalError,
+  }) {
     bool retryable = false;
     switch (type) {
       case NoemaErrorType.providerUnavailable:

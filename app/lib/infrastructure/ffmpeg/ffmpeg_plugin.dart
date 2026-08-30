@@ -11,6 +11,8 @@ class FFmpegPlugin implements IPlugin {
 
   @override
   void register(PluginContext context) {
-    context.providers.register(FFmpegVideoCompilerProvider(context.appSettings));
+    context.providers.register(
+      FFmpegVideoCompilerProvider(context.appSettings),
+    );
   }
 }
