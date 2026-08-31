@@ -14,6 +14,20 @@ class UnauthorizedException implements Exception {
   String toString() => 'Unauthorized action: $toolId';
 }
 
+class RecoverableToolException implements Exception {
+  final String message;
+  RecoverableToolException(this.message);
+  @override
+  String toString() => 'RecoverableToolException: $message';
+}
+
+class FatalToolException implements Exception {
+  final String message;
+  FatalToolException(this.message);
+  @override
+  String toString() => 'FatalToolException: $message';
+}
+
 abstract class AgentToolbox {
   Future<dynamic> executeAction(AgentSession session, AgentAction action);
   List<AgentToolSchema> getAvailableTools();

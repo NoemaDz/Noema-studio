@@ -92,10 +92,18 @@ abstract class Agent {
           session.observationHistory.add('Tool ${action.toolId} was denied by user. Replanning...');
           return false; // Break the current plan, force a replan
         }
+      } on RecoverableToolException catch (e) {
+        session.state = AgentSessionState.replanning;
+        session.observationHistory.add('Tool ${action.toolId} failed (recoverable): ${e.message}. Replanning...');
+        return false;
+      } on FatalToolException catch (e) {
+        session.state = AgentSessionState.failed;
+        session.observationHistory.add('Tool ${action.toolId} failed fatally: ${e.message}.');
+        return false;
       } catch (e) {
         session.state = AgentSessionState.failed;
-        session.observationHistory.add('Tool ${action.toolId} failed: $e');
-        return false; // Break current plan on other errors to allow replan
+        session.observationHistory.add('Tool ${action.toolId} failed with unexpected error: $e');
+        return false; // Break current plan on other errors
       }
 
       session.executedActions.add(action);

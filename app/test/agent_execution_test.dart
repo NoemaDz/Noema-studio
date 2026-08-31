@@ -29,6 +29,12 @@ class MockToolbox implements AgentToolbox {
     if (!policy.isAuthorized(action.toolId, action.riskLevel)) {
       throw UnauthorizedException(action.toolId);
     }
+    if (action.toolId == 'recoverable') {
+      throw RecoverableToolException('API timeout');
+    }
+    if (action.toolId == 'fatal') {
+      throw FatalToolException('Disk full');
+    }
     return {'status': 'ok'};
   }
 
@@ -151,6 +157,46 @@ void main() {
       expect(session.deniedTools.length, 1);
       expect(session.deniedTools.first['toolId'], 'write');
       expect(session.state, AgentSessionState.replanning);
+    });
+
+    test('recoverable failure -> replan', () async {
+      agent.willApprove = PermissionOutcome.allow;
+      final plan = AgentPlan(
+        goal: session.currentGoal,
+        steps: [
+          AgentStep(
+            id: '1',
+            description: 'Recoverable',
+            action: MockAction('recoverable', ToolRiskLevel.safe),
+          ),
+        ],
+      );
+
+      final completed = await agent.executePlan(session, plan);
+
+      expect(completed, false);
+      expect(session.state, AgentSessionState.replanning);
+      expect(session.observationHistory.last, contains('failed (recoverable): API timeout'));
+    });
+
+    test('fatal failure -> failed', () async {
+      agent.willApprove = PermissionOutcome.allow;
+      final plan = AgentPlan(
+        goal: session.currentGoal,
+        steps: [
+          AgentStep(
+            id: '1',
+            description: 'Fatal',
+            action: MockAction('fatal', ToolRiskLevel.safe),
+          ),
+        ],
+      );
+
+      final completed = await agent.executePlan(session, plan);
+
+      expect(completed, false);
+      expect(session.state, AgentSessionState.failed);
+      expect(session.observationHistory.last, contains('failed fatally: Disk full'));
     });
   });
 }
