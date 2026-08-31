@@ -48,6 +48,7 @@ class NoemaProject {
   final List<GeneratedImage> images = [];
   final List<GeneratedVideo> videos = [];
   final List<GeneratedAudio> audios = [];
+  final List<Artifact> artifacts = [];
   String? finalVideoPath;
 
   // ── Execution State ───────────────────────────────────────────────────────

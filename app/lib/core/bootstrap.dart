@@ -122,6 +122,9 @@ class Bootstrap {
       saveProject: projectPersistenceService.saveProject,
     );
 
-    documentIngestionService = DocumentIngestionService(providerRegistry);
+    documentIngestionService = DocumentIngestionService(
+      providerRegistry,
+      jobManager,
+    );
   }
 }

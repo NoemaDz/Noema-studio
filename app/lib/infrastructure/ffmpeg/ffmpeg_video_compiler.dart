@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:convert';
 import '../../core/providers/video_compiler_provider.dart';
 import '../../core/capabilities/capability.dart';
@@ -40,6 +41,8 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
   final Map<String, Process> _runningProcesses = {};
   final Set<String> _cancelledJobs = {};
+  final Map<String, Completer<ExecutionResult>> _resultCompleters = {};
+  final Map<String, double> _progress = {};
 
   @visibleForTesting
   List<String> get activeJobIds => _runningProcesses.keys.toList();
@@ -126,8 +129,25 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
     }
 
     job.transitionTo(JobStatus.running);
+    _resultCompleters[jobId] = Completer<ExecutionResult>();
+    _progress[jobId] = 0.0;
     _runCompileAsync(job, resources, outputPath, options);
     return job;
+  }
+
+  @override
+  Future<JobStatusUpdate> updateJobStatus(Job job) async {
+    if (_results.containsKey(job.id)) {
+      // The application layer completes the job after artifact creation.
+      return JobStatusUpdate(status: JobStatus.running, progress: 1.0);
+    }
+    if (_cancelledJobs.contains(job.id)) {
+      return JobStatusUpdate(status: JobStatus.running);
+    }
+    return JobStatusUpdate(
+      status: JobStatus.running,
+      progress: _progress[job.id] ?? 0.0,
+    );
   }
 
   Future<void> _runCompileAsync(
@@ -322,24 +342,24 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
       await _runFfmpeg(jobId, ffmpegPath, concatArgs);
 
-      _results[jobId] = ExecutionResult.success(textOutput: permanentPath);
+      final execResult = ExecutionResult.success(textOutput: permanentPath);
+      _results[jobId] = execResult;
       job.metadata["outputPath"] = permanentPath;
-      job.result = permanentPath;
-      job.progress = 1.0;
-      job.transitionTo(JobStatus.completed);
+      _progress[jobId] = 1.0;
+      _resultCompleters[jobId]?.complete(execResult);
     } catch (e) {
       if (_cancelledJobs.contains(jobId)) {
-        _results[jobId] = ExecutionResult.failure(
+        final execResult = ExecutionResult.failure(
           JobError(code: 'cancelled', message: 'Job cancelled by user'),
         );
-        job.result = "Job cancelled by user";
-        job.transitionTo(JobStatus.cancelled);
+        _results[jobId] = execResult;
+        _resultCompleters[jobId]?.complete(execResult);
       } else {
-        _results[jobId] = ExecutionResult.failure(
+        final execResult = ExecutionResult.failure(
           JobError(code: 'compile_failed', message: e.toString()),
         );
-        job.result = "Exception: $e";
-        job.transitionTo(JobStatus.failed);
+        _results[jobId] = execResult;
+        _resultCompleters[jobId]?.complete(execResult);
       }
     } finally {
       _cancelledJobs.remove(jobId);
@@ -353,9 +373,11 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
   @override
   Future<ExecutionResult> getResult(String jobId) async {
-    final result = _results[jobId];
-    if (result != null) {
-      return result;
+    if (_results.containsKey(jobId)) {
+      return _results[jobId]!;
+    }
+    if (_resultCompleters.containsKey(jobId)) {
+      return await _resultCompleters[jobId]!.future;
     }
     return ExecutionResult.failure(
       JobError(code: 'not_found', message: 'Job not found'),

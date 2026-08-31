@@ -1,12 +1,16 @@
-import 'provider.dart';
+import 'async_provider.dart';
+import 'dart:async';
 import '../../models/job.dart' as noema_job;
 import '../contracts/execution_request.dart' as noema_contracts;
 import '../contracts/execution_result.dart' as noema_contracts;
 
 import 'package:uuid/uuid.dart';
 
-abstract class DocumentIngestionProvider extends Provider {
+abstract class DocumentIngestionProvider extends AsyncProvider {
   final Map<String, noema_contracts.ExecutionResult> _results = {};
+  final Map<String, noema_job.JobStatusUpdate> _updates = {};
+  final Map<String, Completer<noema_contracts.ExecutionResult>>
+  _resultCompleters = {};
 
   /// The file extensions this provider can handle (e.g., ['pdf'], ['txt'])
   List<String> get supportedExtensions;
@@ -31,22 +35,37 @@ abstract class DocumentIngestionProvider extends Provider {
       status: noema_job.JobStatus.running,
     );
 
+    _resultCompleters[jobId] = Completer<noema_contracts.ExecutionResult>();
+    _updates[jobId] = noema_job.JobStatusUpdate(
+      status: noema_job.JobStatus.running,
+    );
+
     // Run ingestion asynchronously
     Future.microtask(() async {
       try {
         final text = await readText(filePath);
-        _results[jobId] = noema_contracts.ExecutionResult.success(
+        final execResult = noema_contracts.ExecutionResult.success(
           textOutput: text,
         );
-        job.result = "Ingestion complete";
-        job.progress = 1.0;
-        job.transitionTo(noema_job.JobStatus.completed);
-      } catch (e) {
-        _results[jobId] = noema_contracts.ExecutionResult.failure(
-          noema_job.JobError(code: 'ingestion_failed', message: e.toString()),
+        _results[jobId] = execResult;
+        _updates[jobId] = noema_job.JobStatusUpdate(
+          status: noema_job.JobStatus.completed,
+          progress: 1.0,
+          result: "Ingestion complete",
         );
-        job.result = "Ingestion failed: $e";
-        job.transitionTo(noema_job.JobStatus.failed);
+        _resultCompleters[jobId]?.complete(execResult);
+      } catch (e) {
+        final error = noema_job.JobError(
+          code: 'ingestion_failed',
+          message: e.toString(),
+        );
+        final execResult = noema_contracts.ExecutionResult.failure(error);
+        _results[jobId] = execResult;
+        _updates[jobId] = noema_job.JobStatusUpdate(
+          status: noema_job.JobStatus.failed,
+          error: error,
+        );
+        _resultCompleters[jobId]?.complete(execResult);
       }
     });
 
@@ -54,10 +73,24 @@ abstract class DocumentIngestionProvider extends Provider {
   }
 
   @override
+  Future<noema_job.JobStatusUpdate> updateJobStatus(noema_job.Job job) async {
+    return _updates[job.id] ??
+        noema_job.JobStatusUpdate(
+          status: noema_job.JobStatus.failed,
+          error: noema_job.JobError(
+            code: 'not_found',
+            message: 'Job not found',
+          ),
+        );
+  }
+
+  @override
   Future<noema_contracts.ExecutionResult> getResult(String jobId) async {
-    final result = _results[jobId];
-    if (result != null) {
-      return result;
+    if (_results.containsKey(jobId)) {
+      return _results[jobId]!;
+    }
+    if (_resultCompleters.containsKey(jobId)) {
+      return await _resultCompleters[jobId]!.future;
     }
     return noema_contracts.ExecutionResult.failure(
       noema_job.JobError(

@@ -1,4 +1,4 @@
-import 'provider.dart';
+import 'async_provider.dart';
 
 class AudioVideoResource {
   final String imagePath;
@@ -14,4 +14,4 @@ class AudioVideoResource {
   });
 }
 
-abstract class VideoCompilerProvider extends Provider {}
+abstract class VideoCompilerProvider extends AsyncProvider {}

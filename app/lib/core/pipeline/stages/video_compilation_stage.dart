@@ -7,8 +7,9 @@ import '../../providers/video_compiler_provider.dart';
 import '../../job_manager.dart';
 import '../../../workflows/video/video_workflow.dart';
 import '../../../models/job.dart';
-import '../../cancellation_token.dart';
-import 'package:flutter/foundation.dart';
+import '../../contracts/execution_result.dart';
+import '../../../models/artifact.dart';
+import '../../../models/artifact_type.dart';
 import 'package:path/path.dart' as p;
 
 class VideoCompilationStage extends PipelineStage {
@@ -96,29 +97,43 @@ class VideoCompilationStage extends PipelineStage {
     jobManager.add(job);
     project.jobIds.add(job.id);
 
+    ExecutionResult? execResult;
     try {
-      await jobManager.waitForCompletion(job.id, token: cancellationToken);
-    } on CancelledException {
-      debugPrint(
-        'VideoCompilationStage: Cancellation requested, killing job ${job.id} on provider.',
-      );
-      await provider.cancelJob(job.id);
-      rethrow;
+      // Instead of JobManager.waitForCompletion, we wait for the provider's result.
+      // If cancellation is requested, JobMonitor calls provider.cancelJob(),
+      // which will cause getResult to unblock with a cancellation error.
+      execResult = await provider.getResult(job.id);
+    } catch (e) {
+      final error = JobError(code: 'compile_exception', message: e.toString());
+      jobManager.fail(job.id, error);
+      throw Exception("Video compilation exception: $e");
     }
 
-    if (job.status == JobStatus.failed) {
-      throw Exception(
-        "Video compilation failed: ${job.error?.message ?? 'Unknown error'}",
-      );
-    }
-
-    final execResult = await provider.getResult(job.id);
     if (!execResult.isSuccess || execResult.textOutput == null) {
-      throw Exception(
-        "Failed to retrieve compiled video path: ${execResult.error?.message}",
-      );
+      final error =
+          execResult.error ??
+          JobError(code: 'compile_failed', message: 'No output generated');
+      jobManager.fail(job.id, error);
+      throw Exception("Video compilation failed: ${error.message}");
     }
 
-    project.finalVideoPath = execResult.textOutput;
+    // validate output
+    final outputPathResult = execResult.textOutput!;
+    // Create/register Artifact
+    final artifact = Artifact(
+      id: job.id,
+      path: outputPathResult,
+      type: ArtifactType.video,
+    );
+
+    // persist/store Artifact
+    project.artifacts.add(artifact);
+    project.finalVideoPath = artifact.path;
+
+    // ONLY THEN mark the operation completed
+    jobManager.complete(
+      job.id,
+      "Video compiled successfully to ${artifact.path}",
+    );
   }
 }
