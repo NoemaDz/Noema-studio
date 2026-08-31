@@ -1,6 +1,14 @@
 import '../core/noema.dart';
+import '../core/noema_project.dart';
 import 'models/agent_action.dart';
 import 'permissions/permission_policy.dart';
+
+class UnauthorizedException implements Exception {
+  final String toolId;
+  UnauthorizedException(this.toolId);
+  @override
+  String toString() => 'Unauthorized action: $toolId';
+}
 
 abstract class AgentToolbox {
   Future<dynamic> executeAction(AgentAction action);
@@ -14,19 +22,43 @@ class NoemaAgentToolbox implements AgentToolbox {
 
   @override
   Future<dynamic> executeAction(AgentAction action) async {
+    // Single Source of Truth for permission enforcement
     if (!permissionPolicy.isAuthorized(action.toolId, action.riskLevel)) {
-      throw Exception('Unauthorized action: ${action.toolId}');
+      throw UnauthorizedException(action.toolId);
     }
 
-    // A real implementation would map toolIds to specific Noema calls
+    // Map toolIds to specific Noema calls
     switch (action.toolId) {
-      case 'create_scene':
-        // Example: interact with projectGenerationService or similar
-        return {'status': 'success', 'sceneId': 'scene_123'};
+      case 'generate_story':
+        final idea = action.arguments['idea'] as String;
+        final result = await noema.generateStory(idea);
+        return {'status': 'success', 'story': result};
+
+      case 'generate_planning':
+        final project = action.arguments['project'] as NoemaProject;
+        final result = await noema.generatePlanning(project);
+        return {'status': 'success', 'projectId': result.id};
+
+      case 'extract_characters':
+        final project = action.arguments['project'] as NoemaProject;
+        await noema.extractCharacters(project);
+        return {'status': 'success'};
+
+      case 'generate_production':
+        final project = action.arguments['project'] as NoemaProject;
+        final result = await noema.generateProduction(project);
+        return {'status': 'success', 'projectId': result.id};
+
       case 'generate_image':
         final prompt = action.arguments['prompt'] as String;
         final job = await noema.generateImage(prompt);
         return {'status': 'success', 'jobId': job.id};
+
+      case 'save_project':
+        final project = action.arguments['project'] as NoemaProject;
+        await noema.saveProject(project);
+        return {'status': 'success'};
+
       default:
         throw UnimplementedError(
           'Tool ${action.toolId} is not implemented yet.',

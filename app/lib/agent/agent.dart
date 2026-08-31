@@ -15,13 +15,19 @@ abstract class Agent {
   Future<void> executePlan(AgentSession session, AgentPlan plan) async {
     for (final step in plan.steps) {
       final action = step.action;
-      if (!permissionPolicy.isAuthorized(action.toolId, action.riskLevel)) {
+      dynamic result;
+
+      try {
+        result = await toolbox.executeAction(action);
+      } on UnauthorizedException {
         final granted = await requestPermission(action);
         if (!granted) {
           throw Exception('Permission denied for action: ${action.toolId}');
         }
+        // Retry after permission is granted
+        result = await toolbox.executeAction(action);
       }
-      final result = await toolbox.executeAction(action);
+
       session.executedActions.add(action);
       session.results[step.id] = result;
 

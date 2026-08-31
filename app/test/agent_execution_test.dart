@@ -18,8 +18,15 @@ class MockAction extends AgentAction {
 }
 
 class MockToolbox implements AgentToolbox {
+  final PermissionPolicy policy;
+
+  MockToolbox(this.policy);
+
   @override
   Future executeAction(AgentAction action) async {
+    if (!policy.isAuthorized(action.toolId, action.riskLevel)) {
+      throw UnauthorizedException(action.toolId);
+    }
     return {'status': 'ok'};
   }
 }
@@ -74,7 +81,7 @@ void main() {
 
     setUp(() {
       policy = PermissionPolicy();
-      toolbox = MockToolbox();
+      toolbox = MockToolbox(policy);
       agent = TestAgent(toolbox: toolbox, permissionPolicy: policy);
 
       final mockStory = Story(title: 'test', scenes: []);

@@ -43,19 +43,20 @@ class PermissionPolicy {
   bool isAuthorized(String toolId, ToolRiskLevel riskLevel) {
     clearExpired();
 
+    final permission = _grantedPermissions
+        .where((p) => p.toolId == toolId || p.toolId == '*')
+        .lastOrNull;
+
+    // alwaysAsk overrides everything, even safe tools
+    if (permission?.scope == PermissionScope.alwaysAsk) {
+      return false;
+    }
+
     if (riskLevel == ToolRiskLevel.safe) {
       return true;
     }
 
-    final permission = _grantedPermissions
-        .where((p) => p.toolId == toolId)
-        .lastOrNull;
-
     if (permission == null) {
-      return false;
-    }
-
-    if (permission.scope == PermissionScope.alwaysAsk) {
       return false;
     }
 
