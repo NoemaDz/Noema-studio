@@ -104,7 +104,7 @@ class NoemaAgentToolbox implements AgentToolbox {
         return ToolResult(
           toolId: action.toolId,
           status: ToolResultStatus.success,
-          artifacts: [ToolArtifact(artifactId: job.id, type: 'image_job')],
+          jobs: [JobReference(jobId: job.id, type: 'image_job')],
         );
 
       case 'save_project':
