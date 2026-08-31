@@ -72,9 +72,7 @@ void main() {
       await agent.run(session);
       
       expect(agent.formulationCalls, 1);
-      expect(session.executedActions.length, 0); // executeAction returns before adding to executedActions for task_complete?
-      // Wait, in my executePlan: if (action.toolId == 'task_complete') return true;
-      // It returns true BEFORE adding to executedActions and results.
+      expect(session.state, AgentSessionState.completed);
     });
 
     test('respects maxIterations', () async {
@@ -98,6 +96,7 @@ void main() {
       
       expect(agent.formulationCalls, 3);
       expect(session.executedActions.length, 3);
+      expect(session.state, AgentSessionState.iterationLimitReached);
       expect(session.observationHistory.any((o) => o.contains('Iteration 3')), isTrue);
     });
 
@@ -109,7 +108,8 @@ void main() {
       await agent.run(session);
       
       expect(agent.formulationCalls, 1);
-      expect(session.observationHistory.last, contains('Plan formulated with 0 steps'));
+      expect(session.state, AgentSessionState.failed);
+      expect(session.observationHistory.last, contains('Plan formulated with 0 steps. Assuming stuck.'));
     });
   });
 }

@@ -123,6 +123,7 @@ void main() {
           session.executedActions.length,
           1,
         ); // Only the 'safe' read action executed
+        expect(session.state, AgentSessionState.stopped);
       },
     );
 
@@ -149,6 +150,7 @@ void main() {
       expect(session.executedActions.length, 1);
       expect(session.deniedTools.length, 1);
       expect(session.deniedTools.first['toolId'], 'write');
+      expect(session.state, AgentSessionState.replanning);
     });
   });
 }

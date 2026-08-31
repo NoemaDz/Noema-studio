@@ -21,25 +21,40 @@ abstract class Agent {
   Future<AgentPlan> formulatePlan(AgentSession session);
 
   Future<void> run(AgentSession session, {int maxIterations = 5}) async {
+    session.state = AgentSessionState.running;
+    
     for (int i = 0; i < maxIterations; i++) {
+      if (session.state == AgentSessionState.stopped || session.state == AgentSessionState.completed) {
+        break;
+      }
+      if (session.state == AgentSessionState.failed) {
+        break;
+      }
+      
+      session.state = AgentSessionState.running;
       session.observationHistory.add('Iteration ${i + 1} started.');
       
       final plan = await formulatePlan(session);
       session.currentPlan = plan;
       
       if (plan.steps.isEmpty) {
-        session.observationHistory.add('Plan formulated with 0 steps. Assuming goal complete.');
+        session.observationHistory.add('Plan formulated with 0 steps. Assuming stuck.');
+        session.state = AgentSessionState.failed;
         break;
       }
 
       final completed = await executePlan(session, plan);
       if (completed) {
+        session.state = AgentSessionState.completed;
         session.observationHistory.add('Task marked as complete by Agent.');
+        permissionPolicy.onTaskComplete();
         break;
       }
     }
     
-    permissionPolicy.onTaskComplete();
+    if (session.state == AgentSessionState.running || session.state == AgentSessionState.replanning) {
+      session.state = AgentSessionState.iterationLimitReached;
+    }
   }
 
   /// Returns true if task_complete was called and the loop should terminate.
@@ -55,17 +70,21 @@ abstract class Agent {
           return true; // Goal achieved
         }
         
-        session.observationHistory.add('Tool ${action.toolId} succeeded.');
+        session.observationHistory.add('Tool ${action.toolId} result: $result');
       } on UnauthorizedException {
+        session.state = AgentSessionState.waitingForPermission;
         final outcome = await requestPermission(action);
         
         if (outcome == PermissionOutcome.allow) {
           // Granted, try again immediately
+          session.state = AgentSessionState.running;
           result = await toolbox.executeAction(session, action);
-          session.observationHistory.add('Tool ${action.toolId} succeeded after permission granted.');
+          session.observationHistory.add('Tool ${action.toolId} result: $result');
         } else if (outcome == PermissionOutcome.stopTask) {
+          session.state = AgentSessionState.stopped;
           throw TaskStoppedException('User explicitly stopped the task during ${action.toolId}.');
         } else if (outcome == PermissionOutcome.denyAndReplan) {
+          session.state = AgentSessionState.replanning;
           session.deniedTools.add({
             'toolId': action.toolId,
             'reason': 'user_denied'
@@ -74,6 +93,7 @@ abstract class Agent {
           return false; // Break the current plan, force a replan
         }
       } catch (e) {
+        session.state = AgentSessionState.failed;
         session.observationHistory.add('Tool ${action.toolId} failed: $e');
         return false; // Break current plan on other errors to allow replan
       }
