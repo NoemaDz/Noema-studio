@@ -18,7 +18,7 @@ class AgentPlanner {
 
     final responseText = await llmClient.generateText(prompt);
 
-    return _parseAndValidateResponse(responseText, session.currentGoal);
+    return _parseAndValidateResponse(responseText, session);
   }
 
   String _buildPrompt(AgentSession session) {
@@ -26,6 +26,8 @@ class AgentPlanner {
     final toolsJson = jsonEncode(tools.map((t) => t.toJson()).toList());
     final projectContext = ProjectContext.fromProject(session.currentProject);
     final contextJson = jsonEncode(projectContext.toJson());
+    final deniedToolsJson = jsonEncode(session.deniedTools);
+    final historyJson = jsonEncode(session.observationHistory);
 
     return '''
 You are an intelligent agent planner. Your task is to break down the user's goal into a structured plan using only the available tools.
@@ -34,6 +36,12 @@ Goal: ${session.currentGoal}
 
 Project Context:
 $contextJson
+
+Denied Tools:
+$deniedToolsJson
+
+Recent History:
+$historyJson
 
 Available Tools:
 $toolsJson
@@ -52,7 +60,8 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
 ''';
   }
 
-  AgentPlan _parseAndValidateResponse(String responseText, String goal) {
+  AgentPlan _parseAndValidateResponse(String responseText, AgentSession session) {
+    final goal = session.currentGoal;
     // 1. Strip potential markdown code blocks
     String jsonString = responseText.trim();
     if (jsonString.startsWith('```json')) {
@@ -109,6 +118,10 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
 
       if (toolId == null || toolId is! String) {
         throw const FormatException('Missing or invalid "toolId" in action');
+      }
+
+      if (session.deniedTools.any((d) => d['toolId'] == toolId)) {
+        throw FormatException('Tool is denied: $toolId');
       }
 
       final tools = toolbox.getAvailableTools();

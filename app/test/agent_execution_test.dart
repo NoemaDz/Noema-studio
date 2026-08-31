@@ -12,6 +12,7 @@ import 'package:noema_studio/agent/permissions/permission_scope.dart';
 import 'package:noema_studio/agent/permissions/tool_risk_level.dart';
 import 'package:noema_studio/agent/permissions/agent_permission.dart';
 import 'package:noema_studio/agent/models/agent_tool_schema.dart';
+import 'package:noema_studio/agent/models/permission_outcome.dart';
 
 class MockAction extends AgentAction {
   MockAction(String toolId, ToolRiskLevel riskLevel)
@@ -38,7 +39,7 @@ class MockToolbox implements AgentToolbox {
 }
 
 class TestAgent extends Agent {
-  bool willApprove = false;
+  PermissionOutcome willApprove = PermissionOutcome.allow;
   int approvalRequests = 0;
 
   TestAgent({required super.toolbox, required super.permissionPolicy});
@@ -63,9 +64,9 @@ class TestAgent extends Agent {
   }
 
   @override
-  Future<bool> requestPermission(AgentAction action) async {
+  Future<PermissionOutcome> requestPermission(AgentAction action) async {
     approvalRequests++;
-    if (willApprove) {
+    if (willApprove == PermissionOutcome.allow) {
       permissionPolicy.grant(
         AgentPermission(
           toolId: action.toolId,
@@ -102,9 +103,9 @@ void main() {
     });
 
     test(
-      'deny -> blocked: fails execution and throws if permission denied',
+      'deny -> stopTask: fails execution and throws TaskStoppedException',
       () async {
-        agent.willApprove = false;
+        agent.willApprove = PermissionOutcome.stopTask;
         final plan = await agent.formulatePlan(session);
 
         await expectLater(
@@ -113,7 +114,7 @@ void main() {
             isA<Exception>().having(
               (e) => e.toString(),
               'message',
-              contains('Permission denied'),
+              contains('User explicitly stopped the task'),
             ),
           ),
         );
@@ -128,7 +129,7 @@ void main() {
     test(
       'grant -> retry: catches UnauthorizedException, prompts user, and retries successfully',
       () async {
-        agent.willApprove = true;
+        agent.willApprove = PermissionOutcome.allow;
         final plan = await agent.formulatePlan(session);
 
         await agent.executePlan(session, plan);
@@ -138,5 +139,16 @@ void main() {
         expect(session.executedActions.length, 2);
       },
     );
+    test('denyAndReplan: aborts plan and adds to deniedTools', () async {
+      agent.willApprove = PermissionOutcome.denyAndReplan;
+      final plan = await agent.formulatePlan(session);
+
+      await agent.executePlan(session, plan);
+
+      expect(agent.approvalRequests, 1);
+      expect(session.executedActions.length, 1);
+      expect(session.deniedTools.length, 1);
+      expect(session.deniedTools.first['toolId'], 'write');
+    });
   });
 }

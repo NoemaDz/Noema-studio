@@ -8,6 +8,9 @@ class AgentSession {
   AgentPlan? currentPlan;
   final List<AgentAction> executedActions = [];
   final Map<String, dynamic> results = {};
+  
+  final List<Map<String, String>> deniedTools = [];
+  final List<String> observationHistory = [];
 
   AgentSession({
     required this.currentProject,

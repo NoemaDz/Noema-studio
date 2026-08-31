@@ -4,11 +4,13 @@ import 'models/agent_plan.dart';
 import 'models/agent_session.dart';
 import 'models/agent_action.dart';
 
+import 'models/permission_outcome.dart';
+
 class LlmAgent extends Agent {
   final AgentPlanner planner;
 
   // Provide a callback or mechanism for requesting permissions from the UI
-  final Future<bool> Function(AgentAction action) onPermissionRequested;
+  final Future<PermissionOutcome> Function(AgentAction action) onPermissionRequested;
 
   LlmAgent({
     required super.toolbox,
@@ -24,7 +26,7 @@ class LlmAgent extends Agent {
   }
 
   @override
-  Future<bool> requestPermission(AgentAction action) {
+  Future<PermissionOutcome> requestPermission(AgentAction action) {
     return onPermissionRequested(action);
   }
 }

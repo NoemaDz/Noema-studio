@@ -8,6 +8,7 @@ import 'package:noema_studio/agent/permissions/permission_scope.dart';
 import 'package:noema_studio/agent/permissions/agent_permission.dart';
 import 'package:noema_studio/agent/models/agent_session.dart';
 import 'package:noema_studio/core/noema_project.dart';
+import 'package:noema_studio/agent/models/permission_outcome.dart';
 import 'package:noema_studio/models/story.dart';
 import 'package:noema_studio/infrastructure/ollama/ollama_llm_client.dart';
 import 'agent_planner_test.dart' show TestToolbox;
@@ -84,7 +85,7 @@ void main() {
                 grantedAt: DateTime.now(),
               ),
             );
-            return true;
+            return PermissionOutcome.allow;
           },
         );
 

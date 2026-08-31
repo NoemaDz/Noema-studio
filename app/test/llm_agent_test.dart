@@ -9,6 +9,7 @@ import 'package:noema_studio/models/story.dart';
 import 'agent_planner_test.dart' show TestToolbox;
 import 'package:noema_studio/agent/permissions/agent_permission.dart';
 import 'package:noema_studio/agent/permissions/permission_scope.dart';
+import 'package:noema_studio/agent/models/permission_outcome.dart';
 
 void main() {
   group('LlmAgent E2E execution', () {
@@ -16,7 +17,7 @@ void main() {
     late PermissionPolicy policy;
     late TestToolbox toolbox;
     int permissionRequests = 0;
-    bool nextPermissionResponse = true;
+    PermissionOutcome nextPermissionResponse = PermissionOutcome.allow;
 
     setUp(() {
       policy = PermissionPolicy();
@@ -30,7 +31,7 @@ void main() {
         currentGoal: 'write a story',
       );
       permissionRequests = 0;
-      nextPermissionResponse = true;
+      nextPermissionResponse = PermissionOutcome.allow;
     });
 
     test('formulates and executes a plan from LLM', () async {
@@ -58,7 +59,7 @@ void main() {
         planner: planner,
         onPermissionRequested: (action) async {
           permissionRequests++;
-          if (nextPermissionResponse) {
+          if (nextPermissionResponse == PermissionOutcome.allow) {
             policy.grant(
               AgentPermission(
                 toolId: action.toolId,

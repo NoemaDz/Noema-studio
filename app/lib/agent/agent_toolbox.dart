@@ -78,6 +78,9 @@ class NoemaAgentToolbox implements AgentToolbox {
         await noema.saveProject(project);
         return {'status': 'success'};
 
+      case 'task_complete':
+        return {'status': 'success', 'message': action.arguments['message']};
+
       default:
         throw UnimplementedError(
           'Tool ${action.toolId} is not implemented yet.',
@@ -122,6 +125,14 @@ class NoemaAgentToolbox implements AgentToolbox {
         id: 'save_project',
         description: 'Saves the project state to disk.',
         parameters: {'projectId': 'string'},
+        requiredParameters: ['projectId'],
+        riskLevel: ToolRiskLevel.safe,
+      ),
+      AgentToolSchema(
+        id: 'task_complete',
+        description: 'Marks the current goal as fully achieved and successfully stops the agent loop.',
+        parameters: {'message': 'string'},
+        requiredParameters: ['message'],
         riskLevel: ToolRiskLevel.safe,
       ),
     ];
