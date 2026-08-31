@@ -1,6 +1,7 @@
 import '../../core/noema_project.dart';
 import 'agent_plan.dart';
 import 'agent_action.dart';
+import 'agent_observation.dart';
 
 enum AgentSessionState {
   initial,
@@ -21,7 +22,7 @@ class AgentSession {
   final Map<String, dynamic> results = {};
   
   final List<Map<String, String>> deniedTools = [];
-  final List<String> observationHistory = [];
+  final List<AgentObservation> observations = [];
   
   AgentSessionState state = AgentSessionState.initial;
 

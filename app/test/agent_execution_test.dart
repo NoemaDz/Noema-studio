@@ -13,6 +13,7 @@ import 'package:noema_studio/agent/permissions/tool_risk_level.dart';
 import 'package:noema_studio/agent/permissions/agent_permission.dart';
 import 'package:noema_studio/agent/models/agent_tool_schema.dart';
 import 'package:noema_studio/agent/models/permission_outcome.dart';
+import 'package:noema_studio/agent/models/tool_result.dart';
 
 class MockAction extends AgentAction {
   MockAction(String toolId, ToolRiskLevel riskLevel)
@@ -25,7 +26,7 @@ class MockToolbox implements AgentToolbox {
   MockToolbox(this.policy);
 
   @override
-  Future executeAction(AgentSession session, AgentAction action) async {
+  Future<ToolResult> executeAction(AgentSession session, AgentAction action) async {
     if (!policy.isAuthorized(action.toolId, action.riskLevel)) {
       throw UnauthorizedException(action.toolId);
     }
@@ -35,7 +36,7 @@ class MockToolbox implements AgentToolbox {
     if (action.toolId == 'fatal') {
       throw FatalToolException('Disk full');
     }
-    return {'status': 'ok'};
+    return ToolResult(toolId: action.toolId, status: ToolResultStatus.success);
   }
 
   @override
@@ -176,7 +177,8 @@ void main() {
 
       expect(completed, false);
       expect(session.state, AgentSessionState.replanning);
-      expect(session.observationHistory.last, contains('failed (recoverable): API timeout'));
+      expect(session.observations.last.result.error, contains('API timeout'));
+      expect(session.observations.last.result.status, ToolResultStatus.recoverableFailure);
     });
 
     test('fatal failure -> failed', () async {
@@ -196,7 +198,8 @@ void main() {
 
       expect(completed, false);
       expect(session.state, AgentSessionState.failed);
-      expect(session.observationHistory.last, contains('failed fatally: Disk full'));
+      expect(session.observations.last.result.error, contains('Disk full'));
+      expect(session.observations.last.result.status, ToolResultStatus.fatalFailure);
     });
   });
 }

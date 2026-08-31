@@ -2,6 +2,8 @@ import 'models/agent_plan.dart';
 import 'models/agent_action.dart';
 import 'models/agent_session.dart';
 import 'models/permission_outcome.dart';
+import 'models/tool_result.dart';
+import 'models/agent_observation.dart';
 import 'agent_toolbox.dart';
 import 'permissions/permission_policy.dart';
 
@@ -32,13 +34,23 @@ abstract class Agent {
       }
       
       session.state = AgentSessionState.running;
-      session.observationHistory.add('Iteration ${i + 1} started.');
+      session.observations.add(AgentObservation(
+        stepId: 'iteration_${i + 1}',
+        toolId: 'system',
+        result: ToolResult(toolId: 'system', status: ToolResultStatus.success, data: {'message': 'Iteration ${i + 1} started.'}),
+        timestamp: DateTime.now(),
+      ));
       
       final plan = await formulatePlan(session);
       session.currentPlan = plan;
       
       if (plan.steps.isEmpty) {
-        session.observationHistory.add('Plan formulated with 0 steps. Assuming stuck.');
+        session.observations.add(AgentObservation(
+          stepId: 'iteration_${i + 1}_empty',
+          toolId: 'system',
+          result: ToolResult(toolId: 'system', status: ToolResultStatus.fatalFailure, error: 'Plan formulated with 0 steps. Assuming stuck.'),
+          timestamp: DateTime.now(),
+        ));
         session.state = AgentSessionState.failed;
         break;
       }
@@ -46,7 +58,12 @@ abstract class Agent {
       final completed = await executePlan(session, plan);
       if (completed) {
         session.state = AgentSessionState.completed;
-        session.observationHistory.add('Task marked as complete by Agent.');
+        session.observations.add(AgentObservation(
+          stepId: 'iteration_${i + 1}_completed',
+          toolId: 'system',
+          result: ToolResult(toolId: 'system', status: ToolResultStatus.success, data: {'message': 'Task marked as complete by Agent.'}),
+          timestamp: DateTime.now(),
+        ));
         permissionPolicy.onTaskComplete();
         break;
       }
@@ -61,7 +78,7 @@ abstract class Agent {
   Future<bool> executePlan(AgentSession session, AgentPlan plan) async {
     for (final step in plan.steps) {
       final action = step.action;
-      dynamic result;
+      ToolResult? result;
 
       try {
         result = await toolbox.executeAction(session, action);
@@ -70,7 +87,12 @@ abstract class Agent {
           return true; // Goal achieved
         }
         
-        session.observationHistory.add('Tool ${action.toolId} result: $result');
+        session.observations.add(AgentObservation(
+          stepId: step.id,
+          toolId: action.toolId,
+          result: result,
+          timestamp: DateTime.now(),
+        ));
       } on UnauthorizedException {
         session.state = AgentSessionState.waitingForPermission;
         final outcome = await requestPermission(action);
@@ -79,7 +101,12 @@ abstract class Agent {
           // Granted, try again immediately
           session.state = AgentSessionState.running;
           result = await toolbox.executeAction(session, action);
-          session.observationHistory.add('Tool ${action.toolId} result: $result');
+          session.observations.add(AgentObservation(
+            stepId: step.id,
+            toolId: action.toolId,
+            result: result,
+            timestamp: DateTime.now(),
+          ));
         } else if (outcome == PermissionOutcome.stopTask) {
           session.state = AgentSessionState.stopped;
           throw TaskStoppedException('User explicitly stopped the task during ${action.toolId}.');
@@ -89,25 +116,54 @@ abstract class Agent {
             'toolId': action.toolId,
             'reason': 'user_denied'
           });
-          session.observationHistory.add('Tool ${action.toolId} was denied by user. Replanning...');
+          // Do not add a normal observation for denial. The deniedTools handles it.
           return false; // Break the current plan, force a replan
         }
       } on RecoverableToolException catch (e) {
         session.state = AgentSessionState.replanning;
-        session.observationHistory.add('Tool ${action.toolId} failed (recoverable): ${e.message}. Replanning...');
+        session.observations.add(AgentObservation(
+          stepId: step.id,
+          toolId: action.toolId,
+          result: ToolResult(
+            toolId: action.toolId,
+            status: ToolResultStatus.recoverableFailure,
+            error: e.message,
+          ),
+          timestamp: DateTime.now(),
+        ));
         return false;
       } on FatalToolException catch (e) {
         session.state = AgentSessionState.failed;
-        session.observationHistory.add('Tool ${action.toolId} failed fatally: ${e.message}.');
+        session.observations.add(AgentObservation(
+          stepId: step.id,
+          toolId: action.toolId,
+          result: ToolResult(
+            toolId: action.toolId,
+            status: ToolResultStatus.fatalFailure,
+            error: e.message,
+          ),
+          timestamp: DateTime.now(),
+        ));
         return false;
       } catch (e) {
         session.state = AgentSessionState.failed;
-        session.observationHistory.add('Tool ${action.toolId} failed with unexpected error: $e');
+        session.observations.add(AgentObservation(
+          stepId: step.id,
+          toolId: action.toolId,
+          result: ToolResult(
+            toolId: action.toolId,
+            status: ToolResultStatus.fatalFailure,
+            error: e.toString(),
+          ),
+          timestamp: DateTime.now(),
+        ));
         return false; // Break current plan on other errors
       }
 
       session.executedActions.add(action);
-      session.results[step.id] = result;
+      if (result != null) {
+        session.results[step.id] = result;
+      }
 
       permissionPolicy.onActionComplete(action.toolId);
     }

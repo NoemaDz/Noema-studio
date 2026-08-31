@@ -27,7 +27,12 @@ class AgentPlanner {
     final projectContext = ProjectContext.fromProject(session.currentProject);
     final contextJson = jsonEncode(projectContext.toJson());
     final deniedToolsJson = jsonEncode(session.deniedTools);
-    final historyJson = jsonEncode(session.observationHistory);
+    
+    // Bounded context: last 10 observations
+    final recentObservations = session.observations.length > 10 
+        ? session.observations.sublist(session.observations.length - 10) 
+        : session.observations;
+    final historyJson = jsonEncode(recentObservations.map((o) => o.toJson()).toList());
 
     return '''
 You are an intelligent agent planner. Your task is to break down the user's goal into a structured plan using only the available tools.

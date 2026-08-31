@@ -97,7 +97,7 @@ void main() {
       expect(agent.formulationCalls, 3);
       expect(session.executedActions.length, 3);
       expect(session.state, AgentSessionState.iterationLimitReached);
-      expect(session.observationHistory.any((o) => o.contains('Iteration 3')), isTrue);
+      expect(session.observations.any((o) => o.stepId.startsWith('iteration_3')), isTrue);
     });
 
     test('terminates when empty plan is returned', () async {
@@ -109,7 +109,7 @@ void main() {
       
       expect(agent.formulationCalls, 1);
       expect(session.state, AgentSessionState.failed);
-      expect(session.observationHistory.last, contains('Plan formulated with 0 steps. Assuming stuck.'));
+      expect(session.observations.last.result.error, contains('Plan formulated with 0 steps. Assuming stuck.'));
     });
   });
 }

@@ -6,6 +6,7 @@ import 'permissions/permission_policy.dart';
 
 import 'models/agent_session.dart';
 import 'permissions/tool_risk_level.dart';
+import 'models/tool_result.dart';
 
 class UnauthorizedException implements Exception {
   final String toolId;
@@ -29,7 +30,7 @@ class FatalToolException implements Exception {
 }
 
 abstract class AgentToolbox {
-  Future<dynamic> executeAction(AgentSession session, AgentAction action);
+  Future<ToolResult> executeAction(AgentSession session, AgentAction action);
   List<AgentToolSchema> getAvailableTools();
 }
 
@@ -40,7 +41,7 @@ class NoemaAgentToolbox implements AgentToolbox {
   NoemaAgentToolbox({required this.noema, required this.permissionPolicy});
 
   @override
-  Future<dynamic> executeAction(
+  Future<ToolResult> executeAction(
     AgentSession session,
     AgentAction action,
   ) async {
@@ -65,35 +66,61 @@ class NoemaAgentToolbox implements AgentToolbox {
       case 'generate_story':
         final idea = action.arguments['idea'] as String;
         final result = await noema.generateStory(idea);
-        return {'status': 'success', 'story': result};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+          data: {'story': result},
+        );
 
       case 'generate_planning':
         final project = getProject();
         final result = await noema.generatePlanning(project);
-        return {'status': 'success', 'projectId': result.id};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+          data: {'projectId': result.id},
+        );
 
       case 'extract_characters':
         final project = getProject();
         await noema.extractCharacters(project);
-        return {'status': 'success'};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+        );
 
       case 'generate_production':
         final project = getProject();
         final result = await noema.generateProduction(project);
-        return {'status': 'success', 'projectId': result.id};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+          data: {'projectId': result.id},
+        );
 
       case 'generate_image':
         final prompt = action.arguments['prompt'] as String;
         final job = await noema.generateImage(prompt);
-        return {'status': 'success', 'jobId': job.id};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+          artifacts: [ToolArtifact(artifactId: job.id, type: 'image_job')],
+        );
 
       case 'save_project':
         final project = getProject();
         await noema.saveProject(project);
-        return {'status': 'success'};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+        );
 
       case 'task_complete':
-        return {'status': 'success', 'message': action.arguments['message']};
+        return ToolResult(
+          toolId: action.toolId,
+          status: ToolResultStatus.success,
+          data: {'message': action.arguments['message']},
+        );
 
       default:
         throw UnimplementedError(
