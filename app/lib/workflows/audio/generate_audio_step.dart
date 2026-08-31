@@ -29,7 +29,7 @@ class GenerateAudioStep extends WorkflowStep<Job> {
     final request = ExecutionRequest(
       capability: CapabilityType.tts,
       input: text,
-      parameters: {if (voiceProfile != null) 'voiceProfile': voiceProfile},
+      parameters: {'voiceProfile': ?voiceProfile},
     );
 
     final job = await provider.execute(request);

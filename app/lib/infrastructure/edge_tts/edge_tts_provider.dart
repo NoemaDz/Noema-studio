@@ -118,8 +118,7 @@ class EdgeTTSProvider extends TTSProvider {
         job.transitionTo(JobStatus.completed);
       } else {
         final errorMessage =
-            "Edge TTS failed after trying multiple paths:\n" +
-            errors.join('\n');
+            "Edge TTS failed after trying multiple paths:\n${errors.join('\n')}";
         _results[job.id] = ExecutionResult.failure(
           JobError(code: 'exec_error', message: errorMessage),
         );

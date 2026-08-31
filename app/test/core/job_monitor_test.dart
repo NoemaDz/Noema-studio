@@ -6,7 +6,6 @@ import 'package:noema_studio/core/job_events.dart';
 import 'package:noema_studio/core/providers/provider_registry.dart';
 import 'package:noema_studio/core/providers/async_provider.dart';
 import 'package:noema_studio/models/job.dart';
-import 'package:noema_studio/models/artifact.dart';
 import 'package:noema_studio/core/contracts/execution_request.dart';
 import 'package:noema_studio/core/contracts/execution_result.dart';
 import 'package:noema_studio/core/capabilities/capability.dart';

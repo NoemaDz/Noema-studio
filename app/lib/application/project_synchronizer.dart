@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../core/noema_project.dart';
 import '../core/providers/provider_registry.dart';
-import '../core/providers/async_provider.dart';
 import '../models/job.dart';
 import '../models/artifact.dart';
 import '../models/artifact_type.dart';

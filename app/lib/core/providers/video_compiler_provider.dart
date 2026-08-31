@@ -1,5 +1,4 @@
 import 'provider.dart';
-import '../../models/job.dart';
 
 class AudioVideoResource {
   final String imagePath;

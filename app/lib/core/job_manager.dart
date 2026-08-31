@@ -1,7 +1,6 @@
 import 'dart:async';
 import '../models/job.dart';
 import 'providers/provider_registry.dart';
-import 'providers/async_provider.dart';
 import 'cancellation_token.dart';
 
 class JobManager {
@@ -111,9 +110,7 @@ class JobManager {
       try {
         if (registry?.has(job.providerId) == true) {
           final provider = registry!.get(job.providerId);
-          if (provider != null) {
-            await provider.cancelJob(job.id);
-          }
+          await provider.cancelJob(job.id);
         }
         if (job.transitionTo(finalStatus)) {
           if (error != null) job.error = error;

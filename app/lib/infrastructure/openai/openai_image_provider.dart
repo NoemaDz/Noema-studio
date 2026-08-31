@@ -13,7 +13,8 @@ import '../../core/contracts/execution_result.dart';
 
 class OpenAIImageProvider extends ImageProvider {
   final PluginContext context;
-  final Map<String, Job> _jobs = {};
+  final Map<String, ExecutionResult> _results = {};
+  final List<String> _cancelledJobs = [];
 
   OpenAIImageProvider(this.context);
 
@@ -51,21 +52,35 @@ class OpenAIImageProvider extends ImageProvider {
       status: JobStatus.queued,
       metadata: {"prompt": prompt},
     );
-    _jobs[jobId] = job;
+
+    if (_cancelledJobs.contains(jobId)) {
+      job.transitionTo(JobStatus.cancelled);
+      job.result = "Job cancelled by user";
+      _results[jobId] = ExecutionResult.failure(
+        JobError(code: 'cancelled', message: 'Job cancelled by user'),
+      );
+      _cancelledJobs.remove(jobId);
+      return job;
+    }
 
     // Start generation asynchronously
-    _generateImage(jobId, prompt, apiKey, url);
+    _generateImage(job, prompt, apiKey, url);
 
     return job;
   }
 
   Future<void> _generateImage(
-    String jobId,
+    Job job,
     String prompt,
     String apiKey,
     String url,
   ) async {
+    final jobId = job.id;
     try {
+      if (_cancelledJobs.contains(jobId)) {
+        throw Exception("Cancelled by user");
+      }
+
       final response = await http.post(
         Uri.parse("$url/images/generations"),
         headers: {
@@ -81,98 +96,85 @@ class OpenAIImageProvider extends ImageProvider {
         }),
       );
 
+      if (_cancelledJobs.contains(jobId)) {
+        throw Exception("Cancelled by user");
+      }
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final imageUrl = data["data"][0]["url"];
 
-        final job = _jobs[jobId]!;
-        job.transitionTo(JobStatus.completed);
-        job.progress = 1.0;
-        job.metadata["url"] = imageUrl;
+        final imgResponse = await http.get(Uri.parse(imageUrl));
+        if (imgResponse.statusCode == 200) {
+          final outputDir = PlatformPaths.instance.getJobOutputPath(jobId);
+          final file = File(p.join(outputDir, "openai_img_$jobId.png"));
+          await file.writeAsBytes(imgResponse.bodyBytes);
+
+          _results[jobId] = ExecutionResult.success(textOutput: file.path);
+          job.transitionTo(JobStatus.completed);
+          job.progress = 1.0;
+          job.metadata["url"] = imageUrl;
+          job.result = file.path;
+        } else {
+          _results[jobId] = ExecutionResult.failure(
+            JobError(
+              code: 'download_failed',
+              message: 'Failed to download image',
+            ),
+          );
+          job.transitionTo(JobStatus.failed);
+          job.metadata["error"] = "Download failed: ${imgResponse.statusCode}";
+        }
       } else {
-        final job = _jobs[jobId]!;
+        _results[jobId] = ExecutionResult.failure(
+          JobError(
+            code: 'api_error',
+            message: 'OpenAI Error: ${response.statusCode}',
+          ),
+        );
         job.transitionTo(JobStatus.failed);
         job.metadata["error"] =
             "OpenAI Error: ${response.statusCode} - ${response.body}";
       }
     } catch (e) {
-      final job = _jobs[jobId]!;
-      job.transitionTo(JobStatus.failed);
-      job.metadata["error"] = "Exception: $e";
+      if (_cancelledJobs.contains(jobId)) {
+        _results[jobId] = ExecutionResult.failure(
+          JobError(code: 'cancelled', message: 'Job cancelled by user'),
+        );
+        job.transitionTo(JobStatus.cancelled);
+        job.metadata["error"] = "Cancelled by user";
+      } else {
+        _results[jobId] = ExecutionResult.failure(
+          JobError(code: 'exception', message: e.toString()),
+        );
+        job.transitionTo(JobStatus.failed);
+        job.metadata["error"] = "Exception: $e";
+      }
+    } finally {
+      _cancelledJobs.remove(jobId);
     }
   }
 
   @override
   Future<JobStatusUpdate> updateJobStatus(Job job) async {
-    final knownJob = _jobs[job.id];
-    if (knownJob != null) {
-      return JobStatusUpdate(
-        status: knownJob.status,
-        result: knownJob.result,
-        error: knownJob.error,
-      );
-    }
     return JobStatusUpdate(status: job.status);
   }
 
   @override
   Future<ExecutionResult> getResult(String jobId) async {
-    final job = _jobs[jobId];
-    if (job == null) {
-      return ExecutionResult.failure(
-        JobError(code: 'not_found', message: "Job not found"),
-      );
+    final result = _results[jobId];
+    if (result != null) {
+      return result;
     }
-    if (job.status != JobStatus.completed) {
-      return ExecutionResult.failure(
-        JobError(code: 'not_completed', message: "Job not completed"),
-      );
-    }
-
-    final imageUrl = job.metadata["url"];
-    if (imageUrl == null) {
-      return ExecutionResult.failure(
-        JobError(code: 'no_url', message: "No image URL in metadata"),
-      );
-    }
-
-    try {
-      final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode == 200) {
-        final outputDir = PlatformPaths.instance.getJobOutputPath(jobId);
-        final file = File(p.join(outputDir, "openai_img_$jobId.png"));
-        await file.writeAsBytes(response.bodyBytes);
-
-        return ExecutionResult.success(textOutput: file.path);
-      } else {
-        return ExecutionResult.failure(
-          JobError(
-            code: 'download_failed',
-            message: "Failed to download image: ${response.statusCode}",
-          ),
-        );
-      }
-    } catch (e) {
-      return ExecutionResult.failure(
-        JobError(code: 'download_error', message: "Download failed: $e"),
-      );
-    }
+    return ExecutionResult.failure(
+      JobError(code: 'not_found', message: "Job not found"),
+    );
   }
 
   @override
   Future<void> cancelJob(String jobId) async {
-    // NOTE: This is a logical cancellation.
-    // The HTTP request to OpenAI is synchronous and cannot be easily cancelled
-    // midway using the standard http package without a dedicated CancelToken/Client.
-    // Setting the job to failed ensures the PipelineEngine moves on and ignores the result.
-    if (_jobs.containsKey(jobId)) {
-      final job = _jobs[jobId]!;
-      if (job.status == JobStatus.running ||
-          job.status == JobStatus.queued ||
-          job.status == JobStatus.starting) {
-        job.transitionTo(JobStatus.cancelled);
-        job.metadata["error"] = "Cancelled by user";
-      }
+    if (!_cancelledJobs.contains(jobId)) {
+      _cancelledJobs.add(jobId);
     }
   }
 }

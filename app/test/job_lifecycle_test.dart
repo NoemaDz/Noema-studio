@@ -4,7 +4,6 @@ import 'package:noema_studio/core/job_manager.dart';
 import 'package:noema_studio/core/job_runner.dart';
 import 'package:noema_studio/core/providers/provider_registry.dart';
 import 'package:noema_studio/core/providers/async_provider.dart';
-import 'package:noema_studio/models/artifact.dart';
 import 'package:noema_studio/core/contracts/execution_request.dart';
 import 'package:noema_studio/core/contracts/execution_result.dart';
 import 'package:noema_studio/core/capabilities/capability.dart';

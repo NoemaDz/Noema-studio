@@ -4,7 +4,6 @@ import 'package:noema_studio/infrastructure/ffmpeg/ffmpeg_video_compiler.dart';
 import 'package:noema_studio/core/settings/app_settings.dart';
 import 'package:noema_studio/core/capabilities/capability.dart';
 import 'package:noema_studio/core/contracts/execution_request.dart';
-import 'package:noema_studio/core/contracts/execution_result.dart';
 import 'package:noema_studio/core/providers/video_compiler_provider.dart';
 import 'package:noema_studio/models/job.dart';
 

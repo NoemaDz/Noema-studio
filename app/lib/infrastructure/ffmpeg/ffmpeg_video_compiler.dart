@@ -8,6 +8,7 @@ import 'ffmpeg_path_escaper.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart';
 import '../../core/settings/app_settings.dart';
+import '../../core/settings/platform_paths.dart';
 
 import 'package:uuid/uuid.dart';
 
@@ -15,12 +16,10 @@ import '../../application/dependency_manager.dart';
 import '../../core/cancellation_token.dart';
 import '../../core/contracts/execution_request.dart';
 import '../../core/contracts/execution_result.dart';
-import '../../models/artifact.dart';
-import '../../models/artifact_type.dart';
 
 class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
   final AppSettings appSettings;
-  final Map<String, Job> _jobs = {};
+  final Map<String, ExecutionResult> _results = {};
 
   FFmpegVideoCompilerProvider(this.appSettings);
 
@@ -113,10 +112,20 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
       id: jobId,
       providerId: id,
       type: "compileVideo",
-      status: JobStatus.running,
+      status: JobStatus.pending,
     );
-    _jobs[jobId] = job;
 
+    if (_cancelledJobs.contains(jobId)) {
+      job.transitionTo(JobStatus.cancelled);
+      job.result = "Job cancelled by user";
+      _results[jobId] = ExecutionResult.failure(
+        JobError(code: 'cancelled', message: 'Job cancelled by user'),
+      );
+      _cancelledJobs.remove(jobId);
+      return job;
+    }
+
+    job.transitionTo(JobStatus.running);
     _runCompileAsync(job, resources, outputPath, options);
     return job;
   }
@@ -299,26 +308,36 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
       }
       listFile.writeAsStringSync(listContent.toString());
 
+      final permanentDir = PlatformPaths.instance.getJobOutputPath(jobId);
+      final permanentPath = p.join(permanentDir, p.basename(outputPath));
+
       final concatArgs = [
         '-f', 'concat',
         '-safe', '0',
         '-i', listFile.path,
         '-c', 'copy', // Super fast, no re-encoding
         '-y',
-        outputPath,
+        permanentPath,
       ];
 
       await _runFfmpeg(jobId, ffmpegPath, concatArgs);
 
-      job.metadata["outputPath"] = outputPath;
-      job.result = outputPath;
+      _results[jobId] = ExecutionResult.success(textOutput: permanentPath);
+      job.metadata["outputPath"] = permanentPath;
+      job.result = permanentPath;
       job.progress = 1.0;
       job.transitionTo(JobStatus.completed);
     } catch (e) {
       if (_cancelledJobs.contains(jobId)) {
+        _results[jobId] = ExecutionResult.failure(
+          JobError(code: 'cancelled', message: 'Job cancelled by user'),
+        );
         job.result = "Job cancelled by user";
         job.transitionTo(JobStatus.cancelled);
       } else {
+        _results[jobId] = ExecutionResult.failure(
+          JobError(code: 'compile_failed', message: e.toString()),
+        );
         job.result = "Exception: $e";
         job.transitionTo(JobStatus.failed);
       }
@@ -334,21 +353,12 @@ class FFmpegVideoCompilerProvider extends VideoCompilerProvider {
 
   @override
   Future<ExecutionResult> getResult(String jobId) async {
-    final job = _jobs[jobId];
-    if (job == null) {
-      return ExecutionResult.failure(
-        JobError(code: 'not_found', message: 'Job not found'),
-      );
+    final result = _results[jobId];
+    if (result != null) {
+      return result;
     }
-    if (job.status != JobStatus.completed) {
-      return ExecutionResult.failure(
-        JobError(code: 'not_completed', message: 'Job not completed yet'),
-      );
-    }
-
-    // FFmpeg video compiler currently stores the output path directly in job.result.
-    // So we can return it as textOutput or wrap it in an Artifact.
-    // Since VideoCompilationStage uses `job.result` directly for now, we provide it in textOutput.
-    return ExecutionResult.success(textOutput: job.result);
+    return ExecutionResult.failure(
+      JobError(code: 'not_found', message: 'Job not found'),
+    );
   }
 }

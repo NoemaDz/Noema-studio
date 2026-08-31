@@ -1,5 +1,4 @@
 import '../../core/providers/image_provider.dart';
-import '../../core/job_manager.dart';
 import '../../core/workflow/workflow_step.dart';
 import '../../models/job.dart';
 import '../../core/contracts/execution_request.dart';
@@ -25,7 +24,6 @@ class GenerateImageStep extends WorkflowStep<Job> {
       throw Exception("Missing image prompt");
     }
 
-    final options = context.get<Map<String, dynamic>>("options");
     final request = ExecutionRequest(
       capability: CapabilityType.imageGeneration,
       input: prompt,

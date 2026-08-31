@@ -29,7 +29,6 @@ class GenerateVideoStep extends WorkflowStep<Job> {
       throw Exception("Missing source image for video");
     }
 
-    final options = context.get<Map<String, dynamic>>("options");
     final request = ExecutionRequest(
       capability: CapabilityType.videoGeneration,
       input: prompt,

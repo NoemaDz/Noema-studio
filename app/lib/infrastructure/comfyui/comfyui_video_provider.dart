@@ -2,7 +2,6 @@ import '../../core/providers/video_provider.dart';
 import '../../core/capabilities/capability.dart';
 import '../../models/job.dart';
 import 'comfyui_driver.dart';
-import '../../models/artifact.dart';
 import '../../core/contracts/execution_request.dart';
 import '../../core/contracts/execution_result.dart';
 import '../../core/plugins/plugin_context.dart';

@@ -17,6 +17,9 @@ import 'package:noema_studio/models/job.dart' as noema_job;
 import 'package:noema_studio/core/contracts/execution_request.dart'
     as noema_contracts;
 import 'package:noema_studio/core/contracts/execution_result.dart';
+import 'package:noema_studio/core/providers/image_provider.dart';
+import 'package:noema_studio/core/providers/llm_provider.dart';
+import 'package:noema_studio/core/providers/tts_provider.dart';
 
 class MockProvider extends Provider {
   @override
@@ -265,9 +268,14 @@ void main() {
 
   group('Proxy Providers Capabilities', () {
     late PluginContext fakeContext;
+    late ProviderRegistry registry;
     setUp(() {
+      registry = ProviderRegistry();
+      registry.register(MockImageProvider());
+      registry.register(MockLLMProvider());
+      registry.register(MockTTSProvider());
       fakeContext = PluginContext(
-        providers: ProviderRegistry(),
+        providers: registry,
         pipelines: PipelineRegistry(),
         engine: WorkflowEngine(),
         appSettings: AppSettings(),
@@ -326,4 +334,73 @@ void main() {
       },
     );
   });
+}
+
+class MockImageProvider extends ImageProvider {
+  @override
+  String get id => 'mock_img';
+  @override
+  String get name => 'Mock Img';
+  @override
+  bool get available => true;
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.imageGeneration};
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
+  @override
+  Future<noema_job.Job> execute(
+    noema_contracts.ExecutionRequest request,
+  ) async => throw UnimplementedError();
+  @override
+  Future<ExecutionResult> getResult(String jobId) async =>
+      throw UnimplementedError();
+  @override
+  Future<void> cancelJob(String jobId) async {}
+  @override
+  Future<noema_job.JobStatusUpdate> updateJobStatus(noema_job.Job job) async =>
+      noema_job.JobStatusUpdate(status: job.status);
+}
+
+class MockLLMProvider extends LLMProvider {
+  @override
+  String get id => 'mock_llm';
+  @override
+  String get name => 'Mock LLM';
+  @override
+  bool get available => true;
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.llm};
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
+  @override
+  Future<noema_job.Job> execute(
+    noema_contracts.ExecutionRequest request,
+  ) async => throw UnimplementedError();
+  @override
+  Future<ExecutionResult> getResult(String jobId) async =>
+      throw UnimplementedError();
+  @override
+  Future<void> cancelJob(String jobId) async {}
+}
+
+class MockTTSProvider extends TTSProvider {
+  @override
+  String get id => 'mock_tts';
+  @override
+  String get name => 'Mock TTS';
+  @override
+  bool get available => true;
+  @override
+  Set<CapabilityType> get capabilities => {CapabilityType.tts};
+  @override
+  HardwareRequirements get hardwareRequirements => const HardwareRequirements();
+  @override
+  Future<noema_job.Job> execute(
+    noema_contracts.ExecutionRequest request,
+  ) async => throw UnimplementedError();
+  @override
+  Future<ExecutionResult> getResult(String jobId) async =>
+      throw UnimplementedError();
+  @override
+  Future<void> cancelJob(String jobId) async {}
 }
