@@ -169,15 +169,16 @@ class SceneImageStage extends PipelineStage {
       }
 
       final execResult = await provider.getResult(job.id);
-      if (!execResult.isSuccess || execResult.textOutput == null) {
+      if (!execResult.isSuccess || (execResult.textOutput == null && execResult.artifact == null)) {
         throw Exception(
           'Failed to retrieve image artifact for scene ${scene.id}: ${execResult.error?.message ?? 'Unknown error'}',
         );
       }
 
+      final artifactPath = execResult.artifact?.path ?? execResult.textOutput!;
       final artifact = Artifact(
         id: job.id,
-        path: execResult.textOutput!,
+        path: artifactPath,
         type: ArtifactType.image,
       );
 

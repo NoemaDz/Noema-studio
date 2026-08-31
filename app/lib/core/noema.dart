@@ -32,7 +32,7 @@ class Noema {
   Noema({Bootstrap? bootstrap}) : bootstrap = bootstrap ?? Bootstrap();
 
   void init(List<IPlugin> plugins) {
-    bootstrap.initializePlugins(plugins);
+    bootstrap.initializePlugins(this, plugins);
   }
 
   Future<String> generateStory(String idea) {
@@ -84,6 +84,10 @@ class Noema {
     // 1. Native Job Recovery
     if (project.savedJobs.isNotEmpty) {
       bootstrap.jobManager.restoreJobs(project.savedJobs);
+    }
+
+    if (project.agentSession != null) {
+      bootstrap.agentOrchestratorService.resumeSession(project.agentSession!);
     }
 
     // 2. Artifact Filesystem Reconciliation

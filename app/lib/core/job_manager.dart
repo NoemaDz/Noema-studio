@@ -6,8 +6,15 @@ import 'cancellation_token.dart';
 class JobManager {
   final ProviderRegistry? registry;
   final List<Job> _jobs = [];
+  final StreamController<Job> _jobEvents = StreamController<Job>.broadcast();
 
   JobManager({this.registry});
+
+  Stream<Job> get onJobUpdated => _jobEvents.stream;
+
+  void dispose() {
+    _jobEvents.close();
+  }
 
   List<Job> get jobs => List.unmodifiable(_jobs);
 
@@ -41,6 +48,8 @@ class JobManager {
       }
       if (update.result != null) job.result = update.result;
       if (update.error != null) job.error = update.error;
+      
+      _jobEvents.add(job);
     } else {
       print(
         "WARNING: Illegal transition attempted for Job ${job.id} to ${update.status}",
@@ -58,6 +67,8 @@ class JobManager {
         print(
           "WARNING: Illegal transition attempted for Job ${job.id} to $status",
         );
+      } else {
+        _jobEvents.add(job);
       }
     }
   }
@@ -67,6 +78,7 @@ class JobManager {
 
     if (job != null) {
       job.progress = progress;
+      _jobEvents.add(job);
     }
   }
 
@@ -77,6 +89,7 @@ class JobManager {
       if (job.transitionTo(JobStatus.completed)) {
         job.progress = 1.0;
         job.result = result;
+        _jobEvents.add(job);
       }
     }
   }
@@ -87,6 +100,7 @@ class JobManager {
     if (job != null) {
       if (job.transitionTo(JobStatus.failed)) {
         job.error = error;
+        _jobEvents.add(job);
       }
     }
   }
@@ -114,6 +128,9 @@ class JobManager {
         }
         if (job.transitionTo(finalStatus)) {
           if (error != null) job.error = error;
+          _jobEvents.add(job);
+        } else {
+          _jobEvents.add(job); // Still emit for cancelling
         }
       } catch (e) {
         job.transitionTo(JobStatus.failed);
@@ -121,6 +138,7 @@ class JobManager {
           code: 'CANCEL_FAILED',
           message: 'Failed to cancel job: $e',
         );
+        _jobEvents.add(job);
       }
     }
   }

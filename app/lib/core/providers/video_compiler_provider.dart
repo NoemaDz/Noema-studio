@@ -12,6 +12,22 @@ class AudioVideoResource {
     this.subtitleText,
     this.effect,
   });
+
+  Map<String, dynamic> toJson() => {
+    'imagePath': imagePath,
+    'audioPaths': audioPaths,
+    'subtitleText': subtitleText,
+    'effect': effect,
+  };
+
+  factory AudioVideoResource.fromJson(Map<String, dynamic> json) {
+    return AudioVideoResource(
+      imagePath: json['imagePath'] as String,
+      audioPaths: (json['audioPaths'] as List<dynamic>).cast<String>(),
+      subtitleText: json['subtitleText'] as String?,
+      effect: json['effect'] as String?,
+    );
+  }
 }
 
 abstract class VideoCompilerProvider extends AsyncProvider {}

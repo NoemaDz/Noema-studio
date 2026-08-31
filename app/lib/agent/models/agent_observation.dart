@@ -19,4 +19,13 @@ class AgentObservation {
     'result': result.toJson(),
     'timestamp': timestamp.toIso8601String(),
   };
+
+  factory AgentObservation.fromJson(Map<String, dynamic> json) {
+    return AgentObservation(
+      stepId: json['stepId'] as String,
+      toolId: json['toolId'] as String,
+      result: ToolResult.fromJson(json['result'] as Map<String, dynamic>),
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+  }
 }

@@ -16,6 +16,7 @@ import '../widgets/generation_panel.dart';
 import '../widgets/scene_editor_view.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/character_list.dart';
+import '../widgets/agent_panel.dart';
 import 'settings_dialog.dart';
 
 class StudioScreen extends StatefulWidget {
@@ -476,6 +477,9 @@ class _StudioScreenState extends State<StudioScreen> {
                           ),
                         ),
                       ),
+                    
+                    // Agent Panel
+                    const AgentPanel(),
                   ],
                 );
               },

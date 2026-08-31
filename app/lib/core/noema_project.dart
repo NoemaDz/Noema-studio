@@ -16,6 +16,7 @@ import '../models/artifact.dart';
 import '../models/artifact_type.dart';
 import 'package:uuid/uuid.dart';
 import '../models/generation_state.dart';
+import '../agent/models/agent_session.dart';
 
 /// The single canonical domain model for a Noema production project.
 /// This is the Source of Truth for all project state — from initial idea
@@ -61,6 +62,9 @@ class NoemaProject {
   // ── Meta ──────────────────────────────────────────────────────────────────
   final Map<String, dynamic> settings = {};
   final Map<String, dynamic> metadata = {};
+
+  // ── Agent ─────────────────────────────────────────────────────────────────
+  AgentSession? agentSession;
 
   NoemaProject({
     required this.id,
@@ -153,6 +157,7 @@ class NoemaProject {
       'savedJobs': savedJobs.map((e) => e.toJson()).toList(),
       'settings': settings,
       'metadata': metadata,
+      if (agentSession != null) 'agentSession': agentSession!.toJson(),
     };
   }
 
@@ -256,6 +261,13 @@ class NoemaProject {
     if (json['metadata'] != null) {
       project.metadata.addAll(
         Map<String, dynamic>.from(json['metadata'] as Map),
+      );
+    }
+
+    if (json['agentSession'] != null) {
+      project.agentSession = AgentSession.fromJson(
+        json['agentSession'] as Map<String, dynamic>,
+        project,
       );
     }
 

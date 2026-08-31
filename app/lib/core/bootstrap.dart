@@ -18,6 +18,10 @@ import 'job_manager.dart';
 import 'job_events.dart';
 import 'pipeline/project_pipeline.dart';
 import '../presentation/state/project_state.dart';
+import '../presentation/state/agent_state.dart';
+import '../application/services/agent_orchestrator_service.dart';
+import '../agent/agent_toolbox.dart';
+import '../agent/permissions/permission_policy.dart';
 import '../application/services/project_service.dart';
 import '../application/services/project_generation_service.dart';
 import '../application/services/project_persistence_service.dart';
@@ -26,6 +30,8 @@ import '../application/services/image_generation_service.dart';
 import '../application/services/character_extraction_service.dart';
 import '../application/services/document_ingestion_service.dart';
 import 'settings/app_settings.dart';
+
+import '../core/noema.dart';
 
 class Bootstrap {
   late final PluginManager pluginManager;
@@ -43,6 +49,8 @@ class Bootstrap {
   late final JobMonitor jobMonitor;
   late final JobEvents jobEvents;
   late final ProjectState projectState;
+  late final AgentState agentState;
+  late final AgentOrchestratorService agentOrchestratorService;
   late final AppSettings appSettings;
 
   late final ProjectService projectService;
@@ -79,7 +87,7 @@ class Bootstrap {
     pluginManager = PluginManager(context: pluginContext);
   }
 
-  void initializePlugins(List<IPlugin> plugins) {
+  void initializePlugins(Noema noema, List<IPlugin> plugins) {
     providerRegistry.register(ProxyTTSProvider(pluginContext));
     providerRegistry.register(ProxyImageProvider(pluginContext));
     providerRegistry.register(ProxyVideoProvider(pluginContext));
@@ -126,5 +134,14 @@ class Bootstrap {
       providerRegistry,
       jobManager,
     );
+
+    final permissionPolicy = PermissionPolicy();
+    agentOrchestratorService = AgentOrchestratorService(
+      toolbox: NoemaAgentToolbox(noema: noema, permissionPolicy: permissionPolicy),
+      jobEvents: jobEvents,
+      permissionPolicy: permissionPolicy,
+    );
+
+    agentState = AgentState(agentOrchestratorService);
   }
 }

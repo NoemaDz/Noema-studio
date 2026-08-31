@@ -6,6 +6,7 @@ import 'models/tool_result.dart';
 import 'models/agent_observation.dart';
 import 'agent_toolbox.dart';
 import 'permissions/permission_policy.dart';
+import '../models/job.dart';
 
 class TaskStoppedException implements Exception {
   final String message;
@@ -45,14 +46,47 @@ abstract class Agent {
       session.currentPlan = plan;
       
       if (plan.steps.isEmpty) {
-        session.observations.add(AgentObservation(
-          stepId: 'iteration_${i + 1}_empty',
-          toolId: 'system',
-          result: ToolResult(toolId: 'system', status: ToolResultStatus.fatalFailure, error: 'Plan formulated with 0 steps. Assuming stuck.'),
-          timestamp: DateTime.now(),
-        ));
-        session.state = AgentSessionState.failed;
-        break;
+        // Check if there are pending jobs we are waiting for
+        final hasPendingJobs = session.observations.any((obs) {
+          final jobs = obs.result.jobs;
+          if (jobs == null || jobs.isEmpty) return false;
+          
+          // Find the last observation for this stepId
+          final lastObsForStep = session.observations.lastWhere((o) => o.stepId == obs.stepId);
+          
+          // If the last observation for this step is a success but has no artifacts and no error, it's still pending
+          // (Assuming job completion either provides an artifact or changes status to failure/recoverableFailure)
+          // Also, if the tool inherently doesn't produce artifacts, we should probably check if this was injected by onJobEvent.
+          // To be robust, let's assume a job is pending if the last observation doesn't have artifacts and is successful,
+          // BUT wait, what if a job completes without artifacts?
+          // Let's check if the last observation is the SAME as the initial one. If so, it's pending.
+          if (lastObsForStep == obs) {
+            // It's the only observation for this step so far. Is it a pending job?
+            // A pending job observation has jobs but no artifacts.
+            return obs.result.artifacts == null && obs.result.status == ToolResultStatus.success;
+          }
+          return false;
+        });
+
+        if (hasPendingJobs) {
+          session.observations.add(AgentObservation(
+            stepId: 'iteration_${i + 1}_waiting',
+            toolId: 'system',
+            result: ToolResult(toolId: 'system', status: ToolResultStatus.success, data: {'message': 'Waiting for pending jobs to complete.'}),
+            timestamp: DateTime.now(),
+          ));
+          session.state = AgentSessionState.waitingForJobs;
+          break; // Suspend the loop
+        } else {
+          session.observations.add(AgentObservation(
+            stepId: 'iteration_${i + 1}_empty',
+            toolId: 'system',
+            result: ToolResult(toolId: 'system', status: ToolResultStatus.fatalFailure, error: 'Plan formulated with 0 steps. Assuming stuck.'),
+            timestamp: DateTime.now(),
+          ));
+          session.state = AgentSessionState.failed;
+          break;
+        }
       }
 
       final completed = await executePlan(session, plan);
@@ -172,4 +206,63 @@ abstract class Agent {
 
   /// Hook for human-in-the-loop authorization
   Future<PermissionOutcome> requestPermission(AgentAction action);
+
+  /// Translates JobManager events into AgentObservations asynchronously.
+  void onJobEvent(AgentSession session, Job job) {
+    if (job.status != JobStatus.completed && job.status != JobStatus.failed && job.status != JobStatus.cancelled) {
+      return; // Only care about terminal states
+    }
+
+    // Find the original observation that submitted this job
+    // Search from newest to oldest
+    AgentObservation? initialObs;
+    for (final obs in session.observations.reversed) {
+      if (obs.result.jobs != null && obs.result.jobs!.any((j) => j.jobId == job.id)) {
+        initialObs = obs;
+        break;
+      }
+    }
+
+    if (initialObs == null) {
+      // This job was not started by the agent in this session (or we lost context)
+      return;
+    }
+
+    ToolResultStatus newStatus;
+    List<ArtifactReference>? artifacts;
+    String? error;
+
+    if (job.status == JobStatus.completed) {
+      newStatus = ToolResultStatus.success;
+      if (job.result != null) {
+        artifacts = [ArtifactReference(artifactId: job.result!, type: 'generated_artifact')];
+      }
+    } else if (job.status == JobStatus.cancelled) {
+      newStatus = ToolResultStatus.recoverableFailure;
+      error = 'Job cancelled by user or system.';
+    } else {
+      newStatus = ToolResultStatus.fatalFailure;
+      error = job.error?.message ?? 'Job failed with unknown error.';
+    }
+
+    final newObs = AgentObservation(
+      stepId: initialObs.stepId, // Preserve correlation
+      toolId: initialObs.toolId,
+      result: ToolResult(
+        toolId: initialObs.toolId,
+        status: newStatus,
+        jobs: [JobReference(jobId: job.id, type: job.type)],
+        artifacts: artifacts,
+        error: error,
+      ),
+      timestamp: DateTime.now(),
+    );
+
+    session.observations.add(newObs);
+
+    // If the agent was explicitly waiting for jobs, wake it up
+    if (session.state == AgentSessionState.waitingForJobs) {
+      run(session); // Resume the agent loop
+    }
+  }
 }
