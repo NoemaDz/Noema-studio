@@ -146,6 +146,15 @@ class JobManager {
   void restoreJobs(List<Job> jobs) {
     for (final job in jobs) {
       if (!contains(job.id)) {
+        // Reconciliation: If the app crashed while a job was running,
+        // we must mark it as failed so the UI doesn't hang forever waiting for it.
+        if (job.status == JobStatus.running || job.status == JobStatus.queued) {
+          job.forceStatus(JobStatus.failed);
+          job.error = JobError(
+            code: 'app_restart',
+            message: 'Job interrupted due to application restart',
+          );
+        }
         _jobs.add(job);
       }
     }

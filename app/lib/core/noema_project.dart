@@ -7,6 +7,7 @@ import '../models/character.dart';
 import '../models/style.dart';
 import 'styles/style_registry.dart';
 import '../models/project_task.dart';
+import '../models/task_status.dart';
 import '../models/job.dart';
 import '../core/project_progress.dart';
 import '../core/project_statistics.dart';
@@ -145,6 +146,7 @@ class NoemaProject {
       'images': images.map((e) => e.toJson()).toList(),
       'videos': videos.map((e) => e.toJson()).toList(),
       'audios': audios.map((e) => e.toJson()).toList(),
+      'artifacts': artifacts.map((e) => e.toJson()).toList(),
       'finalVideoPath': finalVideoPath,
       'tasks': tasks.map((e) => e.toJson()).toList(),
       'jobIds': jobIds,
@@ -209,13 +211,27 @@ class NoemaProject {
       );
     }
 
+    if (json['artifacts'] != null) {
+      project.artifacts.addAll(
+        (json['artifacts'] as List).map(
+          (e) => Artifact.fromJson(e as Map<String, dynamic>),
+        ),
+      );
+    }
+
     project.finalVideoPath = json['finalVideoPath'] as String?;
 
     if (json['tasks'] != null) {
       project.tasks.addAll(
-        (json['tasks'] as List).map(
-          (e) => ProjectTask.fromJson(e as Map<String, dynamic>),
-        ),
+        (json['tasks'] as List).map((e) {
+          final task = ProjectTask.fromJson(e as Map<String, dynamic>);
+          // Reconciliation: If app crashed while task was running, it is now failed.
+          if (task.status == TaskStatus.running) {
+            task.status = TaskStatus.failed;
+            task.message = "Task interrupted by application restart";
+          }
+          return task;
+        }),
       );
     }
 
