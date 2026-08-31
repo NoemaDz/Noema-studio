@@ -18,6 +18,14 @@ class LlmTimeoutException implements Exception {
   String toString() => 'LlmTimeoutException: $message';
 }
 
+class LlmHttpException implements Exception {
+  final int statusCode;
+  final String message;
+  LlmHttpException(this.statusCode, this.message);
+  @override
+  String toString() => 'LlmHttpException: $statusCode $message';
+}
+
 class OllamaLlmClient implements LlmClient {
   final String baseUrl;
   final String modelName;
@@ -57,22 +65,14 @@ class OllamaLlmClient implements LlmClient {
         }
         return responseText;
       } else {
-        throw Exception(
-          'Ollama API returned status code ${response.statusCode}: ${response.body}',
-        );
+        throw LlmHttpException(response.statusCode, response.body);
       }
     } on TimeoutException {
-      throw LlmTimeoutException(
-        'Ollama API request timed out after ${timeout.inSeconds} seconds',
-      );
+      throw LlmTimeoutException('Ollama API request timed out after ${timeout.inSeconds} seconds');
     } on SocketException catch (e) {
-      throw LlmConnectionException(
-        'Failed to connect to Ollama at $baseUrl: $e',
-      );
+      throw LlmConnectionException('Failed to connect to Ollama at $baseUrl: $e');
     } catch (e) {
-      if (e is FormatException ||
-          e is LlmConnectionException ||
-          e is LlmTimeoutException) {
+      if (e is FormatException || e is LlmConnectionException || e is LlmTimeoutException || e is LlmHttpException) {
         rethrow;
       }
       throw Exception('Unexpected error communicating with Ollama: $e');

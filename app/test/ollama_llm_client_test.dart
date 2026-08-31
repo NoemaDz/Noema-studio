@@ -102,7 +102,7 @@ void main() {
       );
     });
 
-    test('throws Exception on non-200 status code', () async {
+    test('throws LlmHttpException on non-200 status code', () async {
       final mockClient = MockHttpClient((request) async {
         return http.StreamedResponse(
           Stream.value(utf8.encode('Internal Server Error')),
@@ -119,11 +119,7 @@ void main() {
       await expectLater(
         client.generateText('hello'),
         throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'toString',
-            contains('API returned status code 500'),
-          ),
+          isA<LlmHttpException>().having((e) => e.statusCode, 'statusCode', 500),
         ),
       );
     });

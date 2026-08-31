@@ -27,6 +27,13 @@ class TestToolbox extends MockToolbox {
         parameters: {},
         riskLevel: ToolRiskLevel.moderate,
       ),
+      AgentToolSchema(
+        id: 'generate_scene',
+        description: 'Generates a scene',
+        parameters: {'idea': 'string', 'mood': 'string'},
+        requiredParameters: ['idea'],
+        riskLevel: ToolRiskLevel.high,
+      ),
     ];
   }
 }
@@ -146,5 +153,91 @@ void main() {
         );
       },
     );
+
+    test('throws FormatException on duplicate step IDs', () async {
+      final json = '''
+      [
+        {
+          "id": "step_1",
+          "description": "Read project state",
+          "action": {
+            "toolId": "read_project",
+            "arguments": {}
+          }
+        },
+        {
+          "id": "step_1",
+          "description": "Read again",
+          "action": {
+            "toolId": "read_project",
+            "arguments": {}
+          }
+        }
+      ]
+      ''';
+      final llmClient = MockLlmClient(json);
+      final planner = AgentPlanner(llmClient: llmClient, toolbox: toolbox);
+      await expectLater(
+        planner.formulatePlan(session),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Duplicate step ID'),
+          ),
+        ),
+      );
+    });
+
+    test('accepts missing optional parameters', () async {
+      final json = '''
+      [
+        {
+          "id": "step_1",
+          "description": "Generate scene",
+          "action": {
+            "toolId": "generate_scene",
+            "arguments": {
+              "idea": "A dark forest"
+            }
+          }
+        }
+      ]
+      ''';
+      final llmClient = MockLlmClient(json);
+      final planner = AgentPlanner(llmClient: llmClient, toolbox: toolbox);
+      final plan = await planner.formulatePlan(session);
+      expect(plan.steps.length, 1);
+      expect(plan.steps.first.action.arguments['mood'], isNull);
+    });
+
+    test('throws FormatException on missing required parameter', () async {
+      final json = '''
+      [
+        {
+          "id": "step_1",
+          "description": "Generate scene",
+          "action": {
+            "toolId": "generate_scene",
+            "arguments": {
+              "mood": "dark"
+            }
+          }
+        }
+      ]
+      ''';
+      final llmClient = MockLlmClient(json);
+      final planner = AgentPlanner(llmClient: llmClient, toolbox: toolbox);
+      await expectLater(
+        planner.formulatePlan(session),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Missing required argument "idea"'),
+          ),
+        ),
+      );
+    });
   });
 }

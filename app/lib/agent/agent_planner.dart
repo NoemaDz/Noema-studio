@@ -5,6 +5,7 @@ import 'models/agent_plan.dart';
 import 'models/agent_step.dart';
 import 'models/agent_session.dart';
 import 'models/agent_action.dart';
+import 'models/project_context.dart';
 
 class AgentPlanner {
   final LlmClient llmClient;
@@ -23,11 +24,16 @@ class AgentPlanner {
   String _buildPrompt(AgentSession session) {
     final tools = toolbox.getAvailableTools();
     final toolsJson = jsonEncode(tools.map((t) => t.toJson()).toList());
+    final projectContext = ProjectContext.fromProject(session.currentProject);
+    final contextJson = jsonEncode(projectContext.toJson());
 
     return '''
 You are an intelligent agent planner. Your task is to break down the user's goal into a structured plan using only the available tools.
 
 Goal: ${session.currentGoal}
+
+Project Context:
+$contextJson
 
 Available Tools:
 $toolsJson
@@ -67,6 +73,8 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
 
     // 3. Validate schema
     final steps = <AgentStep>[];
+    final seenIds = <String>{};
+
     for (final item in jsonArray) {
       if (item is! Map<String, dynamic>) {
         throw const FormatException('Each step must be a JSON object');
@@ -79,6 +87,12 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
       if (id == null || id is! String) {
         throw const FormatException('Missing or invalid "id" field in step');
       }
+      
+      if (seenIds.contains(id)) {
+        throw FormatException('Duplicate step ID found: $id');
+      }
+      seenIds.add(id);
+
       if (description == null || description is! String) {
         throw const FormatException(
           'Missing or invalid "description" field in step',
@@ -107,23 +121,27 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
           ? Map<String, dynamic>.from(arguments)
           : {};
 
-      for (final key in schema.parameters.keys) {
+      // Check required parameters
+      for (final key in schema.requiredParameters) {
         if (!argsMap.containsKey(key)) {
           throw FormatException(
             'Missing required argument "$key" for tool "$toolId"',
           );
         }
+      }
+
+      // Check types and unknown parameters
+      for (final key in argsMap.keys) {
+        if (!schema.parameters.containsKey(key)) {
+          throw FormatException('Unknown argument "$key" for tool "$toolId"');
+        }
+        
         final expectedType = schema.parameters[key];
         final val = argsMap[key];
         if (expectedType == 'string' && val is! String) {
           throw FormatException(
             'Argument "$key" must be a string for tool "$toolId"',
           );
-        }
-      }
-      for (final key in argsMap.keys) {
-        if (!schema.parameters.containsKey(key)) {
-          throw FormatException('Unknown argument "$key" for tool "$toolId"');
         }
       }
 
