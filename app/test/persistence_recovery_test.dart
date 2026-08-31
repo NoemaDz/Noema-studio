@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noema_studio/core/noema_project.dart';
+import 'package:noema_studio/core/noema.dart';
+import 'dart:io';
+import 'dart:convert';
 import 'package:noema_studio/models/artifact.dart';
 import 'package:noema_studio/models/artifact_type.dart';
 import 'package:noema_studio/models/story.dart';
@@ -107,6 +110,68 @@ void main() {
         expect(restoredQueuedJob?.error?.code, 'app_restart');
 
         expect(restoredCompletedJob?.status, JobStatus.completed);
+      },
+    );
+
+    test(
+      'Integration: save -> simulated crash -> reload -> recovery (Artifact reconciliation)',
+      () async {
+        final noema = Noema();
+        noema.init([]);
+
+        // 1. Create a project with some artifacts, simulating before a crash
+        final project = NoemaProject(
+          id: 'crash-test',
+          idea: 'Crash Recovery',
+          story: Story(title: 'T', scenes: []),
+        );
+
+        // Add a running job
+        project.savedJobs.add(
+          Job(
+            id: 'job-1',
+            providerId: 'p',
+            type: 't',
+            status: JobStatus.running,
+          ),
+        );
+
+        // Add two artifacts: one that exists on disk, one that doesn't
+        final tempDir = Directory.systemTemp.createTempSync('noema_test');
+        final validFile = File('${tempDir.path}/valid.mp4')..createSync();
+        final missingFilePath = '${tempDir.path}/missing.mp4'; // Never created
+
+        project.artifacts.add(
+          Artifact(id: 'a1', path: validFile.path, type: ArtifactType.video),
+        );
+        project.artifacts.add(
+          Artifact(id: 'a2', path: missingFilePath, type: ArtifactType.video),
+        );
+
+        // Simulate saving before crash (bypassing path_provider by directly writing JSON)
+        final projectJsonFile = File('${tempDir.path}/project.json');
+        projectJsonFile.writeAsStringSync(jsonEncode(project.toJson()));
+
+        // --- SIMULATED CRASH HAPPENS HERE ---
+
+        // 2. Reload and Recovery
+        final recoveredProject = await noema.openProject(projectJsonFile.path);
+
+        // 3. Verification
+
+        // Job was recovered and reconciled as failed natively
+        expect(noema.bootstrap.jobManager.contains('job-1'), true);
+        expect(
+          noema.bootstrap.jobManager.find('job-1')?.status,
+          JobStatus.failed,
+        );
+
+        // Artifacts were reconciled (the missing one should be gone)
+        expect(recoveredProject.artifacts.length, 1);
+        expect(recoveredProject.artifacts.first.path, validFile.path);
+
+        // Clean up
+        tempDir.deleteSync(recursive: true);
       },
     );
   });

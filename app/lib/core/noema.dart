@@ -10,6 +10,7 @@ import '/application/services/story_generation_service.dart';
 import '/application/services/image_generation_service.dart';
 import '/application/services/character_extraction_service.dart';
 import '/application/services/document_ingestion_service.dart';
+import 'dart:io';
 
 class Noema {
   final Bootstrap bootstrap;
@@ -77,8 +78,39 @@ class Noema {
   }
 
   //===========================================
-  Future<NoemaProject> openProject(String path) {
-    return projectPersistenceService.openProject(path);
+  Future<NoemaProject> openProject(String path) async {
+    final project = await projectPersistenceService.openProject(path);
+
+    // 1. Native Job Recovery
+    if (project.savedJobs.isNotEmpty) {
+      bootstrap.jobManager.restoreJobs(project.savedJobs);
+    }
+
+    // 2. Artifact Filesystem Reconciliation
+    // Remove any artifacts that no longer exist on disk
+    project.artifacts.removeWhere(
+      (artifact) => !File(artifact.path).existsSync(),
+    );
+
+    for (var img in project.images) {
+      if (img.artifact != null && !File(img.artifact!.path).existsSync())
+        img.artifact = null;
+    }
+    for (var vid in project.videos) {
+      if (vid.artifact != null && !File(vid.artifact!.path).existsSync())
+        vid.artifact = null;
+    }
+    for (var aud in project.audios) {
+      if (aud.artifact != null && !File(aud.artifact!.path).existsSync())
+        aud.artifact = null;
+    }
+
+    if (project.finalVideoPath != null &&
+        !File(project.finalVideoPath!).existsSync()) {
+      project.finalVideoPath = null;
+    }
+
+    return project;
   }
 
   //=========================================

@@ -252,14 +252,6 @@ class _StudioScreenState extends State<StudioScreen> {
         final project = await noema.openProject(files.first.path!);
         noema.bootstrap.projectState.setProject(project);
 
-        // Restore any previously active jobs into the JobManager
-        if (project.savedJobs.isNotEmpty) {
-          noema.bootstrap.jobManager.restoreJobs(project.savedJobs);
-          debugPrint(
-            'StudioScreen: Restored ${project.savedJobs.length} saved jobs.',
-          );
-        }
-
         final synchronizer = ProjectSynchronizer(
           project: project,
           registry: noema.bootstrap.providerRegistry,
