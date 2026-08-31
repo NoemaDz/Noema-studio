@@ -145,8 +145,9 @@ void main() {
       newManager.restoreJobs(restoredJobs);
 
       expect(newManager.jobs.length, 2);
-      expect(newManager.find('abc')?.status, JobStatus.running);
-      expect(newManager.find('def')?.status, JobStatus.queued);
+      // Phase 3: Non-terminal jobs are automatically failed upon restore to prevent hanging.
+      expect(newManager.find('abc')?.status, JobStatus.failed);
+      expect(newManager.find('def')?.status, JobStatus.failed);
       expect(
         newManager.find('ghi'),
         isNull,

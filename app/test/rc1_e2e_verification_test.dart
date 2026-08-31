@@ -239,8 +239,9 @@ void main() {
         2,
         reason: 'Completed job must NOT be restored after crash',
       );
-      expect(freshMgr.find('alive')?.status, JobStatus.running);
-      expect(freshMgr.find('wait')?.status, JobStatus.queued);
+      // Phase 3: Non-terminal jobs are automatically failed upon restore to prevent hanging.
+      expect(freshMgr.find('alive')?.status, JobStatus.failed);
+      expect(freshMgr.find('wait')?.status, JobStatus.failed);
       expect(
         freshMgr.find('done'),
         isNull,
