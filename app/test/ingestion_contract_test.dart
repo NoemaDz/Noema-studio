@@ -77,5 +77,32 @@ void main() {
         expect(result.error?.code, 'ingestion_failed');
       },
     );
+
+    test(
+      'DocumentIngestionService cancellation cannot leave waitForCompletion blocked forever',
+      () async {
+        final reader = TxtReader();
+        final request = ExecutionRequest(
+          capability: CapabilityType.llm,
+          input: '',
+          parameters: {'file_path': 'fake.txt'},
+        );
+
+        final job = await reader.execute(request);
+        jobManager.add(job);
+        expect(jobManager.find(job.id)?.status, JobStatus.running);
+
+        // We cancel the job in the manager
+        jobManager.cancelJob(job.id);
+
+        // waitForCompletion should return immediately because of the cancelled state
+        // (it will not block forever)
+        await jobManager
+            .waitForCompletion(job.id)
+            .timeout(const Duration(milliseconds: 500));
+
+        expect(jobManager.find(job.id)?.status, JobStatus.cancelled);
+      },
+    );
   });
 }

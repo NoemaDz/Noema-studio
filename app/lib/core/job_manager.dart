@@ -176,7 +176,9 @@ class JobManager {
         throw Exception("Job $id not found");
       }
 
-      if (job.status == JobStatus.completed || job.status == JobStatus.failed) {
+      if (job.status == JobStatus.completed ||
+          job.status == JobStatus.failed ||
+          job.status == JobStatus.cancelled) {
         return;
       }
 
