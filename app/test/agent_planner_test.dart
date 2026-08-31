@@ -19,11 +19,13 @@ class TestToolbox extends MockToolbox {
         id: 'generate_story',
         description: 'Generates a story',
         parameters: {'idea': 'string'},
+        riskLevel: ToolRiskLevel.high,
       ),
       AgentToolSchema(
         id: 'read_project',
         description: 'Reads the project',
         parameters: {},
+        riskLevel: ToolRiskLevel.moderate,
       ),
     ];
   }

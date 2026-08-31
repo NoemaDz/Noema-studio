@@ -5,7 +5,6 @@ import 'models/agent_plan.dart';
 import 'models/agent_step.dart';
 import 'models/agent_session.dart';
 import 'models/agent_action.dart';
-import 'permissions/tool_risk_level.dart';
 
 class AgentPlanner {
   final LlmClient llmClient;
@@ -98,17 +97,37 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
         throw const FormatException('Missing or invalid "toolId" in action');
       }
 
-      // In a real application, arguments could be properly type-checked against the schema
+      final tools = toolbox.getAvailableTools();
+      final schema = tools.firstWhere(
+        (t) => t.id == toolId,
+        orElse: () => throw FormatException('Unknown toolId: $toolId'),
+      );
+
       final Map<String, dynamic> argsMap = arguments is Map
           ? Map<String, dynamic>.from(arguments)
           : {};
 
-      // Determine risk level (for now, default to moderate, or we can look it up if we added risk to schema)
-      // We'll set a default of high to be safe, except for read-only tools
-      final riskLevel =
-          toolId.startsWith('generate_') || toolId == 'save_project'
-          ? ToolRiskLevel.high
-          : ToolRiskLevel.moderate;
+      for (final key in schema.parameters.keys) {
+        if (!argsMap.containsKey(key)) {
+          throw FormatException(
+            'Missing required argument "$key" for tool "$toolId"',
+          );
+        }
+        final expectedType = schema.parameters[key];
+        final val = argsMap[key];
+        if (expectedType == 'string' && val is! String) {
+          throw FormatException(
+            'Argument "$key" must be a string for tool "$toolId"',
+          );
+        }
+      }
+      for (final key in argsMap.keys) {
+        if (!schema.parameters.containsKey(key)) {
+          throw FormatException('Unknown argument "$key" for tool "$toolId"');
+        }
+      }
+
+      final riskLevel = schema.riskLevel;
 
       final action = AgentAction(
         toolId: toolId,

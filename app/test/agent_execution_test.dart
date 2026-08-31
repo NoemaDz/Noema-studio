@@ -24,7 +24,7 @@ class MockToolbox implements AgentToolbox {
   MockToolbox(this.policy);
 
   @override
-  Future executeAction(AgentAction action) async {
+  Future executeAction(AgentSession session, AgentAction action) async {
     if (!policy.isAuthorized(action.toolId, action.riskLevel)) {
       throw UnauthorizedException(action.toolId);
     }

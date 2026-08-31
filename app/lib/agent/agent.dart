@@ -18,14 +18,14 @@ abstract class Agent {
       dynamic result;
 
       try {
-        result = await toolbox.executeAction(action);
+        result = await toolbox.executeAction(session, action);
       } on UnauthorizedException {
         final granted = await requestPermission(action);
         if (!granted) {
           throw Exception('Permission denied for action: ${action.toolId}');
         }
         // Retry after permission is granted
-        result = await toolbox.executeAction(action);
+        result = await toolbox.executeAction(session, action);
       }
 
       session.executedActions.add(action);
