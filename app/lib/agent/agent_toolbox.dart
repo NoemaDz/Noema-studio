@@ -1,6 +1,7 @@
 import '../core/noema.dart';
 import '../core/noema_project.dart';
 import 'models/agent_action.dart';
+import 'models/agent_tool_schema.dart';
 import 'permissions/permission_policy.dart';
 
 class UnauthorizedException implements Exception {
@@ -12,6 +13,7 @@ class UnauthorizedException implements Exception {
 
 abstract class AgentToolbox {
   Future<dynamic> executeAction(AgentAction action);
+  List<AgentToolSchema> getAvailableTools();
 }
 
 class NoemaAgentToolbox implements AgentToolbox {
@@ -64,5 +66,41 @@ class NoemaAgentToolbox implements AgentToolbox {
           'Tool ${action.toolId} is not implemented yet.',
         );
     }
+  }
+
+  @override
+  List<AgentToolSchema> getAvailableTools() {
+    return [
+      AgentToolSchema(
+        id: 'generate_story',
+        description: 'Generates a multi-scene story from a simple idea.',
+        parameters: {'idea': 'string'},
+      ),
+      AgentToolSchema(
+        id: 'generate_planning',
+        description: 'Generates a production plan (tasks) for the project.',
+        parameters: {'project': 'NoemaProject'},
+      ),
+      AgentToolSchema(
+        id: 'extract_characters',
+        description: 'Extracts consistent character profiles from the story.',
+        parameters: {'project': 'NoemaProject'},
+      ),
+      AgentToolSchema(
+        id: 'generate_production',
+        description: 'Compiles all generated assets into a final video.',
+        parameters: {'project': 'NoemaProject'},
+      ),
+      AgentToolSchema(
+        id: 'generate_image',
+        description: 'Generates an image from a prompt.',
+        parameters: {'prompt': 'string'},
+      ),
+      AgentToolSchema(
+        id: 'save_project',
+        description: 'Saves the project state to disk.',
+        parameters: {'project': 'NoemaProject'},
+      ),
+    ];
   }
 }

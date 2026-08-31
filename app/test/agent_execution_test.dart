@@ -11,6 +11,7 @@ import 'package:noema_studio/agent/permissions/permission_policy.dart';
 import 'package:noema_studio/agent/permissions/permission_scope.dart';
 import 'package:noema_studio/agent/permissions/tool_risk_level.dart';
 import 'package:noema_studio/agent/permissions/agent_permission.dart';
+import 'package:noema_studio/agent/models/agent_tool_schema.dart';
 
 class MockAction extends AgentAction {
   MockAction(String toolId, ToolRiskLevel riskLevel)
@@ -28,6 +29,11 @@ class MockToolbox implements AgentToolbox {
       throw UnauthorizedException(action.toolId);
     }
     return {'status': 'ok'};
+  }
+
+  @override
+  List<AgentToolSchema> getAvailableTools() {
+    return [];
   }
 }
 

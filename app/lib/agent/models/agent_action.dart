@@ -1,6 +1,6 @@
 import '../permissions/tool_risk_level.dart';
 
-abstract class AgentAction {
+class AgentAction {
   final String toolId;
   final ToolRiskLevel riskLevel;
   final Map<String, dynamic> arguments;
