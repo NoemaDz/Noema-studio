@@ -43,23 +43,25 @@ class PermissionPolicy {
   bool isAuthorized(String toolId, ToolRiskLevel riskLevel) {
     clearExpired();
 
-    final permission = _grantedPermissions
-        .where((p) => p.toolId == toolId || p.toolId == '*')
+    // 1. Specific Tool Permission
+    final specificPermission = _grantedPermissions
+        .where((p) => p.toolId == toolId)
         .lastOrNull;
 
-    // alwaysAsk overrides everything, even safe tools
-    if (permission?.scope == PermissionScope.alwaysAsk) {
-      return false;
+    if (specificPermission != null) {
+      return specificPermission.scope != PermissionScope.alwaysAsk;
     }
 
-    if (riskLevel == ToolRiskLevel.safe) {
-      return true;
+    // 2. Wildcard Permission
+    final wildcardPermission = _grantedPermissions
+        .where((p) => p.toolId == '*')
+        .lastOrNull;
+
+    if (wildcardPermission != null) {
+      return wildcardPermission.scope != PermissionScope.alwaysAsk;
     }
 
-    if (permission == null) {
-      return false;
-    }
-
-    return true;
+    // 3. Default Policy (based on risk level)
+    return riskLevel == ToolRiskLevel.safe;
   }
 }

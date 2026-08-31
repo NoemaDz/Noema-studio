@@ -95,35 +95,42 @@ void main() {
       );
     });
 
-    test('fails if permission denied', () async {
-      agent.willApprove = false;
-      final plan = await agent.formulatePlan(session);
+    test(
+      'deny -> blocked: fails execution and throws if permission denied',
+      () async {
+        agent.willApprove = false;
+        final plan = await agent.formulatePlan(session);
 
-      await expectLater(
-        agent.executePlan(session, plan),
-        throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('Permission denied'),
+        await expectLater(
+          agent.executePlan(session, plan),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('Permission denied'),
+            ),
           ),
-        ),
-      );
-      expect(agent.approvalRequests, 1);
-      expect(
-        session.executedActions.length,
-        1,
-      ); // Only the 'safe' read action executed
-    });
+        );
+        expect(agent.approvalRequests, 1);
+        expect(
+          session.executedActions.length,
+          1,
+        ); // Only the 'safe' read action executed
+      },
+    );
 
-    test('succeeds if permission granted', () async {
-      agent.willApprove = true;
-      final plan = await agent.formulatePlan(session);
+    test(
+      'grant -> retry: catches UnauthorizedException, prompts user, and retries successfully',
+      () async {
+        agent.willApprove = true;
+        final plan = await agent.formulatePlan(session);
 
-      await agent.executePlan(session, plan);
+        await agent.executePlan(session, plan);
 
-      expect(agent.approvalRequests, 1);
-      expect(session.executedActions.length, 2);
-    });
+        expect(agent.approvalRequests, 1);
+        // Both actions executed, first safe tool passed natively, second threw, caught, approved, retried.
+        expect(session.executedActions.length, 2);
+      },
+    );
   });
 }

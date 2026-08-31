@@ -68,5 +68,47 @@ void main() {
         isFalse,
       );
     });
+
+    test('alwaysAsk + safe: alwaysAsk overrides safe default', () {
+      final policy = PermissionPolicy();
+      policy.grant(
+        AgentPermission(
+          toolId: 'read_project',
+          scope: PermissionScope.alwaysAsk,
+          grantedAt: DateTime.now(),
+        ),
+      );
+      // Safe tool is normally true, but specific alwaysAsk makes it false
+      expect(policy.isAuthorized('read_project', ToolRiskLevel.safe), isFalse);
+    });
+
+    test('specific vs wildcard: specific overrides wildcard', () {
+      final policy = PermissionPolicy();
+      // Wildcard allows everything
+      policy.grant(
+        AgentPermission(
+          toolId: '*',
+          scope: PermissionScope.session,
+          grantedAt: DateTime.now(),
+        ),
+      );
+      expect(policy.isAuthorized('generate_image', ToolRiskLevel.high), isTrue);
+
+      // Specific alwaysAsk overrides wildcard
+      policy.grant(
+        AgentPermission(
+          toolId: 'generate_image',
+          scope: PermissionScope.alwaysAsk,
+          grantedAt: DateTime.now(),
+        ),
+      );
+      expect(
+        policy.isAuthorized('generate_image', ToolRiskLevel.high),
+        isFalse,
+      );
+
+      // Wildcard still works for others
+      expect(policy.isAuthorized('delete_project', ToolRiskLevel.high), isTrue);
+    });
   });
 }
