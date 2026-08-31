@@ -93,16 +93,19 @@ class Noema {
     );
 
     for (var img in project.images) {
-      if (img.artifact != null && !File(img.artifact!.path).existsSync())
+      if (img.artifact != null && !File(img.artifact!.path).existsSync()) {
         img.artifact = null;
+      }
     }
     for (var vid in project.videos) {
-      if (vid.artifact != null && !File(vid.artifact!.path).existsSync())
+      if (vid.artifact != null && !File(vid.artifact!.path).existsSync()) {
         vid.artifact = null;
+      }
     }
     for (var aud in project.audios) {
-      if (aud.artifact != null && !File(aud.artifact!.path).existsSync())
+      if (aud.artifact != null && !File(aud.artifact!.path).existsSync()) {
         aud.artifact = null;
+      }
     }
 
     if (project.finalVideoPath != null &&
