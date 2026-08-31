@@ -26,6 +26,7 @@ class AgentSession {
   final List<AgentObservation> observations = [];
   
   AgentSessionState state = AgentSessionState.initial;
+  bool isLoopRunning = false;
 
   AgentSession({
     required this.currentProject,

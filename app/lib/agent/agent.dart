@@ -24,7 +24,11 @@ abstract class Agent {
   Future<AgentPlan> formulatePlan(AgentSession session);
 
   Future<void> run(AgentSession session, {int maxIterations = 5}) async {
-    session.state = AgentSessionState.running;
+    if (session.isLoopRunning) return;
+    session.isLoopRunning = true;
+
+    try {
+      session.state = AgentSessionState.running;
     
     for (int i = 0; i < maxIterations; i++) {
       if (session.state == AgentSessionState.stopped || session.state == AgentSessionState.completed) {
@@ -51,21 +55,8 @@ abstract class Agent {
           final jobs = obs.result.jobs;
           if (jobs == null || jobs.isEmpty) return false;
           
-          // Find the last observation for this stepId
-          final lastObsForStep = session.observations.lastWhere((o) => o.stepId == obs.stepId);
-          
-          // If the last observation for this step is a success but has no artifacts and no error, it's still pending
-          // (Assuming job completion either provides an artifact or changes status to failure/recoverableFailure)
-          // Also, if the tool inherently doesn't produce artifacts, we should probably check if this was injected by onJobEvent.
-          // To be robust, let's assume a job is pending if the last observation doesn't have artifacts and is successful,
-          // BUT wait, what if a job completes without artifacts?
-          // Let's check if the last observation is the SAME as the initial one. If so, it's pending.
-          if (lastObsForStep == obs) {
-            // It's the only observation for this step so far. Is it a pending job?
-            // A pending job observation has jobs but no artifacts.
-            return obs.result.artifacts == null && obs.result.status == ToolResultStatus.success;
-          }
-          return false;
+          final hasCompletion = session.observations.where((o) => o.stepId == obs.stepId).length > 1;
+          return !hasCompletion;
         });
 
         if (hasPendingJobs) {
@@ -105,6 +96,9 @@ abstract class Agent {
     
     if (session.state == AgentSessionState.running || session.state == AgentSessionState.replanning) {
       session.state = AgentSessionState.iterationLimitReached;
+    }
+    } finally {
+      session.isLoopRunning = false;
     }
   }
 
