@@ -69,9 +69,9 @@ void main() {
       expect(job.transitionTo(JobStatus.running), isFalse);
       expect(job.status, JobStatus.completed); // Status should remain completed
 
-      // pending -> completed (should fail)
+      // pending -> retrying (should fail)
       final job2 = Job(id: '2', providerId: 'test', type: 'image');
-      expect(job2.transitionTo(JobStatus.completed), isFalse);
+      expect(job2.transitionTo(JobStatus.retrying), isFalse);
       expect(job2.status, JobStatus.pending);
     });
   });

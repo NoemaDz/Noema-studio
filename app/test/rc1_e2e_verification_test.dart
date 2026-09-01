@@ -132,12 +132,12 @@ void main() {
       );
     });
 
-    test('Invalid skip transition (pending→completed) is blocked', () {
+    test('Invalid skip transition (pending→retrying) is blocked', () {
       final job = Job(id: 'sm-6', providerId: 'comfyui', type: 'image');
       expect(
-        job.transitionTo(JobStatus.completed),
+        job.transitionTo(JobStatus.retrying),
         isFalse,
-        reason: 'Cannot skip intermediate states',
+        reason: 'Cannot transition from pending to retrying directly',
       );
       expect(job.status, JobStatus.pending);
     });
