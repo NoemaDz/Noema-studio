@@ -148,6 +148,9 @@ class Job {
           newStatus == JobStatus.failed ||
           newStatus == JobStatus.cancelled) {
         completedAt ??= DateTime.now();
+        if (newStatus == JobStatus.completed) {
+          progress = 1.0;
+        }
       }
 
       return true;
