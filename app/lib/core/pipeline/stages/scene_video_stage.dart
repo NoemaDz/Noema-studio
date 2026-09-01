@@ -91,8 +91,15 @@ class SceneVideoStage extends PipelineStage {
         debugPrint('SceneVideoStage: Scene ${scene.id} video job queued ✓');
 
         // Wait for job to complete
-        await jobManager.waitForCompletion(job.id, token: cancellationToken);
-
+        try {
+          await jobManager.waitForCompletion(job.id, token: cancellationToken);
+        } on CancelledException {
+          debugPrint(
+            'SceneVideoStage: Cancellation requested, killing job ${job.id} on provider.',
+          );
+          await jobManager.cancelJob(job.id);
+          rethrow;
+        }
         if (job.status == JobStatus.failed) {
           throw Exception(
             "Video generation failed for scene ${scene.id}: ${job.error?.message ?? 'Unknown error'}",

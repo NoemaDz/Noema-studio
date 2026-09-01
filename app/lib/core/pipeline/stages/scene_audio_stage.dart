@@ -60,7 +60,7 @@ class SceneAudioStage extends PipelineStage {
         debugPrint(
           'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
         );
-        await provider.cancelJob(job.id);
+        await jobManager.cancelJob(job.id);
         rethrow;
       }
 
@@ -122,7 +122,7 @@ class SceneAudioStage extends PipelineStage {
         debugPrint(
           'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
         );
-        await provider.cancelJob(job.id);
+        await jobManager.cancelJob(job.id);
         rethrow;
       }
 
@@ -171,7 +171,7 @@ class SceneAudioStage extends PipelineStage {
         debugPrint(
           'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
         );
-        await provider.cancelJob(job.id);
+        await jobManager.cancelJob(job.id);
         rethrow;
       }
 

@@ -158,7 +158,7 @@ class SceneImageStage extends PipelineStage {
         debugPrint(
           'SceneImageStage: Cancellation requested, killing job ${job.id} on provider.',
         );
-        await provider.cancelJob(job.id);
+        await jobManager.cancelJob(job.id);
         rethrow;
       }
 

@@ -99,10 +99,12 @@ class VideoCompilationStage extends PipelineStage {
 
     ExecutionResult? execResult;
     try {
-      // Instead of JobManager.waitForCompletion, we wait for the provider's result.
-      // If cancellation is requested, JobMonitor calls provider.cancelJob(),
-      // which will cause getResult to unblock with a cancellation error.
+      await jobManager.waitForCompletion(job.id, token: cancellationToken);
       execResult = await provider.getResult(job.id);
+    } on CancelledException {
+      debugPrint('VideoCompilationStage: Cancellation requested, killing job ${job.id}');
+      await jobManager.cancelJob(job.id);
+      rethrow;
     } catch (e) {
       final error = JobError(code: 'compile_exception', message: e.toString());
       jobManager.fail(job.id, error);
