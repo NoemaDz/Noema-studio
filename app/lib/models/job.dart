@@ -98,13 +98,16 @@ class Job {
             newStatus == JobStatus.starting ||
             newStatus == JobStatus.running ||
             newStatus == JobStatus.cancelled ||
-            newStatus == JobStatus.cancelling;
+            newStatus == JobStatus.cancelling ||
+            newStatus == JobStatus.completed ||
+            newStatus == JobStatus.failed;
         break;
       case JobStatus.starting:
         isValid =
             newStatus == JobStatus.running ||
             newStatus == JobStatus.failed ||
-            newStatus == JobStatus.cancelling;
+            newStatus == JobStatus.cancelling ||
+            newStatus == JobStatus.completed;
         break;
       case JobStatus.running:
         isValid =
