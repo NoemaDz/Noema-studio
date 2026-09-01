@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../contracts/pipeline_stage.dart';
+import '../../cancellation_token.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
 import '../../workflow/workflow_context.dart';
