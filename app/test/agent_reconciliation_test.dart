@@ -22,7 +22,10 @@ class MockAsyncToolbox implements AgentToolbox {
   MockAsyncToolbox(this.jobManager);
 
   @override
-  Future<ToolResult> executeAction(AgentSession session, AgentAction action) async {
+  Future<ToolResult> executeAction(
+    AgentSession session,
+    AgentAction action,
+  ) async {
     if (action.toolId == 'generate_image') {
       final job = Job(
         id: 'job_123',
@@ -119,7 +122,7 @@ void main() {
               riskLevel: ToolRiskLevel.moderate,
               arguments: {'prompt': 'test'},
             ),
-          )
+          ),
         ],
       );
 
@@ -152,7 +155,10 @@ void main() {
       final freshAgent = TestAsyncAgent(
         toolbox: freshToolbox,
         permissionPolicy: policy,
-        initialPlan: AgentPlan(goal: 'draw image', steps: []), // Agent is restored mid-execution, next formulate is empty
+        initialPlan: AgentPlan(
+          goal: 'draw image',
+          steps: [],
+        ), // Agent is restored mid-execution, next formulate is empty
         emptyPlan: AgentPlan(goal: 'draw image', steps: []),
       );
 
@@ -183,10 +189,15 @@ void main() {
       }
 
       // 12. Verify Agent does NOT remain stuck
-      expect(restoredSession.state, AgentSessionState.failed); // Fails because it wakes up and formulates empty plan
+      expect(
+        restoredSession.state,
+        AgentSessionState.failed,
+      ); // Fails because it wakes up and formulates empty plan
 
       // 13. Verify correct observation is produced
-      final completionObs = restoredSession.observations.lastWhere((o) => o.stepId == 'step_1');
+      final completionObs = restoredSession.observations.lastWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(completionObs.result.status, ToolResultStatus.success);
       expect(completionObs.result.artifacts!.first.artifactId, 'artifact_456');
     });
@@ -212,7 +223,9 @@ void main() {
         type: 'image_job',
         status: JobStatus.running,
       );
-      freshJobManager.restoreJobs([restoredJob]); // JobManager internally changes status to failed
+      freshJobManager.restoreJobs([
+        restoredJob,
+      ]); // JobManager internally changes status to failed
 
       final restoredSession = cloneSession(persistedSession);
 
@@ -226,10 +239,15 @@ void main() {
       }
 
       expect(restoredSession.state, AgentSessionState.failed);
-      
-      final completionObs = restoredSession.observations.lastWhere((o) => o.stepId == 'step_1');
+
+      final completionObs = restoredSession.observations.lastWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(completionObs.result.status, ToolResultStatus.fatalFailure);
-      expect(completionObs.result.error, 'Job interrupted due to application restart');
+      expect(
+        completionObs.result.error,
+        'Job interrupted due to application restart',
+      );
     });
 
     test('Still-running Job', () async {
@@ -263,7 +281,7 @@ void main() {
       }
 
       await Future.delayed(const Duration(milliseconds: 50));
-      
+
       // Expected: Agent remains waiting
       expect(restoredSession.state, AgentSessionState.waitingForJobs);
     });
@@ -300,7 +318,7 @@ void main() {
       // Expected: AgentSession ignores it and remains waiting
       expect(restoredSession.state, AgentSessionState.waitingForJobs);
     });
-    
+
     test('Missing Job', () async {
       await agent.run(session);
       expect(session.state, AgentSessionState.waitingForJobs);

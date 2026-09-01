@@ -6,22 +6,25 @@ import '../../agent/models/agent_session.dart';
 import '../../agent/models/permission_outcome.dart';
 import '../../agent/permissions/permission_policy.dart';
 import '../../agent/agent_toolbox.dart';
+import '../../agent/agent_planner.dart';
 import '../../core/job_events.dart';
 import '../../core/noema_project.dart';
 
 class OrchestratedAgent extends Agent {
   final Future<PermissionOutcome> Function(AgentAction action) onRequest;
 
+  final AgentPlanner planner;
+
   OrchestratedAgent({
     required super.toolbox,
     required super.permissionPolicy,
     required this.onRequest,
+    required this.planner,
   });
 
   @override
   Future<AgentPlan> formulatePlan(AgentSession session) async {
-    // Basic fallback since this orchestrator doesn't yet have LLM planner injected
-    return AgentPlan(goal: session.currentGoal, steps: []);
+    return await planner.formulatePlan(session);
   }
 
   @override
@@ -34,8 +37,9 @@ class AgentOrchestratorService {
   final AgentToolbox toolbox;
   final JobEvents jobEvents;
   final PermissionPolicy permissionPolicy;
+  final AgentPlanner planner;
   late final OrchestratedAgent _agent;
-  
+
   AgentSession? _currentSession;
   StreamSubscription? _jobSubscription;
 
@@ -49,11 +53,13 @@ class AgentOrchestratorService {
     required this.toolbox,
     required this.jobEvents,
     required this.permissionPolicy,
+    required this.planner,
   }) {
     _agent = OrchestratedAgent(
       toolbox: toolbox,
       permissionPolicy: permissionPolicy,
       onRequest: _handlePermissionRequest,
+      planner: planner,
     );
   }
 
@@ -82,12 +88,9 @@ class AgentOrchestratorService {
 
   /// Start a brand new agent session
   Future<void> startTask(NoemaProject project, String goal) async {
-    _currentSession = AgentSession(
-      currentProject: project,
-      currentGoal: goal,
-    );
+    _currentSession = AgentSession(currentProject: project, currentGoal: goal);
     project.agentSession = _currentSession;
-    
+
     attachJobEvents();
     onStateChanged?.call();
 
@@ -100,7 +103,7 @@ class AgentOrchestratorService {
     attachJobEvents();
     onStateChanged?.call();
 
-    if (session.state == AgentSessionState.running || 
+    if (session.state == AgentSessionState.running ||
         session.state == AgentSessionState.replanning) {
       await _runCurrentSession();
     }
@@ -108,7 +111,9 @@ class AgentOrchestratorService {
 
   /// Explicitly stop the current task
   void stopTask() {
-    if (_currentSession != null && _currentSession!.state != AgentSessionState.completed && _currentSession!.state != AgentSessionState.failed) {
+    if (_currentSession != null &&
+        _currentSession!.state != AgentSessionState.completed &&
+        _currentSession!.state != AgentSessionState.failed) {
       _currentSession!.state = AgentSessionState.stopped;
       onStateChanged?.call();
     }
@@ -116,11 +121,11 @@ class AgentOrchestratorService {
 
   Future<void> _runCurrentSession() async {
     if (_currentSession == null) return;
-    
+
     // The Agent.run is fully asynchronous and event-driven.
     // It will yield control when waitingForJobs or requesting permissions.
     await _agent.run(_currentSession!);
-    
+
     onStateChanged?.call();
   }
 }

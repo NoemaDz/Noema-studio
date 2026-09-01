@@ -1,5 +1,1 @@
-enum PermissionOutcome {
-  allow,
-  denyAndReplan,
-  stopTask,
-}
+enum PermissionOutcome { allow, denyAndReplan, stopTask }

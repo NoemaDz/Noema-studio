@@ -12,10 +12,24 @@ import 'package:noema_studio/core/job_events.dart';
 import 'package:noema_studio/core/noema_project.dart';
 import 'package:noema_studio/agent/permissions/permission_policy.dart';
 import 'package:noema_studio/models/story.dart' as import_story;
+import 'package:noema_studio/agent/agent_planner.dart';
+import 'package:noema_studio/agent/llm_client.dart';
+
+class MockLlmClient implements LlmClient {
+  String responseText = '[]';
+
+  @override
+  Future<String> generateText(String prompt) async {
+    return responseText;
+  }
+}
 
 class MockToolbox implements AgentToolbox {
   @override
-  Future<ToolResult> executeAction(AgentSession session, AgentAction action) async {
+  Future<ToolResult> executeAction(
+    AgentSession session,
+    AgentAction action,
+  ) async {
     return ToolResult(toolId: action.toolId, status: ToolResultStatus.success);
   }
 
@@ -26,7 +40,7 @@ class MockToolbox implements AgentToolbox {
       description: "Does something dangerous",
       parameters: {},
       riskLevel: ToolRiskLevel.high,
-    )
+    ),
   ];
 }
 
@@ -34,57 +48,85 @@ void main() {
   group('Agent Orchestration Service Tests', () {
     test('startTask initiates agent session and handles permissions', () async {
       final jobEvents = JobEvents();
+      final toolbox = MockToolbox();
+      final planner = AgentPlanner(
+        llmClient: MockLlmClient(),
+        toolbox: toolbox,
+      );
+
       final orchestrator = AgentOrchestratorService(
-        toolbox: MockToolbox(),
+        toolbox: toolbox,
         jobEvents: jobEvents,
         permissionPolicy: PermissionPolicy(),
+        planner: planner,
       );
 
       bool stateChanged = false;
       orchestrator.onStateChanged = () => stateChanged = true;
 
-      final project = NoemaProject(id: 'p1', idea: 'test', story: import_story.Story(title: 't', scenes: []));
+      final project = NoemaProject(
+        id: 'p1',
+        idea: 'test',
+        story: import_story.Story(title: 't', scenes: []),
+      );
 
       // Mock the permission request to wait
       final permCompleter = Completer<PermissionOutcome>();
-      
+
       orchestrator.onPermissionRequested = (action) {
         return permCompleter.future;
       };
 
       // Start task asynchronously
-      final startFuture = orchestrator.startTask(project, "do something dangerous");
-      
+      final startFuture = orchestrator.startTask(
+        project,
+        "do something dangerous",
+      );
+
       // Yield to event loop to let Agent hit the permission boundary (if we had a real agent/LLM).
       // Wait, our agent relies on LLM to plan. To test this natively without LLM, we'd need a mock LLM.
       // Alternatively, we just verify the state changes.
       expect(stateChanged, isTrue);
       expect(orchestrator.currentSession, isNotNull);
-      expect(orchestrator.currentSession!.currentGoal, "do something dangerous");
+      expect(
+        orchestrator.currentSession!.currentGoal,
+        "do something dangerous",
+      );
 
       // We won't await startFuture because there's no mock LLM in MockToolbox, the Agent will throw or fail planning since the planner is real.
       // That's fine, the session will transition to failed.
       await startFuture;
-      
-      // Since it failed planning (no LLM), it's failed.
+
+      // Since it failed planning (no LLM text to parse), it's failed.
       expect(orchestrator.currentSession!.state, AgentSessionState.failed);
     });
-    
+
     test('stopTask sets state to stopped', () async {
       final jobEvents = JobEvents();
-      final orchestrator = AgentOrchestratorService(
-        toolbox: MockToolbox(),
-        jobEvents: jobEvents,
-        permissionPolicy: PermissionPolicy(),
+      final toolbox = MockToolbox();
+      final planner = AgentPlanner(
+        llmClient: MockLlmClient(),
+        toolbox: toolbox,
       );
 
-      final project = NoemaProject(id: 'p1', idea: 'test', story: import_story.Story(title: 't', scenes: []));
+      final orchestrator = AgentOrchestratorService(
+        toolbox: toolbox,
+        jobEvents: jobEvents,
+        permissionPolicy: PermissionPolicy(),
+        planner: planner,
+      );
+
+      final project = NoemaProject(
+        id: 'p1',
+        idea: 'test',
+        story: import_story.Story(title: 't', scenes: []),
+      );
       orchestrator.startTask(project, "test");
-      
+
       // Force state
       orchestrator.currentSession!.state = AgentSessionState.running;
       orchestrator.stopTask();
-      
+
       expect(orchestrator.currentSession!.state, AgentSessionState.stopped);
     });
   });

@@ -48,7 +48,7 @@ class JobManager {
       }
       if (update.result != null) job.result = update.result;
       if (update.error != null) job.error = update.error;
-      
+
       _jobEvents.add(job);
     } else {
       print(

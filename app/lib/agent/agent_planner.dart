@@ -27,12 +27,14 @@ class AgentPlanner {
     final projectContext = ProjectContext.fromProject(session.currentProject);
     final contextJson = jsonEncode(projectContext.toJson());
     final deniedToolsJson = jsonEncode(session.deniedTools);
-    
+
     // Bounded context: last 10 observations
-    final recentObservations = session.observations.length > 10 
-        ? session.observations.sublist(session.observations.length - 10) 
+    final recentObservations = session.observations.length > 10
+        ? session.observations.sublist(session.observations.length - 10)
         : session.observations;
-    final historyJson = jsonEncode(recentObservations.map((o) => o.toJson()).toList());
+    final historyJson = jsonEncode(
+      recentObservations.map((o) => o.toJson()).toList(),
+    );
 
     return '''
 You are an intelligent agent planner. Your task is to break down the user's goal into a structured plan using only the available tools.
@@ -65,17 +67,22 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
 ''';
   }
 
-  AgentPlan _parseAndValidateResponse(String responseText, AgentSession session) {
+  AgentPlan _parseAndValidateResponse(
+    String responseText,
+    AgentSession session,
+  ) {
     final goal = session.currentGoal;
-    // 1. Strip potential markdown code blocks
     String jsonString = responseText.trim();
-    if (jsonString.startsWith('```json')) {
-      jsonString = jsonString.substring(7);
-      if (jsonString.endsWith('```')) {
-        jsonString = jsonString.substring(0, jsonString.length - 3);
-      }
+
+    // Use regex to extract the JSON array if the LLM added conversational text or markdown
+    final regex = RegExp(r'\[.*\]', dotAll: true);
+    final match = regex.firstMatch(jsonString);
+    if (match != null) {
+      jsonString = match.group(0)!;
+    } else {
+      // Fallback in case it's somehow not matching the regex but is valid JSON
+      jsonString = jsonString.trim();
     }
-    jsonString = jsonString.trim();
 
     // 2. Parse JSON
     List<dynamic> jsonArray;
@@ -101,7 +108,7 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
       if (id == null || id is! String) {
         throw const FormatException('Missing or invalid "id" field in step');
       }
-      
+
       if (seenIds.contains(id)) {
         throw FormatException('Duplicate step ID found: $id');
       }
@@ -153,7 +160,7 @@ Respond ONLY with a valid JSON array of step objects. Each step object MUST have
         if (!schema.parameters.containsKey(key)) {
           throw FormatException('Unknown argument "$key" for tool "$toolId"');
         }
-        
+
         final expectedType = schema.parameters[key];
         final val = argsMap[key];
         if (expectedType == 'string' && val is! String) {

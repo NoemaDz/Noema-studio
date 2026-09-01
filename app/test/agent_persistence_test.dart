@@ -23,7 +23,10 @@ class PersistenceTestToolbox implements AgentToolbox {
   PersistenceTestToolbox(this.jobManager);
 
   @override
-  Future<ToolResult> executeAction(AgentSession session, AgentAction action) async {
+  Future<ToolResult> executeAction(
+    AgentSession session,
+    AgentAction action,
+  ) async {
     if (action.toolId == 'generate_image') {
       final job = Job(
         id: 'job_persistent_123',
@@ -83,7 +86,7 @@ void main() {
         idea: 'idea',
         story: Story(title: 'title', scenes: []),
       );
-      
+
       final originalSession = AgentSession(
         currentProject: originalProject,
         currentGoal: 'draw image',
@@ -101,7 +104,7 @@ void main() {
               riskLevel: ToolRiskLevel.moderate,
               arguments: {'prompt': 'persistent test'},
             ),
-          )
+          ),
         ],
       );
 
@@ -113,7 +116,10 @@ void main() {
       );
 
       // Add dummy denied tools and execution history for serialization testing
-      originalSession.deniedTools.add({'toolId': 'dangerous_tool', 'reason': 'user rejected'});
+      originalSession.deniedTools.add({
+        'toolId': 'dangerous_tool',
+        'reason': 'user rejected',
+      });
 
       // 2. Execute agent to generate job and enter waiting state
       await originalAgent.run(originalSession);
@@ -124,7 +130,9 @@ void main() {
       final generatedJob = originalJobManager.jobs.first;
 
       // 3. Serialize to persist state
-      originalProject.savedJobs.addAll(originalJobManager.jobs); // Simulating app closing behavior
+      originalProject.savedJobs.addAll(
+        originalJobManager.jobs,
+      ); // Simulating app closing behavior
       final serializedJson = jsonEncode(originalProject.toJson());
 
       // ----------------------------------------------------------------------
@@ -139,7 +147,7 @@ void main() {
       expect(restoredProject.id, 'proj_persistence');
       expect(restoredProject.agentSession, isNotNull);
       final restoredSession = restoredProject.agentSession!;
-      
+
       // Verify AgentSession basic fields
       expect(restoredSession.currentGoal, 'draw image');
       expect(restoredSession.state, AgentSessionState.waitingForJobs);
@@ -147,7 +155,9 @@ void main() {
       expect(restoredSession.deniedTools.first['toolId'], 'dangerous_tool');
 
       // Verify AgentSession correlation fields
-      final restoredObservation = restoredSession.observations.lastWhere((o) => o.stepId == 'step_1');
+      final restoredObservation = restoredSession.observations.lastWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(restoredObservation.result.jobs!.first.jobId, generatedJob.id);
 
       // 6. Create fresh runtime objects
@@ -155,7 +165,10 @@ void main() {
       final freshAgent = PersistenceTestAgent(
         toolbox: PersistenceTestToolbox(freshJobManager),
         permissionPolicy: PermissionPolicy(),
-        initialPlan: AgentPlan(goal: 'draw image', steps: []), // Agent is mid-execution, next plan is empty
+        initialPlan: AgentPlan(
+          goal: 'draw image',
+          steps: [],
+        ), // Agent is mid-execution, next plan is empty
         emptyPlan: AgentPlan(goal: 'draw image', steps: []),
       );
 
@@ -183,12 +196,20 @@ void main() {
       }
 
       // 9. Verify Agent successfully resumed and evaluated the new context
-      expect(restoredSession.state, AgentSessionState.failed); // Wakes up, formulates empty plan -> fails
-      
+      expect(
+        restoredSession.state,
+        AgentSessionState.failed,
+      ); // Wakes up, formulates empty plan -> fails
+
       // Verify proper observation was injected using the restored step ID correlation
-      final completionObs = restoredSession.observations.lastWhere((o) => o.stepId == 'step_1');
+      final completionObs = restoredSession.observations.lastWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(completionObs.result.status, ToolResultStatus.success);
-      expect(completionObs.result.artifacts!.first.artifactId, 'artifact_persisted_999');
+      expect(
+        completionObs.result.artifacts!.first.artifactId,
+        'artifact_persisted_999',
+      );
     });
   });
 }

@@ -1,8 +1,4 @@
-enum ToolResultStatus {
-  success,
-  recoverableFailure,
-  fatalFailure,
-}
+enum ToolResultStatus { success, recoverableFailure, fatalFailure }
 
 class ArtifactReference {
   final String artifactId;
@@ -10,10 +6,7 @@ class ArtifactReference {
 
   ArtifactReference({required this.artifactId, required this.type});
 
-  Map<String, dynamic> toJson() => {
-    'artifactId': artifactId,
-    'type': type,
-  };
+  Map<String, dynamic> toJson() => {'artifactId': artifactId, 'type': type};
 
   factory ArtifactReference.fromJson(Map<String, dynamic> json) {
     return ArtifactReference(
@@ -29,10 +22,7 @@ class JobReference {
 
   JobReference({required this.jobId, required this.type});
 
-  Map<String, dynamic> toJson() => {
-    'jobId': jobId,
-    'type': type,
-  };
+  Map<String, dynamic> toJson() => {'jobId': jobId, 'type': type};
 
   factory JobReference.fromJson(Map<String, dynamic> json) {
     return JobReference(
@@ -64,7 +54,8 @@ class ToolResult {
     'status': status.name,
     if (data != null) 'data': data,
     if (error != null) 'error': error,
-    if (artifacts != null) 'artifacts': artifacts!.map((a) => a.toJson()).toList(),
+    if (artifacts != null)
+      'artifacts': artifacts!.map((a) => a.toJson()).toList(),
     if (jobs != null) 'jobs': jobs!.map((j) => j.toJson()).toList(),
   };
 
@@ -72,13 +63,21 @@ class ToolResult {
     return ToolResult(
       toolId: json['toolId'] as String,
       status: ToolResultStatus.values.byName(json['status'] as String),
-      data: json['data'] != null ? Map<String, dynamic>.from(json['data'] as Map) : null,
+      data: json['data'] != null
+          ? Map<String, dynamic>.from(json['data'] as Map)
+          : null,
       error: json['error'] as String?,
       artifacts: json['artifacts'] != null
-          ? (json['artifacts'] as List).map((a) => ArtifactReference.fromJson(a as Map<String, dynamic>)).toList()
+          ? (json['artifacts'] as List)
+                .map(
+                  (a) => ArtifactReference.fromJson(a as Map<String, dynamic>),
+                )
+                .toList()
           : null,
       jobs: json['jobs'] != null
-          ? (json['jobs'] as List).map((j) => JobReference.fromJson(j as Map<String, dynamic>)).toList()
+          ? (json['jobs'] as List)
+                .map((j) => JobReference.fromJson(j as Map<String, dynamic>))
+                .toList()
           : null,
     );
   }

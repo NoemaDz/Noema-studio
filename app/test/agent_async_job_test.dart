@@ -21,7 +21,10 @@ class MockAsyncToolbox implements AgentToolbox {
   MockAsyncToolbox(this.jobManager);
 
   @override
-  Future<ToolResult> executeAction(AgentSession session, AgentAction action) async {
+  Future<ToolResult> executeAction(
+    AgentSession session,
+    AgentAction action,
+  ) async {
     if (action.toolId == 'generate_image') {
       final job = Job(
         id: 'job_123',
@@ -103,7 +106,7 @@ void main() {
               riskLevel: ToolRiskLevel.moderate,
               arguments: {'prompt': 'test'},
             ),
-          )
+          ),
         ],
       );
 
@@ -129,7 +132,9 @@ void main() {
       expect(agent.formulateCount, 2);
 
       // Check observation of submitted job
-      final submissionObs = session.observations.firstWhere((o) => o.stepId == 'step_1');
+      final submissionObs = session.observations.firstWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(submissionObs.result.jobs!.first.jobId, 'job_123');
 
       // 2. Simulate Job completion from JobManager
@@ -150,7 +155,9 @@ void main() {
       expect(session.state, AgentSessionState.failed);
 
       // Verify the injected observation
-      final completionObs = session.observations.lastWhere((o) => o.stepId == 'step_1');
+      final completionObs = session.observations.lastWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(completionObs.result.status, ToolResultStatus.success);
       expect(completionObs.result.artifacts!.first.artifactId, 'artifact_456');
     });
@@ -160,17 +167,25 @@ void main() {
       expect(session.state, AgentSessionState.waitingForJobs);
 
       // Simulate Job failure
-      jobManager.fail('job_123', JobError(code: 'err1', message: 'Failed to generate'));
-      
+      jobManager.fail(
+        'job_123',
+        JobError(code: 'err1', message: 'Failed to generate'),
+      );
+
       for (int i = 0; i < 20; i++) {
         await Future.delayed(const Duration(milliseconds: 10));
         if (session.state != AgentSessionState.waitingForJobs) break;
       }
 
       expect(agent.formulateCount, 3);
-      expect(session.state, AgentSessionState.failed); // Fails because of empty plan after resume
+      expect(
+        session.state,
+        AgentSessionState.failed,
+      ); // Fails because of empty plan after resume
 
-      final completionObs = session.observations.lastWhere((o) => o.stepId == 'step_1');
+      final completionObs = session.observations.lastWhere(
+        (o) => o.stepId == 'step_1',
+      );
       expect(completionObs.result.status, ToolResultStatus.fatalFailure);
       expect(completionObs.result.error, 'Failed to generate');
     });

@@ -26,7 +26,10 @@ class MockToolbox implements AgentToolbox {
   MockToolbox(this.policy);
 
   @override
-  Future<ToolResult> executeAction(AgentSession session, AgentAction action) async {
+  Future<ToolResult> executeAction(
+    AgentSession session,
+    AgentAction action,
+  ) async {
     if (!policy.isAuthorized(action.toolId, action.riskLevel)) {
       throw UnauthorizedException(action.toolId);
     }
@@ -178,7 +181,10 @@ void main() {
       expect(completed, false);
       expect(session.state, AgentSessionState.replanning);
       expect(session.observations.last.result.error, contains('API timeout'));
-      expect(session.observations.last.result.status, ToolResultStatus.recoverableFailure);
+      expect(
+        session.observations.last.result.status,
+        ToolResultStatus.recoverableFailure,
+      );
     });
 
     test('fatal failure -> failed', () async {
@@ -199,7 +205,10 @@ void main() {
       expect(completed, false);
       expect(session.state, AgentSessionState.failed);
       expect(session.observations.last.result.error, contains('Disk full'));
-      expect(session.observations.last.result.status, ToolResultStatus.fatalFailure);
+      expect(
+        session.observations.last.result.status,
+        ToolResultStatus.fatalFailure,
+      );
     });
   });
 }

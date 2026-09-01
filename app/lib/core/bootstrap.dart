@@ -22,6 +22,8 @@ import '../presentation/state/agent_state.dart';
 import '../application/services/agent_orchestrator_service.dart';
 import '../agent/agent_toolbox.dart';
 import '../agent/permissions/permission_policy.dart';
+import '../agent/agent_planner.dart';
+import '../application/services/provider_llm_client.dart';
 import '../application/services/project_service.dart';
 import '../application/services/project_generation_service.dart';
 import '../application/services/project_persistence_service.dart';
@@ -136,10 +138,21 @@ class Bootstrap {
     );
 
     final permissionPolicy = PermissionPolicy();
+    final toolbox = NoemaAgentToolbox(
+      noema: noema,
+      permissionPolicy: permissionPolicy,
+    );
+    final providerLlmClient = ProviderLlmClient(llmProvider);
+    final agentPlanner = AgentPlanner(
+      llmClient: providerLlmClient,
+      toolbox: toolbox,
+    );
+
     agentOrchestratorService = AgentOrchestratorService(
-      toolbox: NoemaAgentToolbox(noema: noema, permissionPolicy: permissionPolicy),
+      toolbox: toolbox,
       jobEvents: jobEvents,
       permissionPolicy: permissionPolicy,
+      planner: agentPlanner,
     );
 
     agentState = AgentState(agentOrchestratorService);

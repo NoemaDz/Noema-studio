@@ -8,7 +8,7 @@ import '../../core/noema_project.dart';
 
 import '../../workflows/characters/character_workflow.dart';
 
-import '../../models/character_list.dart';
+import '../../models/character.dart';
 
 class CharacterExtractionService {
   final WorkflowEngine engine;
@@ -26,12 +26,14 @@ class CharacterExtractionService {
 
     final result = await engine.runWithContext(workflow, context);
 
-    final characters = CharacterList.fromJson(
-      jsonDecode(result.get<String>("characters")!),
-    );
+    final rawCharacters = result.get<List<Map<String, dynamic>>>(
+      "extract_characters",
+    )!;
+
+    final characters = rawCharacters.map((e) => Character.fromJson(e)).toList();
 
     project.characters
       ..clear()
-      ..addAll(characters.characters);
+      ..addAll(characters);
   }
 }

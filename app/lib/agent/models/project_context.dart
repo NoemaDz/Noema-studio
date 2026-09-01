@@ -20,14 +20,12 @@ class ProjectContext {
       projectId: project.id,
       title: project.title,
       idea: project.idea,
-      scenes: project.story.scenes.map((s) => {
-        'id': s.id.toString(),
-        'description': s.description,
-      }).toList(),
-      characters: project.characters.map((c) => {
-        'id': c.id,
-        'name': c.name,
-      }).toList(),
+      scenes: project.story.scenes
+          .map((s) => {'id': s.id.toString(), 'description': s.description})
+          .toList(),
+      characters: project.characters
+          .map((c) => {'id': c.id, 'name': c.name})
+          .toList(),
     );
   }
 

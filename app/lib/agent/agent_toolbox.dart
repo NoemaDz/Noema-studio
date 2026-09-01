@@ -7,6 +7,8 @@ import 'permissions/permission_policy.dart';
 import 'models/agent_session.dart';
 import 'permissions/tool_risk_level.dart';
 import 'models/tool_result.dart';
+import 'dart:convert';
+import '../models/story.dart';
 
 class UnauthorizedException implements Exception {
   final String toolId;
@@ -66,6 +68,17 @@ class NoemaAgentToolbox implements AgentToolbox {
       case 'generate_story':
         final idea = action.arguments['idea'] as String;
         final result = await noema.generateStory(idea);
+
+        // Parse and save the story to the current project
+        try {
+          final Map<String, dynamic> jsonMap = jsonDecode(result);
+          session.currentProject.story = Story.fromJson(jsonMap);
+          // Auto-save the project so the UI updates
+          await noema.saveProject(session.currentProject);
+        } catch (e) {
+          throw RecoverableToolException('Failed to parse generated story: $e');
+        }
+
         return ToolResult(
           toolId: action.toolId,
           status: ToolResultStatus.success,
@@ -171,7 +184,8 @@ class NoemaAgentToolbox implements AgentToolbox {
       ),
       AgentToolSchema(
         id: 'task_complete',
-        description: 'Marks the current goal as fully achieved and successfully stops the agent loop.',
+        description:
+            'Marks the current goal as fully achieved and successfully stops the agent loop.',
         parameters: {'message': 'string'},
         requiredParameters: ['message'],
         riskLevel: ToolRiskLevel.safe,

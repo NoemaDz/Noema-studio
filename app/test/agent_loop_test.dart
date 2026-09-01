@@ -66,11 +66,11 @@ void main() {
               ),
             ),
           ],
-        )
+        ),
       ];
 
       await agent.run(session);
-      
+
       expect(agent.formulationCalls, 1);
       expect(session.state, AgentSessionState.completed);
     });
@@ -90,26 +90,35 @@ void main() {
           ),
         ],
       );
-      agent.plansToReturn = [infinitePlan, infinitePlan, infinitePlan, infinitePlan];
+      agent.plansToReturn = [
+        infinitePlan,
+        infinitePlan,
+        infinitePlan,
+        infinitePlan,
+      ];
 
       await agent.run(session, maxIterations: 3);
-      
+
       expect(agent.formulationCalls, 3);
       expect(session.executedActions.length, 3);
       expect(session.state, AgentSessionState.iterationLimitReached);
-      expect(session.observations.any((o) => o.stepId.startsWith('iteration_3')), isTrue);
+      expect(
+        session.observations.any((o) => o.stepId.startsWith('iteration_3')),
+        isTrue,
+      );
     });
 
     test('terminates when empty plan is returned', () async {
-      agent.plansToReturn = [
-        AgentPlan(goal: session.currentGoal, steps: []),
-      ];
+      agent.plansToReturn = [AgentPlan(goal: session.currentGoal, steps: [])];
 
       await agent.run(session);
-      
+
       expect(agent.formulationCalls, 1);
       expect(session.state, AgentSessionState.failed);
-      expect(session.observations.last.result.error, contains('Plan formulated with 0 steps. Assuming stuck.'));
+      expect(
+        session.observations.last.result.error,
+        contains('Plan formulated with 0 steps. Assuming stuck.'),
+      );
     });
   });
 }

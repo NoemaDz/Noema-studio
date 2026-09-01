@@ -20,7 +20,9 @@ class _AgentPanelState extends State<AgentPanel> {
       final project = noema.bootstrap.projectState.project;
       if (project == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please open or create a project first.')),
+          const SnackBar(
+            content: Text('Please open or create a project first.'),
+          ),
         );
         return;
       }
@@ -35,14 +37,15 @@ class _AgentPanelState extends State<AgentPanel> {
       width: 320,
       color: Theme.of(context).colorScheme.surface,
       opacity: 0.12,
-      border: const Border(
-        left: BorderSide(color: Colors.white10, width: 1.0),
-      ),
+      border: const Border(left: BorderSide(color: Colors.white10, width: 1.0)),
       child: ListenableBuilder(
-        listenable: noema.bootstrap.agentState,
+        listenable: Listenable.merge([
+          noema.bootstrap.agentState,
+          noema.bootstrap.projectState,
+        ]),
         builder: (context, _) {
           final state = noema.bootstrap.agentState;
-          
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -55,10 +58,12 @@ class _AgentPanelState extends State<AgentPanel> {
                 child: Row(
                   children: [
                     Icon(
-                      state.isRunning || state.isWaitingForJobs 
+                      state.isRunning || state.isWaitingForJobs
                           ? Icons.smart_toy
                           : Icons.smart_toy_outlined,
-                      color: state.isRunning ? Theme.of(context).colorScheme.primary : Colors.grey,
+                      color: state.isRunning
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -69,25 +74,35 @@ class _AgentPanelState extends State<AgentPanel> {
                     ),
                     if (state.isRunning || state.isWaitingForJobs)
                       IconButton(
-                        icon: const Icon(Icons.stop, color: Colors.redAccent, size: 20),
+                        icon: const Icon(
+                          Icons.stop,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
                         onPressed: state.stopTask,
                         tooltip: "Stop Task",
-                      )
+                      ),
                   ],
                 ),
               ),
-              
+
               // Status Indicator
-              if (state.currentStatus != "Inactive" && state.currentStatus != "Idle")
+              if (state.currentStatus != "Inactive" &&
+                  state.currentStatus != "Idle")
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
                   child: Row(
                     children: [
                       if (state.isRunning || state.isWaitingForJobs)
                         const SizedBox(
-                          width: 12, 
-                          height: 12, 
+                          width: 12,
+                          height: 12,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       if (state.isRunning || state.isWaitingForJobs)
@@ -127,19 +142,28 @@ class _AgentPanelState extends State<AgentPanel> {
                     Expanded(
                       child: TextField(
                         controller: _goalController,
-                        enabled: !state.isRunning && !state.isWaitingForJobs && state.pendingPermission == null,
+                        enabled:
+                            noema.bootstrap.projectState.project != null &&
+                            !state.isRunning &&
+                            !state.isWaitingForJobs &&
+                            state.pendingPermission == null,
                         maxLines: 4,
                         minLines: 1,
                         textInputAction: TextInputAction.send,
                         decoration: InputDecoration(
-                          hintText: 'Ask agent to do something...',
+                          hintText: noema.bootstrap.projectState.project == null
+                              ? 'Open a project first...'
+                              : 'Ask agent to do something...',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.05),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
                         onSubmitted: (_) => _submitGoal(),
                       ),
@@ -147,17 +171,21 @@ class _AgentPanelState extends State<AgentPanel> {
                     const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.send),
-                      onPressed: (!state.isRunning && !state.isWaitingForJobs && state.pendingPermission == null)
+                      onPressed:
+                          (noema.bootstrap.projectState.project != null &&
+                              !state.isRunning &&
+                              !state.isWaitingForJobs &&
+                              state.pendingPermission == null)
                           ? _submitGoal
                           : null,
                       color: Theme.of(context).colorScheme.primary,
-                    )
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           );
-        }
+        },
       ),
     );
   }
@@ -169,9 +197,15 @@ class _AgentPanelState extends State<AgentPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            obs.isError ? Icons.error_outline : (obs.isPending ? Icons.hourglass_empty : Icons.check_circle_outline),
+            obs.isError
+                ? Icons.error_outline
+                : (obs.isPending
+                      ? Icons.hourglass_empty
+                      : Icons.check_circle_outline),
             size: 16,
-            color: obs.isError ? Colors.redAccent : (obs.isPending ? Colors.orangeAccent : Colors.green),
+            color: obs.isError
+                ? Colors.redAccent
+                : (obs.isPending ? Colors.orangeAccent : Colors.green),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -180,7 +214,10 @@ class _AgentPanelState extends State<AgentPanel> {
               children: [
                 Text(
                   obs.description,
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
                 ),
                 if (obs.resultText != null)
                   Text(
@@ -220,7 +257,13 @@ class _AgentPanelState extends State<AgentPanel> {
             children: [
               Icon(Icons.security, color: Colors.orangeAccent, size: 18),
               SizedBox(width: 8),
-              Text("Permission Required", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orangeAccent)),
+              Text(
+                "Permission Required",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orangeAccent,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -239,7 +282,10 @@ class _AgentPanelState extends State<AgentPanel> {
             children: [
               TextButton(
                 onPressed: () => state.resolvePermission(false, stop: true),
-                child: const Text("Stop Task", style: TextStyle(color: Colors.redAccent)),
+                child: const Text(
+                  "Stop Task",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
               ),
               const SizedBox(width: 8),
               TextButton(
@@ -256,7 +302,7 @@ class _AgentPanelState extends State<AgentPanel> {
                 child: const Text("Allow"),
               ),
             ],
-          )
+          ),
         ],
       ),
     );

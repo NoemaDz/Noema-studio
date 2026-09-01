@@ -10,7 +10,8 @@ class LlmAgent extends Agent {
   final AgentPlanner planner;
 
   // Provide a callback or mechanism for requesting permissions from the UI
-  final Future<PermissionOutcome> Function(AgentAction action) onPermissionRequested;
+  final Future<PermissionOutcome> Function(AgentAction action)
+  onPermissionRequested;
 
   LlmAgent({
     required super.toolbox,

@@ -21,10 +21,10 @@ class AgentSession {
   AgentPlan? currentPlan;
   final List<AgentAction> executedActions = [];
   final Map<String, dynamic> results = {};
-  
+
   final List<Map<String, String>> deniedTools = [];
   final List<AgentObservation> observations = [];
-  
+
   AgentSessionState state = AgentSessionState.initial;
   bool isLoopRunning = false;
 
@@ -44,7 +44,10 @@ class AgentSession {
     'state': state.name,
   };
 
-  factory AgentSession.fromJson(Map<String, dynamic> json, NoemaProject project) {
+  factory AgentSession.fromJson(
+    Map<String, dynamic> json,
+    NoemaProject project,
+  ) {
     final session = AgentSession(
       currentProject: project,
       currentGoal: json['currentGoal'] as String,
@@ -54,10 +57,12 @@ class AgentSession {
     );
 
     session.state = AgentSessionState.values.byName(json['state'] as String);
-    
+
     if (json['executedActions'] != null) {
       session.executedActions.addAll(
-        (json['executedActions'] as List).map((a) => AgentAction.fromJson(a as Map<String, dynamic>)),
+        (json['executedActions'] as List).map(
+          (a) => AgentAction.fromJson(a as Map<String, dynamic>),
+        ),
       );
     }
     if (json['results'] != null) {
@@ -65,12 +70,16 @@ class AgentSession {
     }
     if (json['deniedTools'] != null) {
       session.deniedTools.addAll(
-        (json['deniedTools'] as List).map((dt) => Map<String, String>.from(dt as Map)),
+        (json['deniedTools'] as List).map(
+          (dt) => Map<String, String>.from(dt as Map),
+        ),
       );
     }
     if (json['observations'] != null) {
       session.observations.addAll(
-        (json['observations'] as List).map((o) => AgentObservation.fromJson(o as Map<String, dynamic>)),
+        (json['observations'] as List).map(
+          (o) => AgentObservation.fromJson(o as Map<String, dynamic>),
+        ),
       );
     }
 

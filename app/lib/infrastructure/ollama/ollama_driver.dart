@@ -12,11 +12,14 @@ class OllamaDriver {
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
             "model": noema.bootstrap.appSettings.llmModelName,
-            "format": "json",
             "stream": false,
             "prompt": prompt,
-            "keep_alive": 0,
-            "options": {"num_predict": 4096, "temperature": 0.7},
+            "keep_alive": "5m",
+            "options": {
+              "num_ctx": 8192,
+              "num_predict": 4096,
+              "temperature": 0.7,
+            },
           }),
         )
         .timeout(const Duration(minutes: 15));

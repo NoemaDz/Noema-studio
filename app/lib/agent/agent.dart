@@ -6,6 +6,8 @@ import 'models/tool_result.dart';
 import 'models/agent_observation.dart';
 import 'agent_toolbox.dart';
 import 'permissions/permission_policy.dart';
+import 'permissions/agent_permission.dart';
+import 'permissions/permission_scope.dart';
 import '../models/job.dart';
 
 class TaskStoppedException implements Exception {
@@ -29,74 +31,102 @@ abstract class Agent {
 
     try {
       session.state = AgentSessionState.running;
-    
-    for (int i = 0; i < maxIterations; i++) {
-      if (session.state == AgentSessionState.stopped || session.state == AgentSessionState.completed) {
-        break;
-      }
-      if (session.state == AgentSessionState.failed) {
-        break;
-      }
-      
-      session.state = AgentSessionState.running;
-      session.observations.add(AgentObservation(
-        stepId: 'iteration_${i + 1}',
-        toolId: 'system',
-        result: ToolResult(toolId: 'system', status: ToolResultStatus.success, data: {'message': 'Iteration ${i + 1} started.'}),
-        timestamp: DateTime.now(),
-      ));
-      
-      final plan = await formulatePlan(session);
-      session.currentPlan = plan;
-      
-      if (plan.steps.isEmpty) {
-        // Check if there are pending jobs we are waiting for
+
+      for (int i = 0; i < maxIterations; i++) {
+        if (session.state == AgentSessionState.stopped ||
+            session.state == AgentSessionState.completed) {
+          break;
+        }
+        if (session.state == AgentSessionState.failed) {
+          break;
+        }
+
+        session.state = AgentSessionState.running;
+        session.observations.add(
+          AgentObservation(
+            stepId: 'iteration_${i + 1}',
+            toolId: 'system',
+            result: ToolResult(
+              toolId: 'system',
+              status: ToolResultStatus.success,
+              data: {'message': 'Iteration ${i + 1} started.'},
+            ),
+            timestamp: DateTime.now(),
+          ),
+        );
+
+        // Check for pending jobs BEFORE formulating a plan to avoid concurrent VRAM usage
         final hasPendingJobs = session.observations.any((obs) {
           final jobs = obs.result.jobs;
           if (jobs == null || jobs.isEmpty) return false;
-          
-          final hasCompletion = session.observations.where((o) => o.stepId == obs.stepId).length > 1;
+
+          final hasCompletion =
+              session.observations.where((o) => o.stepId == obs.stepId).length >
+              1;
           return !hasCompletion;
         });
 
         if (hasPendingJobs) {
-          session.observations.add(AgentObservation(
-            stepId: 'iteration_${i + 1}_waiting',
-            toolId: 'system',
-            result: ToolResult(toolId: 'system', status: ToolResultStatus.success, data: {'message': 'Waiting for pending jobs to complete.'}),
-            timestamp: DateTime.now(),
-          ));
+          session.observations.add(
+            AgentObservation(
+              stepId: 'iteration_${i + 1}_waiting',
+              toolId: 'system',
+              result: ToolResult(
+                toolId: 'system',
+                status: ToolResultStatus.success,
+                data: {'message': 'Waiting for pending jobs to complete.'},
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
           session.state = AgentSessionState.waitingForJobs;
           break; // Suspend the loop
-        } else {
-          session.observations.add(AgentObservation(
-            stepId: 'iteration_${i + 1}_empty',
-            toolId: 'system',
-            result: ToolResult(toolId: 'system', status: ToolResultStatus.fatalFailure, error: 'Plan formulated with 0 steps. Assuming stuck.'),
-            timestamp: DateTime.now(),
-          ));
+        }
+
+        final plan = await formulatePlan(session);
+        session.currentPlan = plan;
+
+        if (plan.steps.isEmpty) {
+          session.observations.add(
+            AgentObservation(
+              stepId: 'iteration_${i + 1}_empty',
+              toolId: 'system',
+              result: ToolResult(
+                toolId: 'system',
+                status: ToolResultStatus.fatalFailure,
+                error: 'Plan formulated with 0 steps. Assuming stuck.',
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
           session.state = AgentSessionState.failed;
+          break;
+        }
+
+        final completed = await executePlan(session, plan);
+        if (completed) {
+          session.state = AgentSessionState.completed;
+          session.observations.add(
+            AgentObservation(
+              stepId: 'iteration_${i + 1}_completed',
+              toolId: 'system',
+              result: ToolResult(
+                toolId: 'system',
+                status: ToolResultStatus.success,
+                data: {'message': 'Task marked as complete by Agent.'},
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
+          permissionPolicy.onTaskComplete();
           break;
         }
       }
 
-      final completed = await executePlan(session, plan);
-      if (completed) {
-        session.state = AgentSessionState.completed;
-        session.observations.add(AgentObservation(
-          stepId: 'iteration_${i + 1}_completed',
-          toolId: 'system',
-          result: ToolResult(toolId: 'system', status: ToolResultStatus.success, data: {'message': 'Task marked as complete by Agent.'}),
-          timestamp: DateTime.now(),
-        ));
-        permissionPolicy.onTaskComplete();
-        break;
+      if (session.state == AgentSessionState.running ||
+          session.state == AgentSessionState.replanning) {
+        session.state = AgentSessionState.iterationLimitReached;
       }
-    }
-    
-    if (session.state == AgentSessionState.running || session.state == AgentSessionState.replanning) {
-      session.state = AgentSessionState.iterationLimitReached;
-    }
     } finally {
       session.isLoopRunning = false;
     }
@@ -108,90 +138,103 @@ abstract class Agent {
       final action = step.action;
       ToolResult? result;
 
-      try {
-        result = await toolbox.executeAction(session, action);
-        
-        if (action.toolId == 'task_complete') {
-          return true; // Goal achieved
-        }
-        
-        session.observations.add(AgentObservation(
-          stepId: step.id,
-          toolId: action.toolId,
-          result: result,
-          timestamp: DateTime.now(),
-        ));
-      } on UnauthorizedException {
-        session.state = AgentSessionState.waitingForPermission;
-        final outcome = await requestPermission(action);
-        
-        if (outcome == PermissionOutcome.allow) {
-          // Granted, try again immediately
-          session.state = AgentSessionState.running;
+      while (true) {
+        try {
           result = await toolbox.executeAction(session, action);
-          session.observations.add(AgentObservation(
-            stepId: step.id,
-            toolId: action.toolId,
-            result: result,
-            timestamp: DateTime.now(),
-          ));
-        } else if (outcome == PermissionOutcome.stopTask) {
-          session.state = AgentSessionState.stopped;
-          throw TaskStoppedException('User explicitly stopped the task during ${action.toolId}.');
-        } else if (outcome == PermissionOutcome.denyAndReplan) {
+
+          if (action.toolId == 'task_complete') {
+            return true; // Goal achieved
+          }
+
+          session.observations.add(
+            AgentObservation(
+              stepId: step.id,
+              toolId: action.toolId,
+              result: result,
+              timestamp: DateTime.now(),
+            ),
+          );
+          break; // Success, break the while loop
+        } on UnauthorizedException {
+          session.state = AgentSessionState.waitingForPermission;
+          final outcome = await requestPermission(action);
+
+          if (outcome == PermissionOutcome.allow) {
+            // Grant the permission before trying again
+            permissionPolicy.grant(
+              AgentPermission(
+                toolId: action.toolId,
+                scope: PermissionScope.once, // Or default scope
+                grantedAt: DateTime.now(),
+              ),
+            );
+            // Granted, try again in the next iteration of the while loop
+            session.state = AgentSessionState.running;
+            continue;
+          } else if (outcome == PermissionOutcome.stopTask) {
+            session.state = AgentSessionState.stopped;
+            throw TaskStoppedException(
+              'User explicitly stopped the task during ${action.toolId}.',
+            );
+          } else if (outcome == PermissionOutcome.denyAndReplan) {
+            session.state = AgentSessionState.replanning;
+            session.deniedTools.add({
+              'toolId': action.toolId,
+              'reason': 'user_denied',
+            });
+            // Do not add a normal observation for denial. The deniedTools handles it.
+            return false; // Break the current plan, force a replan
+          }
+        } on RecoverableToolException catch (e) {
           session.state = AgentSessionState.replanning;
-          session.deniedTools.add({
-            'toolId': action.toolId,
-            'reason': 'user_denied'
-          });
-          // Do not add a normal observation for denial. The deniedTools handles it.
-          return false; // Break the current plan, force a replan
+          session.observations.add(
+            AgentObservation(
+              stepId: step.id,
+              toolId: action.toolId,
+              result: ToolResult(
+                toolId: action.toolId,
+                status: ToolResultStatus.recoverableFailure,
+                error: e.message,
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
+          return false;
+        } on FatalToolException catch (e) {
+          session.state = AgentSessionState.failed;
+          session.observations.add(
+            AgentObservation(
+              stepId: step.id,
+              toolId: action.toolId,
+              result: ToolResult(
+                toolId: action.toolId,
+                status: ToolResultStatus.fatalFailure,
+                error: e.message,
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
+          return false;
+        } catch (e) {
+          session.state = AgentSessionState.failed;
+          session.observations.add(
+            AgentObservation(
+              stepId: step.id,
+              toolId: action.toolId,
+              result: ToolResult(
+                toolId: action.toolId,
+                status: ToolResultStatus.fatalFailure,
+                error: e.toString(),
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
+          return false; // Break current plan on other errors
         }
-      } on RecoverableToolException catch (e) {
-        session.state = AgentSessionState.replanning;
-        session.observations.add(AgentObservation(
-          stepId: step.id,
-          toolId: action.toolId,
-          result: ToolResult(
-            toolId: action.toolId,
-            status: ToolResultStatus.recoverableFailure,
-            error: e.message,
-          ),
-          timestamp: DateTime.now(),
-        ));
-        return false;
-      } on FatalToolException catch (e) {
-        session.state = AgentSessionState.failed;
-        session.observations.add(AgentObservation(
-          stepId: step.id,
-          toolId: action.toolId,
-          result: ToolResult(
-            toolId: action.toolId,
-            status: ToolResultStatus.fatalFailure,
-            error: e.message,
-          ),
-          timestamp: DateTime.now(),
-        ));
-        return false;
-      } catch (e) {
-        session.state = AgentSessionState.failed;
-        session.observations.add(AgentObservation(
-          stepId: step.id,
-          toolId: action.toolId,
-          result: ToolResult(
-            toolId: action.toolId,
-            status: ToolResultStatus.fatalFailure,
-            error: e.toString(),
-          ),
-          timestamp: DateTime.now(),
-        ));
-        return false; // Break current plan on other errors
       }
 
       session.executedActions.add(action);
-      if (result != null) {
-        session.results[step.id] = result;
-      }
+      session.results[step.id] = result;
 
       permissionPolicy.onActionComplete(action.toolId);
     }
@@ -203,7 +246,9 @@ abstract class Agent {
 
   /// Translates JobManager events into AgentObservations asynchronously.
   void onJobEvent(AgentSession session, Job job) {
-    if (job.status != JobStatus.completed && job.status != JobStatus.failed && job.status != JobStatus.cancelled) {
+    if (job.status != JobStatus.completed &&
+        job.status != JobStatus.failed &&
+        job.status != JobStatus.cancelled) {
       return; // Only care about terminal states
     }
 
@@ -211,7 +256,8 @@ abstract class Agent {
     // Search from newest to oldest
     AgentObservation? initialObs;
     for (final obs in session.observations.reversed) {
-      if (obs.result.jobs != null && obs.result.jobs!.any((j) => j.jobId == job.id)) {
+      if (obs.result.jobs != null &&
+          obs.result.jobs!.any((j) => j.jobId == job.id)) {
         initialObs = obs;
         break;
       }
@@ -229,7 +275,12 @@ abstract class Agent {
     if (job.status == JobStatus.completed) {
       newStatus = ToolResultStatus.success;
       if (job.result != null) {
-        artifacts = [ArtifactReference(artifactId: job.result!, type: 'generated_artifact')];
+        artifacts = [
+          ArtifactReference(
+            artifactId: job.result!,
+            type: 'generated_artifact',
+          ),
+        ];
       }
     } else if (job.status == JobStatus.cancelled) {
       newStatus = ToolResultStatus.recoverableFailure;

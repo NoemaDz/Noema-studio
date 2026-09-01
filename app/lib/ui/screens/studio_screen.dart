@@ -213,7 +213,12 @@ class _StudioScreenState extends State<StudioScreen> {
   }
 
   void _newProject() {
-    noema.bootstrap.projectState.setProject(null);
+    final p = NoemaProject(
+      id: const Uuid().v4(),
+      idea: "",
+      story: import_story.Story(title: "New Project", scenes: []),
+    );
+    noema.bootstrap.projectState.setProject(p);
     setState(() {
       _ideaController.clear();
       _statusText = "New Project Created.";
@@ -477,7 +482,7 @@ class _StudioScreenState extends State<StudioScreen> {
                           ),
                         ),
                       ),
-                    
+
                     // Agent Panel
                     const AgentPanel(),
                   ],

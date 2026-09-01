@@ -68,11 +68,18 @@ class OllamaLlmClient implements LlmClient {
         throw LlmHttpException(response.statusCode, response.body);
       }
     } on TimeoutException {
-      throw LlmTimeoutException('Ollama API request timed out after ${timeout.inSeconds} seconds');
+      throw LlmTimeoutException(
+        'Ollama API request timed out after ${timeout.inSeconds} seconds',
+      );
     } on SocketException catch (e) {
-      throw LlmConnectionException('Failed to connect to Ollama at $baseUrl: $e');
+      throw LlmConnectionException(
+        'Failed to connect to Ollama at $baseUrl: $e',
+      );
     } catch (e) {
-      if (e is FormatException || e is LlmConnectionException || e is LlmTimeoutException || e is LlmHttpException) {
+      if (e is FormatException ||
+          e is LlmConnectionException ||
+          e is LlmTimeoutException ||
+          e is LlmHttpException) {
         rethrow;
       }
       throw Exception('Unexpected error communicating with Ollama: $e');

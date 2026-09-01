@@ -98,6 +98,20 @@ void main() {
       },
     );
 
+    test('Job can transition from queued directly to completed (fast job)', () {
+      final job = Job(
+        id: '1',
+        providerId: 'mock_provider',
+        type: 'image',
+        status: JobStatus.queued,
+      );
+      manager.add(job);
+
+      manager.updateStatus('1', JobStatus.completed);
+      expect(job.status, JobStatus.completed);
+      expect(job.completedAt, isNotNull);
+    });
+
     test('Completed cannot be cancelled or transitioned', () {
       final job = Job(
         id: '1',

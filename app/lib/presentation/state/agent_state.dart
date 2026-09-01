@@ -32,9 +32,9 @@ class UIObservation {
 
 class AgentState extends ChangeNotifier {
   final AgentOrchestratorService _orchestrator;
-  
+
   PermissionRequest? _pendingPermission;
-  
+
   AgentState(this._orchestrator) {
     _orchestrator.onStateChanged = _onStateChanged;
     _orchestrator.onPermissionRequested = _onPermissionRequested;
@@ -43,59 +43,79 @@ class AgentState extends ChangeNotifier {
   // Derived Properties
   bool get isRunning {
     final state = _orchestrator.currentSession?.state;
-    return state == AgentSessionState.running || state == AgentSessionState.replanning;
+    return state == AgentSessionState.running ||
+        state == AgentSessionState.replanning;
   }
 
-  bool get isWaitingForJobs => _orchestrator.currentSession?.state == AgentSessionState.waitingForJobs;
-  
+  bool get isWaitingForJobs =>
+      _orchestrator.currentSession?.state == AgentSessionState.waitingForJobs;
+
   String get currentStatus {
     switch (_orchestrator.currentSession?.state) {
-      case AgentSessionState.initial: return "Idle";
-      case AgentSessionState.running: return "Thinking...";
-      case AgentSessionState.replanning: return "Replanning...";
-      case AgentSessionState.waitingForPermission: return "Waiting for permission...";
-      case AgentSessionState.waitingForJobs: return "Waiting for job completion...";
-      case AgentSessionState.completed: return "Completed";
-      case AgentSessionState.stopped: return "Stopped";
-      case AgentSessionState.failed: return "Failed";
-      case AgentSessionState.iterationLimitReached: return "Limit reached";
-      case null: return "Inactive";
+      case AgentSessionState.initial:
+        return "Idle";
+      case AgentSessionState.running:
+        return "Thinking...";
+      case AgentSessionState.replanning:
+        return "Replanning...";
+      case AgentSessionState.waitingForPermission:
+        return "Waiting for permission...";
+      case AgentSessionState.waitingForJobs:
+        return "Waiting for job completion...";
+      case AgentSessionState.completed:
+        return "Completed";
+      case AgentSessionState.stopped:
+        return "Stopped";
+      case AgentSessionState.failed:
+        return "Failed";
+      case AgentSessionState.iterationLimitReached:
+        return "Limit reached";
+      case null:
+        return "Inactive";
     }
   }
 
   List<UIObservation> get history {
     final session = _orchestrator.currentSession;
     if (session == null) return [];
-    
+
     final List<UIObservation> result = [];
-    
+
     // Map executed actions and observations
     for (var i = 0; i < session.executedActions.length; i++) {
       // Future: Map executed actions properly if needed
     }
-    
+
     // For now, let's just map observations to UIObservations
     for (final obs in session.observations) {
       bool isError = obs.result.status != ToolResultStatus.success;
-      String? resultText = obs.result.error ?? 
-        (obs.result.artifacts != null && obs.result.artifacts!.isNotEmpty ? 'Generated ${obs.result.artifacts!.first.type}' : null) ??
-        (obs.result.jobs != null && obs.result.jobs!.isNotEmpty ? 'Job pending...' : 'Success');
+      String? resultText =
+          obs.result.error ??
+          (obs.result.artifacts != null && obs.result.artifacts!.isNotEmpty
+              ? 'Generated ${obs.result.artifacts!.first.type}'
+              : null) ??
+          (obs.result.jobs != null && obs.result.jobs!.isNotEmpty
+              ? 'Job pending...'
+              : 'Success');
 
-      final isPendingJob = obs.result.jobs != null && obs.result.jobs!.isNotEmpty;
-      
+      final isPendingJob =
+          obs.result.jobs != null && obs.result.jobs!.isNotEmpty;
+
       // If we later find a completion observation for this stepId, we could update this.
       // But the session appends a new observation for the completion.
       // We will just show them linearly.
-      
-      result.add(UIObservation(
-        description: 'Used ${obs.toolId}',
-        isError: isError,
-        isPending: isPendingJob, // Linear logs
-        resultText: resultText,
-        timestamp: obs.timestamp,
-      ));
+
+      result.add(
+        UIObservation(
+          description: 'Used ${obs.toolId}',
+          isError: isError,
+          isPending: isPendingJob, // Linear logs
+          resultText: resultText,
+          timestamp: obs.timestamp,
+        ),
+      );
     }
-    
+
     return result.reversed.toList();
   }
 
@@ -122,7 +142,7 @@ class AgentState extends ChangeNotifier {
     } else {
       _pendingPermission!.completer.complete(PermissionOutcome.denyAndReplan);
     }
-    
+
     _pendingPermission = null;
     notifyListeners();
   }

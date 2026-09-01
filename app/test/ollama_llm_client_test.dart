@@ -119,7 +119,11 @@ void main() {
       await expectLater(
         client.generateText('hello'),
         throwsA(
-          isA<LlmHttpException>().having((e) => e.statusCode, 'statusCode', 500),
+          isA<LlmHttpException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            500,
+          ),
         ),
       );
     });

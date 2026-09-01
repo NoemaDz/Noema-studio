@@ -106,6 +106,34 @@ void main() {
       ); // starts with generate_
     });
 
+    test('successfully parses JSON mixed with conversational text', () async {
+      final textWithJson = '''
+Here is the plan for your story:
+
+[
+  {
+    "id": "step_1",
+    "description": "Read project state",
+    "action": {
+      "toolId": "read_project",
+      "arguments": {}
+    }
+  }
+]
+
+Let me know if you need any adjustments.
+      ''';
+
+      final llmClient = MockLlmClient(textWithJson);
+      final planner = AgentPlanner(llmClient: llmClient, toolbox: toolbox);
+
+      final plan = await planner.formulatePlan(session);
+
+      expect(plan.steps.length, 1);
+      expect(plan.steps[0].id, 'step_1');
+      expect(plan.steps[0].action.toolId, 'read_project');
+    });
+
     test('throws FormatException on invalid JSON', () async {
       final invalidJson = '''
       [
