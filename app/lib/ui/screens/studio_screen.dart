@@ -289,11 +289,16 @@ class _StudioScreenState extends State<StudioScreen> {
 
   Widget _buildMenuBar(BuildContext context) {
     return MenuBar(
+      style: MenuStyle(
+        elevation: WidgetStateProperty.all(0),
+        backgroundColor: WidgetStateProperty.all(Colors.transparent),
+      ),
       children: [
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: _newProject,
+              leadingIcon: const Icon(Icons.note_add_outlined, size: 18),
               shortcut: const SingleActivator(
                 LogicalKeyboardKey.keyN,
                 control: true,
@@ -302,6 +307,7 @@ class _StudioScreenState extends State<StudioScreen> {
             ),
             MenuItemButton(
               onPressed: _loadProject,
+              leadingIcon: const Icon(Icons.folder_open_outlined, size: 18),
               shortcut: const SingleActivator(
                 LogicalKeyboardKey.keyO,
                 control: true,
@@ -310,6 +316,7 @@ class _StudioScreenState extends State<StudioScreen> {
             ),
             MenuItemButton(
               onPressed: _saveProject,
+              leadingIcon: const Icon(Icons.save_outlined, size: 18),
               shortcut: const SingleActivator(
                 LogicalKeyboardKey.keyS,
                 control: true,
@@ -324,49 +331,75 @@ class _StudioScreenState extends State<StudioScreen> {
                   builder: (context) => const SettingsDialog(),
                 );
               },
+              leadingIcon: const Icon(Icons.settings_outlined, size: 18),
               child: const Text('Settings'),
             ),
             const Divider(),
-            MenuItemButton(onPressed: () {}, child: const Text('Exit')),
+            MenuItemButton(
+              onPressed: () {},
+              leadingIcon: const Icon(Icons.exit_to_app, size: 18),
+              child: const Text('Exit'),
+            ),
           ],
-          child: const Text('File'),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text('File', style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
         ),
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: _generateProject,
+              leadingIcon: const Icon(Icons.play_arrow_rounded, size: 18, color: Colors.green),
               child: const Text('Generate / Run Pipeline'),
             ),
             MenuItemButton(
               onPressed: _importStory,
+              leadingIcon: const Icon(Icons.upload_file_outlined, size: 18),
               child: const Text('Import Script...'),
             ),
             const Divider(),
             MenuItemButton(
               onPressed: () {},
+              leadingIcon: const Icon(Icons.movie_creation_outlined, size: 18),
               child: const Text('Export Video...'),
             ),
           ],
-          child: const Text('Project'),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text('Project', style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
         ),
         SubmenuButton(
           menuChildren: [
-            MenuItemButton(onPressed: () {}, child: const Text('Add Scene')),
             MenuItemButton(
               onPressed: () {},
+              leadingIcon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+              child: const Text('Add Scene'),
+            ),
+            MenuItemButton(
+              onPressed: () {},
+              leadingIcon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
               child: const Text('Add Character'),
             ),
           ],
-          child: const Text('Add'),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text('Add', style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
         ),
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: _openAdvancedMode,
+              leadingIcon: const Icon(Icons.developer_board, size: 18),
               child: const Text('Open Workflow Editor (Advanced Mode)'),
             ),
           ],
-          child: const Text('Tools'),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text('Tools', style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
         ),
       ],
     );

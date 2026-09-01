@@ -19,8 +19,13 @@ class StoryboardViewWidget extends StatelessWidget {
       return const Center(child: Text("No scenes generated yet."));
     }
 
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 300,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 0.7,
+      ),
       itemCount: project.story.scenes.length,
       padding: const EdgeInsets.all(16),
       itemBuilder: (context, index) {
@@ -87,8 +92,6 @@ class _StoryboardCardState extends State<_StoryboardCard> {
           _isHovered ? 1.02 : 1.0,
           1.0,
         ),
-        width: 250,
-        margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           boxShadow: _isHovered
