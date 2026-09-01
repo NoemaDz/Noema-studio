@@ -35,6 +35,14 @@ class JobManager {
     final job = find(id);
     if (job == null) return;
 
+    // Silently ignore updates if the job is already in a terminal state
+    // This prevents log spam from race conditions or delayed provider updates
+    if (job.status == JobStatus.completed ||
+        job.status == JobStatus.failed ||
+        job.status == JobStatus.cancelled) {
+      return;
+    }
+
     if (job.transitionTo(update.status)) {
       if (update.progress != null) {
         // Enforce monotonic progress: do not allow progress to decrease

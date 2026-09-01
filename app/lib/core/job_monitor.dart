@@ -37,7 +37,8 @@ class JobMonitor {
           if (!_isRunning) break; // Early exit if stopped mid-poll
 
           if (job.status == JobStatus.completed ||
-              job.status == JobStatus.failed) {
+              job.status == JobStatus.failed ||
+              job.status == JobStatus.cancelled) {
             continue;
           }
           // Timeout check
