@@ -102,7 +102,9 @@ class VideoCompilationStage extends PipelineStage {
       await jobManager.waitForCompletion(job.id, token: cancellationToken);
       execResult = await provider.getResult(job.id);
     } on CancelledException {
-      debugPrint('VideoCompilationStage: Cancellation requested, killing job ${job.id}');
+      debugPrint(
+        'VideoCompilationStage: Cancellation requested, killing job ${job.id}',
+      );
       await jobManager.cancelJob(job.id);
       rethrow;
     } catch (e) {
