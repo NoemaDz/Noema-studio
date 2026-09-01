@@ -90,6 +90,10 @@ class Job {
       case JobStatus.pending:
         isValid =
             newStatus == JobStatus.queued ||
+            newStatus == JobStatus.starting ||
+            newStatus == JobStatus.running ||
+            newStatus == JobStatus.completed ||
+            newStatus == JobStatus.failed ||
             newStatus == JobStatus.cancelled ||
             newStatus == JobStatus.cancelling;
         break;
