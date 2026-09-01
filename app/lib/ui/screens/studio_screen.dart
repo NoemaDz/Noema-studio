@@ -341,10 +341,7 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Exit'),
             ),
           ],
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text('File', style: TextStyle(fontWeight: FontWeight.w500)),
-          ),
+          child: const Text('File', style: TextStyle(fontWeight: FontWeight.w500)),
         ),
         SubmenuButton(
           menuChildren: [
@@ -365,10 +362,7 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Export Video...'),
             ),
           ],
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text('Project', style: TextStyle(fontWeight: FontWeight.w500)),
-          ),
+          child: const Text('Project', style: TextStyle(fontWeight: FontWeight.w500)),
         ),
         SubmenuButton(
           menuChildren: [
@@ -383,10 +377,7 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Add Character'),
             ),
           ],
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text('Add', style: TextStyle(fontWeight: FontWeight.w500)),
-          ),
+          child: const Text('Add', style: TextStyle(fontWeight: FontWeight.w500)),
         ),
         SubmenuButton(
           menuChildren: [
@@ -396,10 +387,7 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Open Workflow Editor (Advanced Mode)'),
             ),
           ],
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text('Tools', style: TextStyle(fontWeight: FontWeight.w500)),
-          ),
+          child: const Text('Tools', style: TextStyle(fontWeight: FontWeight.w500)),
         ),
       ],
     );
