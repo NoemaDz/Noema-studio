@@ -91,7 +91,7 @@ void main() {
       await agent.run(session);
 
       expect(session.state, AgentSessionState.waitingForJobs);
-      expect(agent.formulateCount, 2);
+      expect(agent.formulateCount, 1);
 
       // Complete job with no artifacts
       final job = Job(
@@ -110,7 +110,7 @@ void main() {
         session.state,
         AgentSessionState.failed,
       ); // since formulatePlan returns 0 steps and no pending jobs
-      expect(agent.formulateCount, 3);
+      expect(agent.formulateCount, 2);
     });
 
     test('Two concurrent run calls do not execute simultaneously', () async {
@@ -135,8 +135,8 @@ void main() {
 
       // If it ran twice concurrently, formulateCount might be higher or it might crash.
       // With our protection, run2 returns immediately.
-      // So run1 does 2 formulations (one yields job, second yields empty and stops at waitingForJobs).
-      expect(agent.formulateCount, 2);
+      // So run1 does 1 formulation (yields job, then checks hasPendingJobs and stops at waitingForJobs).
+      expect(agent.formulateCount, 1);
     });
   });
 }

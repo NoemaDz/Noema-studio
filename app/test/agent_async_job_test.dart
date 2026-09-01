@@ -129,7 +129,7 @@ void main() {
 
       // Verify suspended state
       expect(session.state, AgentSessionState.waitingForJobs);
-      expect(agent.formulateCount, 2);
+      expect(agent.formulateCount, 1);
 
       // Check observation of submitted job
       final submissionObs = session.observations.firstWhere(
@@ -149,9 +149,9 @@ void main() {
       // Verify the agent resumed and formulated again
       // Wait, agent.run(session) was called inside onJobEvent which is async.
       // So agent.run finishes, we check states.
-      expect(agent.formulateCount, 3); // Woke up and formulated again
+      expect(agent.formulateCount, 2); // Woke up and formulated again
 
-      // Since formulateCount == 3, it returned emptyPlan again, but this time there are NO pending jobs, so it should fail.
+      // Since formulateCount == 2, it returned emptyPlan again, but this time there are NO pending jobs, so it should fail.
       expect(session.state, AgentSessionState.failed);
 
       // Verify the injected observation
@@ -177,7 +177,7 @@ void main() {
         if (session.state != AgentSessionState.waitingForJobs) break;
       }
 
-      expect(agent.formulateCount, 3);
+      expect(agent.formulateCount, 2);
       expect(
         session.state,
         AgentSessionState.failed,
