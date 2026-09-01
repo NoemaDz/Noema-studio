@@ -401,6 +401,7 @@ class _StudioScreenState extends State<StudioScreen> {
         children: [
           // 1. Menu Bar
           GlassContainer(
+            width: double.infinity,
             blurRadius: 20,
             opacity: 0.1,
             border: const Border(
