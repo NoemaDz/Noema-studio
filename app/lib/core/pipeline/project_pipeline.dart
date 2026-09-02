@@ -111,6 +111,7 @@ class ProjectPipeline {
         .toList();
 
     for (final jobId in jobsToRemove) {
+      await jobManager.cancelJob(jobId);
       jobManager.remove(jobId);
       project.jobIds.remove(jobId);
     }

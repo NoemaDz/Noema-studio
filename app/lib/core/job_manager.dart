@@ -156,6 +156,13 @@ class JobManager {
   }
 
   void clear() {
+    for (final job in _jobs.toList()) {
+      if (job.status != JobStatus.completed &&
+          job.status != JobStatus.failed &&
+          job.status != JobStatus.cancelled) {
+        cancelJob(job.id); // Fire and forget backend cancellation
+      }
+    }
     _jobs.clear();
   }
 

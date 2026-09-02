@@ -57,6 +57,7 @@ class ProjectSynchronizer {
 
   Future<void> synchronize(Job job) async {
     if (_isDisposed) return;
+    if (!project.jobIds.contains(job.id)) return;
 
     // Always update the savedJobs snapshot before saving
     _updateSavedJobs();
