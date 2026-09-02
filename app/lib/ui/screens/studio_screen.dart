@@ -217,7 +217,7 @@ class _StudioScreenState extends State<StudioScreen> {
   void _newProject() {
     noema.bootstrap.jobManager.clear();
     _activeSynchronizer?.dispose();
-    
+
     final p = NoemaProject(
       id: const Uuid().v4(),
       idea: "",
@@ -262,7 +262,7 @@ class _StudioScreenState extends State<StudioScreen> {
       try {
         noema.bootstrap.jobManager.clear();
         _activeSynchronizer?.dispose();
-        
+
         final project = await noema.openProject(files.first.path!);
         noema.bootstrap.projectState.setProject(project);
 
