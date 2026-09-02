@@ -26,9 +26,11 @@ class ProjectSynchronizer {
   });
 
   StreamSubscription? _subscription;
+  bool _isDisposed = false;
 
   Future<void> attach(JobEvents events) async {
     _subscription?.cancel();
+    _subscription = null;
 
     // Use asyncMap to process one event at a time sequentially
     _subscription = events.stream
@@ -48,10 +50,14 @@ class ProjectSynchronizer {
   }
 
   void dispose() {
+    _isDisposed = true;
     _subscription?.cancel();
+    _subscription = null;
   }
 
   Future<void> synchronize(Job job) async {
+    if (_isDisposed) return;
+
     // Always update the savedJobs snapshot before saving
     _updateSavedJobs();
 

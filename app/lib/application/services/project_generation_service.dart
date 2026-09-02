@@ -1,4 +1,4 @@
-import '../project_synchronizer.dart';
+
 import '/models/task.dart';
 import '/core/noema_project.dart';
 import 'project_service.dart';
@@ -68,23 +68,11 @@ class ProjectGenerationService {
     return project;
   }
 
-  ProjectSynchronizer? _activeSynchronizer;
-
   Future<NoemaProject> generateProduction(
     NoemaProject project, {
     CancellationToken? cancellationToken,
     Function(String)? onUpdate,
   }) async {
-    _activeSynchronizer?.dispose();
-    final synchronizer = ProjectSynchronizer(
-      project: project,
-      registry: providerRegistry,
-      state: projectState,
-      jobManager: jobManager,
-      saveProject: saveProject,
-    );
-    _activeSynchronizer = synchronizer;
-    await synchronizer.attach(jobEvents);
     jobMonitor.start();
 
     await projectPipeline.generateProduction(

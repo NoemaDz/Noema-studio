@@ -49,6 +49,8 @@ class _StudioScreenState extends State<StudioScreen> {
 
   @override
   void dispose() {
+    _activeSynchronizer?.dispose();
+    noema.bootstrap.jobManager.clear();
     ComfyUIRunnerService.instance.stop();
     _ideaController.dispose();
     super.dispose();
@@ -224,6 +226,17 @@ class _StudioScreenState extends State<StudioScreen> {
       story: import_story.Story(title: "New Project", scenes: []),
     );
     noema.bootstrap.projectState.setProject(p);
+
+    final synchronizer = ProjectSynchronizer(
+      project: p,
+      registry: noema.bootstrap.providerRegistry,
+      state: noema.bootstrap.projectState,
+      jobManager: noema.bootstrap.jobManager,
+      saveProject: noema.saveProject,
+    );
+    _activeSynchronizer = synchronizer;
+    synchronizer.attach(noema.bootstrap.jobEvents);
+
     setState(() {
       _ideaController.clear();
       _statusText = "New Project Created.";
