@@ -78,6 +78,11 @@ class MockComfyUIDriver implements ComfyUIDriver {
   }
 
   @override
+  Future<void> cancelJob(String jobId) async {
+    // Successfully cancelled
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

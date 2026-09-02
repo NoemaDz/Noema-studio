@@ -83,7 +83,26 @@ abstract class Agent {
           break; // Suspend the loop
         }
 
-        final plan = await formulatePlan(session);
+        AgentPlan plan;
+        try {
+          plan = await formulatePlan(session);
+        } catch (e) {
+          session.observations.add(
+            AgentObservation(
+              stepId: 'iteration_${i + 1}_error',
+              toolId: 'system',
+              result: ToolResult(
+                toolId: 'system',
+                status: ToolResultStatus.fatalFailure,
+                error: 'Failed to formulate plan: $e',
+              ),
+              timestamp: DateTime.now(),
+            ),
+          );
+          session.state = AgentSessionState.failed;
+          break;
+        }
+
         session.currentPlan = plan;
 
         if (plan.steps.isEmpty) {
