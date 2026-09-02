@@ -50,6 +50,7 @@ class _StudioScreenState extends State<StudioScreen> {
   @override
   void dispose() {
     _activeSynchronizer?.dispose();
+    noema.bootstrap.agentOrchestratorService.stopTask();
     noema.bootstrap.jobManager.clear();
     ComfyUIRunnerService.instance.stop();
     _ideaController.dispose();
@@ -78,12 +79,26 @@ class _StudioScreenState extends State<StudioScreen> {
     });
 
     try {
+      noema.bootstrap.jobManager.clear();
+      _activeSynchronizer?.dispose();
+      noema.bootstrap.agentOrchestratorService.stopTask();
+
       final p = NoemaProject(
         id: const Uuid().v4(),
         idea: _ideaController.text,
         story: import_story.Story(title: "Generating...", scenes: []),
       );
       noema.bootstrap.projectState.setProject(p);
+
+      final synchronizer = ProjectSynchronizer(
+        project: p,
+        registry: noema.bootstrap.providerRegistry,
+        state: noema.bootstrap.projectState,
+        jobManager: noema.bootstrap.jobManager,
+        saveProject: noema.saveProject,
+      );
+      _activeSynchronizer = synchronizer;
+      synchronizer.attach(noema.bootstrap.jobEvents);
 
       await noema.generatePlanning(p);
 
@@ -219,6 +234,7 @@ class _StudioScreenState extends State<StudioScreen> {
   void _newProject() {
     noema.bootstrap.jobManager.clear();
     _activeSynchronizer?.dispose();
+    noema.bootstrap.agentOrchestratorService.stopTask();
 
     final p = NoemaProject(
       id: const Uuid().v4(),
@@ -275,6 +291,7 @@ class _StudioScreenState extends State<StudioScreen> {
       try {
         noema.bootstrap.jobManager.clear();
         _activeSynchronizer?.dispose();
+        noema.bootstrap.agentOrchestratorService.stopTask();
 
         final project = await noema.openProject(files.first.path!);
         noema.bootstrap.projectState.setProject(project);
