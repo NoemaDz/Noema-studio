@@ -68,11 +68,14 @@ class ProjectGenerationService {
     return project;
   }
 
+  ProjectSynchronizer? _activeSynchronizer;
+
   Future<NoemaProject> generateProduction(
     NoemaProject project, {
     CancellationToken? cancellationToken,
     Function(String)? onUpdate,
   }) async {
+    _activeSynchronizer?.dispose();
     final synchronizer = ProjectSynchronizer(
       project: project,
       registry: providerRegistry,
@@ -80,6 +83,7 @@ class ProjectGenerationService {
       jobManager: jobManager,
       saveProject: saveProject,
     );
+    _activeSynchronizer = synchronizer;
     await synchronizer.attach(jobEvents);
     jobMonitor.start();
 

@@ -47,6 +47,10 @@ class ProjectSynchronizer {
     }
   }
 
+  void dispose() {
+    _subscription?.cancel();
+  }
+
   Future<void> synchronize(Job job) async {
     // Always update the savedJobs snapshot before saving
     _updateSavedJobs();

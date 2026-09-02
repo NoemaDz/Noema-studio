@@ -212,7 +212,12 @@ class _StudioScreenState extends State<StudioScreen> {
     }
   }
 
+  ProjectSynchronizer? _activeSynchronizer;
+
   void _newProject() {
+    noema.bootstrap.jobManager.clear();
+    _activeSynchronizer?.dispose();
+    
     final p = NoemaProject(
       id: const Uuid().v4(),
       idea: "",
@@ -255,6 +260,9 @@ class _StudioScreenState extends State<StudioScreen> {
     );
     if (files.isNotEmpty && files.first.path != null) {
       try {
+        noema.bootstrap.jobManager.clear();
+        _activeSynchronizer?.dispose();
+        
         final project = await noema.openProject(files.first.path!);
         noema.bootstrap.projectState.setProject(project);
 
@@ -265,6 +273,7 @@ class _StudioScreenState extends State<StudioScreen> {
           jobManager: noema.bootstrap.jobManager,
           saveProject: noema.saveProject,
         );
+        _activeSynchronizer = synchronizer;
         synchronizer.attach(noema.bootstrap.jobEvents);
         noema.bootstrap.jobMonitor.start();
       } catch (e) {
