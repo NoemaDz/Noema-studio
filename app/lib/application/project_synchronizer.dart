@@ -35,10 +35,21 @@ class ProjectSynchronizer {
     // Use asyncMap to process one event at a time sequentially
     _subscription = events.stream
         .asyncMap((job) async {
-          await synchronize(job);
+          try {
+            await synchronize(job);
+          } catch (e, stack) {
+            debugPrint(
+              "ProjectSynchronizer fatal error in synchronize: $e\n$stack",
+            );
+          }
           return job;
         })
-        .listen((_) {});
+        .listen(
+          (_) {},
+          onError: (e) {
+            debugPrint("ProjectSynchronizer Stream Error: $e");
+          },
+        );
 
     // Initial sync for jobs that are already completed before the monitor starts
     final jobs = jobManager.jobs.where((j) => project.jobIds.contains(j.id));

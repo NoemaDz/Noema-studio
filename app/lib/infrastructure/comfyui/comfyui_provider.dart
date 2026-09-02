@@ -10,8 +10,8 @@ class ComfyUIProvider extends ImageProvider {
   final PluginContext context;
   late final ComfyUIDriver driver;
 
-  ComfyUIProvider(this.context) {
-    driver = ComfyUIDriver(context);
+  ComfyUIProvider(this.context, {ComfyUIDriver? driver}) {
+    this.driver = driver ?? ComfyUIDriver(context);
   }
 
   @override
