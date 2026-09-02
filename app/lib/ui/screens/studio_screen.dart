@@ -341,13 +341,21 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Exit'),
             ),
           ],
-          child: const Text('File', softWrap: false, style: TextStyle(fontWeight: FontWeight.w500)),
+          child: const Text(
+            'File',
+            softWrap: false,
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
         ),
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: _generateProject,
-              leadingIcon: const Icon(Icons.play_arrow_rounded, size: 18, color: Colors.green),
+              leadingIcon: const Icon(
+                Icons.play_arrow_rounded,
+                size: 18,
+                color: Colors.green,
+              ),
               child: const Text('Generate / Run Pipeline', softWrap: false),
             ),
             MenuItemButton(
@@ -362,32 +370,53 @@ class _StudioScreenState extends State<StudioScreen> {
               child: const Text('Export Video...', softWrap: false),
             ),
           ],
-          child: const Text('Project', softWrap: false, style: TextStyle(fontWeight: FontWeight.w500)),
+          child: const Text(
+            'Project',
+            softWrap: false,
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
         ),
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: () {},
-              leadingIcon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+              leadingIcon: const Icon(
+                Icons.add_photo_alternate_outlined,
+                size: 18,
+              ),
               child: const Text('Add Scene', softWrap: false),
             ),
             MenuItemButton(
               onPressed: () {},
-              leadingIcon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+              leadingIcon: const Icon(
+                Icons.person_add_alt_1_outlined,
+                size: 18,
+              ),
               child: const Text('Add Character', softWrap: false),
             ),
           ],
-          child: const Text('Add', softWrap: false, style: TextStyle(fontWeight: FontWeight.w500)),
+          child: const Text(
+            'Add',
+            softWrap: false,
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
         ),
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: _openAdvancedMode,
               leadingIcon: const Icon(Icons.developer_board, size: 18),
-              child: const Text('Open Workflow Editor (Advanced Mode)', softWrap: false),
+              child: const Text(
+                'Open Workflow Editor (Advanced Mode)',
+                softWrap: false,
+              ),
             ),
           ],
-          child: const Text('Tools', softWrap: false, style: TextStyle(fontWeight: FontWeight.w500)),
+          child: const Text(
+            'Tools',
+            softWrap: false,
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
         ),
       ],
     );
