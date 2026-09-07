@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:noema_studio/agent/agent_planner.dart';
 import 'package:noema_studio/agent/llm_client.dart';
 import 'package:noema_studio/agent/models/agent_session.dart';
-import 'package:noema_studio/agent/models/agent_tool_schema.dart';
-import 'package:noema_studio/agent/permissions/tool_risk_level.dart';
 import 'package:noema_studio/core/noema_project.dart';
 import 'package:noema_studio/models/story.dart';
 import 'agent_planner_test.dart' show TestToolbox;

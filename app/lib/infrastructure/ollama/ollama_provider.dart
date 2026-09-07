@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/contracts/execution_request.dart';
 import '../../core/contracts/execution_result.dart';
 import '../../models/job.dart';
+import '../../core/cancellation_token.dart';
 
 class OllamaProvider extends LLMProvider {
   final OllamaDriver service = OllamaDriver();
@@ -46,6 +47,8 @@ class OllamaProvider extends LLMProvider {
       final result = await service.generateStory(prompt);
       _results[job.id] = ExecutionResult.success(textOutput: result);
       job.transitionTo(JobStatus.completed);
+    } on CancelledException {
+      job.transitionTo(JobStatus.cancelled);
     } catch (e) {
       _results[job.id] = ExecutionResult.failure(
         JobError(code: 'error', message: e.toString()),
@@ -65,6 +68,6 @@ class OllamaProvider extends LLMProvider {
 
   @override
   Future<void> cancelJob(String jobId) async {
-    // OllamaDriver currently might not support cancellation natively.
+    service.abort();
   }
 }

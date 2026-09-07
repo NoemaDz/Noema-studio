@@ -10,6 +10,7 @@ import '../../models/job.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import '../../core/cancellation_token.dart';
 
 class AgentPlannerWorkflow extends Workflow {
   final LLMProvider provider;
@@ -70,7 +71,18 @@ class _AgentPlanningStep implements WorkflowStep {
       // Wait for job completion
       while (job.status == JobStatus.pending ||
           job.status == JobStatus.running) {
+        
+        final cancelToken = context.get<CancellationToken>("cancellationToken");
+        if (cancelToken?.isCancelled == true) {
+          await provider.cancelJob(job.id);
+          throw CancelledException();
+        }
+
         await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      if (job.status == JobStatus.cancelled) {
+        throw CancelledException();
       }
 
       if (job.status == JobStatus.failed) {

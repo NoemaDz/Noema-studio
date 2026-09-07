@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../main.dart'; // for global `noema`
 import '../../presentation/state/agent_state.dart';
-import 'glass_container.dart';
 
 class AgentPanel extends StatefulWidget {
   const AgentPanel({super.key});
@@ -33,12 +32,7 @@ class _AgentPanelState extends State<AgentPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      width: 320,
-      color: Theme.of(context).colorScheme.surface,
-      opacity: 0.12,
-      border: const Border(left: BorderSide(color: Colors.white10, width: 1.0)),
-      child: ListenableBuilder(
+    return ListenableBuilder(
         listenable: Listenable.merge([
           noema.bootstrap.agentState,
           noema.bootstrap.projectState,
@@ -68,7 +62,7 @@ class _AgentPanelState extends State<AgentPanel> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        "AI Agent",
+                        "AI Assistant",
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -86,48 +80,9 @@ class _AgentPanelState extends State<AgentPanel> {
                 ),
               ),
 
-              // Status Indicator
-              if (state.currentStatus != "Inactive" &&
-                  state.currentStatus != "Idle")
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.1),
-                  child: Row(
-                    children: [
-                      if (state.isRunning || state.isWaitingForJobs)
-                        const SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      if (state.isRunning || state.isWaitingForJobs)
-                        const SizedBox(width: 8),
-                      Text(
-                        state.currentStatus,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Activity History
+              // Chat History
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: state.history.length,
-                  itemBuilder: (context, index) {
-                    final obs = state.history[index];
-                    return _buildObservationTile(context, obs);
-                  },
-                ),
+                child: _buildChatArea(context, state),
               ),
 
               // Permission Request Overlay
@@ -186,51 +141,148 @@ class _AgentPanelState extends State<AgentPanel> {
             ],
           );
         },
+      );
+  }
+
+  Widget _buildChatArea(BuildContext context, AgentState state) {
+    final items = _buildChatList(context, state);
+    if (items.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.forum_outlined, size: 48, color: Colors.grey.shade700),
+              const SizedBox(height: 16),
+              const Text("How can I help you?", style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              const Text("Ask me to generate characters, edit scenes, or brainstorm ideas.", style: TextStyle(color: Colors.white54, fontSize: 13), textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView(
+      reverse: true,
+      padding: const EdgeInsets.all(16.0),
+      children: items,
+    );
+  }
+
+  List<Widget> _buildChatList(BuildContext context, AgentState state) {
+    final session = noema.bootstrap.agentOrchestratorService.currentSession;
+    final List<Widget> items = [];
+
+    // System Messages (Newest, at bottom)
+    if (state.isRunning || state.isWaitingForJobs) {
+      items.add(_buildThinkingIndicator(context, state.currentStatus));
+    } else if (state.currentStatus == "Completed") {
+      items.add(_buildSystemMessage(context, "Task completed successfully.", isError: false));
+    } else if (state.currentStatus == "Failed") {
+      items.add(_buildSystemMessage(context, "Task failed.", isError: true));
+    } else if (state.currentStatus == "Stopped") {
+      items.add(_buildSystemMessage(context, "Task cancelled by user.", isError: false));
+    }
+
+    // Assistant Messages (from newest to oldest)
+    // state.history is already returned in reverse order (newest-first)
+    for (final obs in state.history) {
+      items.add(_AssistantMessageCard(obs: obs));
+    }
+
+    // User Message (Oldest, at top)
+    if (session != null && session.currentGoal.isNotEmpty) {
+      items.add(_buildUserMessage(context, session.currentGoal));
+    }
+
+    return items;
+  }
+
+  Widget _buildUserMessage(BuildContext context, String text) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16, left: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(4),
+          ),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13, color: Colors.white),
+        ),
       ),
     );
   }
 
-  Widget _buildObservationTile(BuildContext context, UIObservation obs) {
+  Widget _buildSystemMessage(BuildContext context, String text, {required bool isError}) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16, top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isError ? Colors.redAccent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isError ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(isError ? Icons.error_outline : Icons.info_outline, size: 14, color: isError ? Colors.redAccent : Colors.grey),
+            const SizedBox(width: 6),
+            Text(text, style: TextStyle(fontSize: 11, color: isError ? Colors.redAccent : Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThinkingIndicator(BuildContext context, String status) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(bottom: 16.0, right: 32.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            obs.isError
-                ? Icons.error_outline
-                : (obs.isPending
-                      ? Icons.hourglass_empty
-                      : Icons.check_circle_outline),
-            size: 16,
-            color: obs.isError
-                ? Colors.redAccent
-                : (obs.isPending ? Colors.orangeAccent : Colors.green),
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            child: Icon(Icons.smart_toy, size: 14, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+                bottomLeft: Radius.circular(4),
+              ),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  obs.description,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                  ),
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                if (obs.resultText != null)
-                  Text(
-                    obs.resultText!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: obs.isError ? Colors.redAccent : Colors.grey[400],
-                    ),
-                  ),
-                const SizedBox(height: 2),
+                const SizedBox(width: 8),
                 Text(
-                  DateFormat('HH:mm:ss').format(obs.timestamp),
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  status,
+                  style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
                 ),
               ],
             ),
@@ -308,3 +360,111 @@ class _AgentPanelState extends State<AgentPanel> {
     );
   }
 }
+
+class _AssistantMessageCard extends StatefulWidget {
+  final UIObservation obs;
+  const _AssistantMessageCard({required this.obs});
+
+  @override
+  State<_AssistantMessageCard> createState() => _AssistantMessageCardState();
+}
+
+class _AssistantMessageCardState extends State<_AssistantMessageCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    String title = "Executed ${widget.obs.description.replaceAll('Used ', '')}";
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0, right: 32.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: const Icon(Icons.build, size: 12, color: Colors.grey),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                  bottomLeft: Radius.circular(4),
+                ),
+                border: Border.all(color: widget.obs.isError ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        widget.obs.isError ? Icons.error : (widget.obs.isPending ? Icons.hourglass_top : Icons.check_circle),
+                        size: 14,
+                        color: widget.obs.isError ? Colors.redAccent : (widget.obs.isPending ? Colors.orangeAccent : Colors.green),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                        ),
+                      ),
+                      Text(
+                        DateFormat('HH:mm').format(widget.obs.timestamp),
+                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  if (widget.obs.resultText != null) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            const Text("Technical Details", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_expanded)
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: SelectableText(
+                          widget.obs.resultText!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                            color: widget.obs.isError ? Colors.redAccent : Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                  ]
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

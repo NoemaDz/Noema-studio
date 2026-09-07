@@ -28,8 +28,11 @@ class AgentPlannerStage extends PipelineStage {
     final context = WorkflowContext();
 
     context.set("idea", project.idea);
+    if (cancellationToken != null) {
+      context.set("cancellationToken", cancellationToken);
+    }
 
-    final result = await engine.runWithContext(workflow, context);
+    final result = await engine.runWithContext(workflow, context, cancellationToken: cancellationToken);
 
     final planningData =
         result.get<Map<String, dynamic>>("agent_planning") ?? {};

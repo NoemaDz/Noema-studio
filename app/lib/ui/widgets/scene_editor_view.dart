@@ -183,7 +183,7 @@ class _SceneEditorCardState extends State<_SceneEditorCard> {
                 controller: _imagePromptController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: 'Image Prompt (Sent to ComfyUI)',
+                  labelText: 'Scene Visuals',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -202,7 +202,7 @@ class _SceneEditorCardState extends State<_SceneEditorCard> {
                 controller: _audioNarrationController,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: 'Audio Narration (Sent to TTS)',
+                  labelText: 'Voiceover',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

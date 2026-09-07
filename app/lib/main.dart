@@ -71,15 +71,15 @@ class _AIStudioAppState extends State<AIStudioApp> {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        dividerColor: Colors.white10,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF1976D2),
           brightness: Brightness.dark,
-          surface: const Color(0xFF0A0F1E), // Deep dark navy
-          surfaceContainerHighest: const Color(
-            0xFF141B2D,
-          ), // Slightly lighter navy
-          primary: const Color(0xFF2196F3), // Vibrant blue
-          secondary: const Color(0xFF00E5FF), // Neon cyan
+          surface: const Color(0xFF1E1E1E), // Sidebar/Panel color
+          surfaceContainerHighest: const Color(0xFF2C2C2C),
+          primary: const Color(0xFF2196F3),
+          secondary: const Color(0xFF00E5FF),
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),

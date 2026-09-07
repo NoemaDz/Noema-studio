@@ -26,8 +26,7 @@ class MockPluginContext implements PluginContext {
   @override
   final AppSettings appSettings = MockAppSettings();
 
-  @override
-  dynamic get database => throw UnimplementedError();
+  // dynamic get database => throw UnimplementedError();
 
   @override
   CapabilityResolver get capabilityResolver => throw UnimplementedError();

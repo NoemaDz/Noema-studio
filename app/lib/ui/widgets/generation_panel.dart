@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/job.dart';
 import '../../application/comfyui_runner_service.dart';
 import 'live_progress_tracker.dart';
-import 'glass_container.dart';
 import '../../main.dart';
 
 class GenerationPanel extends StatelessWidget {
@@ -29,13 +28,7 @@ class GenerationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      width: 320,
-      color: Theme.of(context).colorScheme.surface,
-      opacity: 0.15,
-      border: const Border(
-        right: BorderSide(color: Colors.white10, width: 1.0),
-      ),
+    return Container(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +41,7 @@ class GenerationPanel extends StatelessWidget {
                   Icon(Icons.smart_toy, color: Colors.blueAccent),
                   SizedBox(width: 8),
                   Text(
-                    "Director Agent",
+                    "Project Director",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -328,8 +321,8 @@ class _AnimatedGenerateButtonState extends State<_AnimatedGenerateButton>
                     noema.bootstrap.appSettings.enableVideoGeneration;
                 return Text(
                   widget.isGenerating
-                      ? "Cancel Generation"
-                      : (isVideo ? "Generate Video" : "Generate Image"),
+                      ? "Cancel Pipeline"
+                      : (isVideo ? "Render Video" : "Render Image"),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

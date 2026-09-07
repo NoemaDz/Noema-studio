@@ -171,26 +171,36 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
     final bool hasError =
         text == "Loading Video..." && !_initialized && widget.videoPath != null;
 
+    final bool isRealEmpty = widget.videoPath == null;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade800),
+        border: Border.all(color: Colors.white10),
       ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.movie_creation_outlined,
-              size: 64,
+              isRealEmpty ? Icons.movie_creation_outlined : (hasError ? Icons.error_outline : Icons.ondemand_video),
+              size: 48,
               color: Colors.grey.shade600,
             ),
             const SizedBox(height: 16),
             Text(
-              hasError ? "Video Generated Successfully!" : text,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 18),
+              isRealEmpty ? "No render available yet." : (hasError ? "Video Generated Successfully!" : text),
+              style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
             ),
+            if (isRealEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                "Once you complete the generation pipeline, your final video will appear here.",
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ],
             if (hasError &&
                 widget.videoPath != null &&
                 !widget.videoPath!.startsWith('http')) ...[

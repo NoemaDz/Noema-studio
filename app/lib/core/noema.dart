@@ -56,8 +56,14 @@ class Noema {
   }
 
   //==============================================
-  Future<NoemaProject> generatePlanning(NoemaProject project) {
-    return projectGenerationService.generatePlanning(project);
+  Future<NoemaProject> generatePlanning(
+    NoemaProject project, {
+    CancellationToken? cancellationToken,
+  }) {
+    return projectGenerationService.generatePlanning(
+      project,
+      cancellationToken: cancellationToken,
+    );
   }
 
   Future<NoemaProject> generateProduction(

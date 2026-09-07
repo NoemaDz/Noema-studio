@@ -7,7 +7,6 @@ import 'package:noema_studio/models/job.dart';
 import 'package:noema_studio/core/providers/provider_registry.dart';
 import 'package:noema_studio/presentation/state/project_state.dart';
 import 'package:noema_studio/core/job_events.dart';
-import 'dart:async';
 import 'dart:io';
 
 void main() {

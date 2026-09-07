@@ -5,6 +5,7 @@ enum GenerationState {
   generating,
   completed,
   failed,
+  stopped,
 }
 
 extension GenerationStateExtension on GenerationState {

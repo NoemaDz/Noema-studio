@@ -39,12 +39,16 @@ class ProjectGenerationService {
     required this.saveProject,
   });
 
-  Future<NoemaProject> generatePlanning(NoemaProject project) async {
+  Future<NoemaProject> generatePlanning(
+    NoemaProject project, {
+    CancellationToken? cancellationToken,
+  }) async {
     // Start job monitor so that Character image generation jobs can be tracked
     jobMonitor.start();
 
     await projectPipeline.generatePlanning(
       project,
+      cancellationToken: cancellationToken,
       onUpdate: (status) {
         projectState.setPipelineStatus(status);
       },

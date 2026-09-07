@@ -14,10 +14,12 @@ import '../../models/generation_state.dart';
 import '../../core/cancellation_token.dart';
 import '../widgets/generation_panel.dart';
 import '../widgets/scene_editor_view.dart';
-import '../widgets/glass_container.dart';
 import '../widgets/character_list.dart';
 import '../widgets/agent_panel.dart';
 import 'settings_dialog.dart';
+import '../../models/job.dart';
+import '../../core/providers/llm_provider.dart';
+import '../../infrastructure/ollama/ollama_provider.dart';
 
 class StudioScreen extends StatefulWidget {
   const StudioScreen({super.key});
@@ -31,6 +33,9 @@ class _StudioScreenState extends State<StudioScreen> {
   bool _isGenerating = false;
   String _statusText = "Ready";
   CancellationToken? _cancelToken;
+
+  bool? _isLeftPanelOpen;
+  bool? _isRightPanelOpen;
 
   @override
   void initState() {
@@ -73,9 +78,18 @@ class _StudioScreenState extends State<StudioScreen> {
       return;
     }
 
+    final currentProject = noema.bootstrap.projectState.project;
+    final currentState = currentProject?.projectState;
+
+    if (currentProject != null && (currentState == GenerationState.reviewing || currentState == GenerationState.stopped || currentState == GenerationState.generating)) {
+      _continueToProduction();
+      return;
+    }
+
     setState(() {
       _isGenerating = true;
       _statusText = "Starting planning phase...";
+      _cancelToken = CancellationToken();
     });
 
     try {
@@ -86,7 +100,7 @@ class _StudioScreenState extends State<StudioScreen> {
       final p = NoemaProject(
         id: const Uuid().v4(),
         idea: _ideaController.text,
-        story: import_story.Story(title: "Generating...", scenes: []),
+        story: import_story.Story(title: "Rendering Pipeline...", scenes: []),
       );
       noema.bootstrap.projectState.setProject(p);
 
@@ -100,18 +114,35 @@ class _StudioScreenState extends State<StudioScreen> {
       _activeSynchronizer = synchronizer;
       synchronizer.attach(noema.bootstrap.jobEvents);
 
-      await noema.generatePlanning(p);
+      await noema.generatePlanning(p, cancellationToken: _cancelToken);
+
+      await noema.saveProject(p);
 
       if (!mounted) return;
       setState(() {
         _statusText = "Planning complete. Please review scenes.";
         _isGenerating = false;
+        _cancelToken = null;
       });
+    } on CancelledException {
+      final p = noema.bootstrap.projectState.project;
+      if (p != null) {
+        p.projectState = GenerationState.stopped;
+        await noema.saveProject(p);
+      }
+      if (mounted) {
+        setState(() {
+          _statusText = "Planning stopped.";
+          _isGenerating = false;
+          _cancelToken = null;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _statusText = "Error: $e";
         _isGenerating = false;
+        _cancelToken = null;
       });
     }
   }
@@ -171,9 +202,14 @@ class _StudioScreenState extends State<StudioScreen> {
         });
       }
     } on CancelledException {
+      final p = noema.bootstrap.projectState.project;
+      if (p != null) {
+        p.projectState = GenerationState.stopped;
+        await noema.saveProject(p);
+      }
       if (mounted) {
         setState(() {
-          _statusText = "Pipeline cancelled.";
+          _statusText = "Pipeline stopped.";
           _isGenerating = false;
           _cancelToken = null;
         });
@@ -191,6 +227,28 @@ class _StudioScreenState extends State<StudioScreen> {
 
   void _cancelGeneration() {
     _cancelToken?.cancel();
+    
+    noema.bootstrap.agentOrchestratorService.stopTask();
+    
+    // Directly abort any active Ollama HTTP request to free VRAM immediately
+    final ollamaProvider = noema.bootstrap.providerRegistry.getOrNull<LLMProvider>('ollama');
+    if (ollamaProvider is OllamaProvider) {
+      ollamaProvider.service.abort();
+    }
+    
+    final project = noema.bootstrap.projectState.project;
+    if (project != null) {
+      for (final job in noema.bootstrap.jobManager.jobs.toList()) {
+        if (project.jobIds.contains(job.id)) {
+          if (job.status != JobStatus.completed &&
+              job.status != JobStatus.failed &&
+              job.status != JobStatus.cancelled) {
+            noema.bootstrap.jobManager.cancelJob(job.id);
+          }
+        }
+      }
+    }
+    
     setState(() {
       _statusText = "Cancelling pipeline...";
     });
@@ -326,9 +384,12 @@ class _StudioScreenState extends State<StudioScreen> {
     }
   }
 
-  Widget _buildMenuBar(BuildContext context) {
-    return MenuBar(
-      style: MenuStyle(
+  Widget _buildMenuBar(BuildContext context, bool leftOpen, bool rightOpen) {
+    return Row(
+      children: [
+        Expanded(
+          child: MenuBar(
+            style: MenuStyle(
         elevation: WidgetStateProperty.all(0),
         backgroundColor: WidgetStateProperty.all(Colors.transparent),
       ),
@@ -446,7 +507,7 @@ class _StudioScreenState extends State<StudioScreen> {
               onPressed: _openAdvancedMode,
               leadingIcon: const Icon(Icons.developer_board, size: 18),
               child: const Text(
-                'Open Workflow Editor (Advanced Mode)',
+                'Advanced Node Editor',
                 softWrap: false,
               ),
             ),
@@ -457,25 +518,89 @@ class _StudioScreenState extends State<StudioScreen> {
             style: TextStyle(fontWeight: FontWeight.w500),
           ),
         ),
+      ], // End MenuBar children
+    ), // End MenuBar
+    ), // End Expanded
+      IconButton(
+        icon: Icon(leftOpen ? Icons.menu_open : Icons.menu),
+        tooltip: 'Toggle Director Panel',
+        onPressed: () => setState(() => _isLeftPanelOpen = !leftOpen),
+      ),
+      IconButton(
+        icon: Icon(rightOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined),
+        tooltip: 'Toggle AI Assistant',
+        onPressed: () => setState(() => _isRightPanelOpen = !rightOpen),
+      ),
+      const SizedBox(width: 8),
       ],
+    );
+  }
+
+  Widget _buildRightPanel(NoemaProject? project) {
+    final hasCharacters = project != null && project.characters.isNotEmpty;
+    
+    Widget content;
+    if (!hasCharacters) {
+      content = const AgentPanel();
+    } else {
+      content = DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            const TabBar(
+              tabs: [
+                Tab(text: 'AI Assistant'),
+                Tab(text: 'Characters'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  const AgentPanel(),
+                  CharacterList(
+                    characters: project.characters,
+                    onCharacterUpdated: () => setState(() {}),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return Container(
+      width: 320,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          left: BorderSide(color: Theme.of(context).dividerColor, width: 1.0),
+        ),
+      ),
+      child: content,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    bool leftOpen = _isLeftPanelOpen ?? (screenWidth >= 1280);
+    bool rightOpen = _isRightPanelOpen ?? (screenWidth >= 1600);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Column(
         children: [
           // 1. Menu Bar
-          GlassContainer(
+          Container(
             width: double.infinity,
-            blurRadius: 20,
-            opacity: 0.1,
-            border: const Border(
-              bottom: BorderSide(color: Colors.white10, width: 1),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(
+                bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+              ),
             ),
-            child: _buildMenuBar(context),
+            child: _buildMenuBar(context, leftOpen, rightOpen),
           ),
 
           // 2. Main Workspace
@@ -485,96 +610,124 @@ class _StudioScreenState extends State<StudioScreen> {
               builder: (context, _) {
                 final project = noema.bootstrap.projectState.project;
 
-                return Row(
-                  children: [
-                    // Left Sidebar: Controls & Progress
-                    GenerationPanel(
-                      ideaController: _ideaController,
-                      isGenerating: _isGenerating,
-                      statusText: _statusText,
-                      pipelineStatus:
-                          noema.bootstrap.projectState.pipelineStatus,
-                      jobs: project != null
-                          ? noema.bootstrap.jobManager.jobs
-                                .where((j) => project.jobIds.contains(j.id))
-                                .toList()
-                          : [],
-                      onGenerate: _generateProject,
-                      onCancel: _cancelGeneration,
-                      onImportStory: _importStory,
-                    ),
+                final isReviewing = project?.projectState == GenerationState.reviewing;
 
-                    // Right Workspace: Video & Storyboard
+                return Column(
+                  children: [
                     Expanded(
-                      child: project?.projectState == GenerationState.reviewing
-                          ? SceneEditorView(
-                              project: project!,
-                              onContinue: _continueToProduction,
-                            )
-                          : Column(
-                              children: [
-                                // Top: Video Player
-                                Expanded(
-                                  flex: 3,
-                                  child: Padding(
+                      flex: 3,
+                      child: Row(
+                        children: [
+                          // Left Sidebar: Controls & Progress
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            width: leftOpen ? 320 : 0,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: SizedBox(
+                                width: 320,
+                                child: GenerationPanel(
+                                  ideaController: _ideaController,
+                                  isGenerating: _isGenerating,
+                                  statusText: _statusText,
+                                  pipelineStatus:
+                                      noema.bootstrap.projectState.pipelineStatus,
+                                  jobs: project != null
+                                      ? noema.bootstrap.jobManager.jobs
+                                            .where((j) => project.jobIds.contains(j.id))
+                                            .toList()
+                                      : [],
+                                  onGenerate: _generateProject,
+                                  onCancel: _cancelGeneration,
+                                  onImportStory: _importStory,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Center Workspace: Video & Scene Editor
+                          Expanded(
+                            child: isReviewing
+                                ? SceneEditorView(
+                                    project: project!,
+                                    onContinue: _continueToProduction,
+                                  )
+                                : Padding(
                                     padding: const EdgeInsets.all(24.0),
                                     child: VideoPreviewWidget(
                                       videoPath: project?.finalVideoPath,
                                     ),
                                   ),
-                                ),
+                          ),
 
-                                // Bottom: Storyboard
-                                Expanded(
-                                  flex: 2,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .surfaceContainerHighest
-                                          .withValues(alpha: 0.1),
-                                      border: Border(
-                                        top: BorderSide(
-                                          color: Theme.of(context).dividerColor,
-                                        ),
-                                      ),
-                                    ),
-                                    child: project != null
-                                        ? StoryboardViewWidget(project: project)
-                                        : const Center(
-                                            child: Text(
-                                              "Timeline empty. Generate a project to see scenes.",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
+                          // Right Sidebar: Agent & Characters
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            width: rightOpen ? 320 : 0,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: SizedBox(
+                                width: 320,
+                                child: _buildRightPanel(project),
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
                     ),
 
-                    // Right Sidebar: Characters Panel
-                    if (project != null && project.characters.isNotEmpty)
-                      GlassContainer(
-                        width: 240,
-                        color: Theme.of(context).colorScheme.surface,
-                        opacity: 0.12,
-                        border: const Border(
-                          left: BorderSide(color: Colors.white10, width: 1.0),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: SingleChildScrollView(
-                          child: CharacterList(
-                            characters: project.characters,
-                            onCharacterUpdated: () => setState(() {}),
+                    // Bottom Sidebar: Storyboard / Timeline
+                    if (!isReviewing)
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.1),
+                            border: Border(
+                              top: BorderSide(
+                                color: Theme.of(context).dividerColor,
+                              ),
+                            ),
                           ),
+                          child: project != null
+                              ? StoryboardViewWidget(project: project, onGenerateScenes: _isGenerating ? null : _generateProject)
+                              : Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.movie_filter_outlined, size: 48, color: Colors.grey),
+                                      const SizedBox(height: 16),
+                                      const Text("Start a new project or open an existing project.", style: TextStyle(color: Colors.grey)),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          OutlinedButton.icon(
+                                            onPressed: _newProject,
+                                            icon: const Icon(Icons.note_add),
+                                            label: const Text("New Project"),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          OutlinedButton.icon(
+                                            onPressed: _loadProject,
+                                            icon: const Icon(Icons.folder_open),
+                                            label: const Text("Open Project"),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
                         ),
                       ),
-
-                    // Agent Panel
-                    const AgentPanel(),
                   ],
                 );
               },
