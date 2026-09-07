@@ -6,13 +6,12 @@ import '../../core/cancellation_token.dart';
 class OllamaDriver {
   String get baseUrl => noema.bootstrap.appSettings.ollamaUrl;
 
-  http.Client? _activeClient;
-  bool _isAborting = false;
+  final Map<String, http.Client> _activeClients = {};
+  final Set<String> _abortingJobs = {};
 
-  Future<String> generateStory(String prompt) async {
+  Future<String> generateStory(String jobId, String prompt) async {
     final client = http.Client();
-    _activeClient = client;
-    _isAborting = false;
+    _activeClients[jobId] = client;
 
     try {
       final response = await client
@@ -40,21 +39,22 @@ class OllamaDriver {
         throw Exception("Failed to generate story");
       }
     } catch (e) {
-      if (_isAborting) {
+      if (_abortingJobs.contains(jobId)) {
         throw CancelledException();
       }
       rethrow;
     } finally {
-      _activeClient = null;
+      _activeClients.remove(jobId);
+      _abortingJobs.remove(jobId);
       client.close();
     }
   }
 
   /// Forcefully closes the active HTTP connection, aborting any in-flight
   /// Ollama generation request. This immediately frees VRAM on the server side.
-  void abort() {
-    _isAborting = true;
-    _activeClient?.close();
-    _activeClient = null;
+  void abort(String jobId) {
+    _abortingJobs.add(jobId);
+    _activeClients[jobId]?.close();
+    _activeClients.remove(jobId);
   }
 }

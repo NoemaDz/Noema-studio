@@ -33,115 +33,113 @@ class _AgentPanelState extends State<AgentPanel> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-        listenable: Listenable.merge([
-          noema.bootstrap.agentState,
-          noema.bootstrap.projectState,
-        ]),
-        builder: (context, _) {
-          final state = noema.bootstrap.agentState;
+      listenable: Listenable.merge([
+        noema.bootstrap.agentState,
+        noema.bootstrap.projectState,
+      ]),
+      builder: (context, _) {
+        final state = noema.bootstrap.agentState;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.white10)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      state.isRunning || state.isWaitingForJobs
-                          ? Icons.smart_toy
-                          : Icons.smart_toy_outlined,
-                      color: state.isRunning
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.grey,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.white10)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    state.isRunning || state.isWaitingForJobs
+                        ? Icons.smart_toy
+                        : Icons.smart_toy_outlined,
+                    color: state.isRunning
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "AI Assistant",
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "AI Assistant",
-                        style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (state.isRunning || state.isWaitingForJobs)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.stop,
+                        color: Colors.redAccent,
+                        size: 20,
                       ),
+                      onPressed: state.stopTask,
+                      tooltip: "Stop Task",
                     ),
-                    if (state.isRunning || state.isWaitingForJobs)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.stop,
-                          color: Colors.redAccent,
-                          size: 20,
+                ],
+              ),
+            ),
+
+            // Chat History
+            Expanded(child: _buildChatArea(context, state)),
+
+            // Permission Request Overlay
+            if (state.pendingPermission != null)
+              _buildPermissionCard(context, state),
+
+            // Input Area
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _goalController,
+                      enabled:
+                          noema.bootstrap.projectState.project != null &&
+                          !state.isRunning &&
+                          !state.isWaitingForJobs &&
+                          state.pendingPermission == null,
+                      maxLines: 4,
+                      minLines: 1,
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        hintText: noema.bootstrap.projectState.project == null
+                            ? 'Open a project first...'
+                            : 'Ask agent to do something...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
                         ),
-                        onPressed: state.stopTask,
-                        tooltip: "Stop Task",
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
-                  ],
-                ),
-              ),
-
-              // Chat History
-              Expanded(
-                child: _buildChatArea(context, state),
-              ),
-
-              // Permission Request Overlay
-              if (state.pendingPermission != null)
-                _buildPermissionCard(context, state),
-
-              // Input Area
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _goalController,
-                        enabled:
-                            noema.bootstrap.projectState.project != null &&
+                      onSubmitted: (_) => _submitGoal(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.send),
+                    onPressed:
+                        (noema.bootstrap.projectState.project != null &&
                             !state.isRunning &&
                             !state.isWaitingForJobs &&
-                            state.pendingPermission == null,
-                        maxLines: 4,
-                        minLines: 1,
-                        textInputAction: TextInputAction.send,
-                        decoration: InputDecoration(
-                          hintText: noema.bootstrap.projectState.project == null
-                              ? 'Open a project first...'
-                              : 'Ask agent to do something...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.05),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        onSubmitted: (_) => _submitGoal(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed:
-                          (noema.bootstrap.projectState.project != null &&
-                              !state.isRunning &&
-                              !state.isWaitingForJobs &&
-                              state.pendingPermission == null)
-                          ? _submitGoal
-                          : null,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ],
-                ),
+                            state.pendingPermission == null)
+                        ? _submitGoal
+                        : null,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
               ),
-            ],
-          );
-        },
-      );
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildChatArea(BuildContext context, AgentState state) {
@@ -155,9 +153,20 @@ class _AgentPanelState extends State<AgentPanel> {
             children: [
               Icon(Icons.forum_outlined, size: 48, color: Colors.grey.shade700),
               const SizedBox(height: 16),
-              const Text("How can I help you?", style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500)),
+              const Text(
+                "How can I help you?",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text("Ask me to generate characters, edit scenes, or brainstorm ideas.", style: TextStyle(color: Colors.white54, fontSize: 13), textAlign: TextAlign.center),
+              const Text(
+                "Ask me to generate characters, edit scenes, or brainstorm ideas.",
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -178,11 +187,19 @@ class _AgentPanelState extends State<AgentPanel> {
     if (state.isRunning || state.isWaitingForJobs) {
       items.add(_buildThinkingIndicator(context, state.currentStatus));
     } else if (state.currentStatus == "Completed") {
-      items.add(_buildSystemMessage(context, "Task completed successfully.", isError: false));
+      items.add(
+        _buildSystemMessage(
+          context,
+          "Task completed successfully.",
+          isError: false,
+        ),
+      );
     } else if (state.currentStatus == "Failed") {
       items.add(_buildSystemMessage(context, "Task failed.", isError: true));
     } else if (state.currentStatus == "Stopped") {
-      items.add(_buildSystemMessage(context, "Task cancelled by user.", isError: false));
+      items.add(
+        _buildSystemMessage(context, "Task cancelled by user.", isError: false),
+      );
     }
 
     // Assistant Messages (from newest to oldest)
@@ -225,22 +242,42 @@ class _AgentPanelState extends State<AgentPanel> {
     );
   }
 
-  Widget _buildSystemMessage(BuildContext context, String text, {required bool isError}) {
+  Widget _buildSystemMessage(
+    BuildContext context,
+    String text, {
+    required bool isError,
+  }) {
     return Center(
       child: Container(
         margin: const EdgeInsets.only(bottom: 16, top: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isError ? Colors.redAccent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
+          color: isError
+              ? Colors.redAccent.withValues(alpha: 0.1)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isError ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white10),
+          border: Border.all(
+            color: isError
+                ? Colors.redAccent.withValues(alpha: 0.3)
+                : Colors.white10,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isError ? Icons.error_outline : Icons.info_outline, size: 14, color: isError ? Colors.redAccent : Colors.grey),
+            Icon(
+              isError ? Icons.error_outline : Icons.info_outline,
+              size: 14,
+              color: isError ? Colors.redAccent : Colors.grey,
+            ),
             const SizedBox(width: 6),
-            Text(text, style: TextStyle(fontSize: 11, color: isError ? Colors.redAccent : Colors.grey)),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                color: isError ? Colors.redAccent : Colors.grey,
+              ),
+            ),
           ],
         ),
       ),
@@ -255,14 +292,22 @@ class _AgentPanelState extends State<AgentPanel> {
         children: [
           CircleAvatar(
             radius: 12,
-            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-            child: Icon(Icons.smart_toy, size: 14, color: Theme.of(context).colorScheme.primary),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.2),
+            child: Icon(
+              Icons.smart_toy,
+              size: 14,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -282,7 +327,11 @@ class _AgentPanelState extends State<AgentPanel> {
                 const SizedBox(width: 8),
                 Text(
                   status,
-                  style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ],
             ),
@@ -375,7 +424,7 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
   @override
   Widget build(BuildContext context) {
     String title = "Executed ${widget.obs.description.replaceAll('Used ', '')}";
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0, right: 32.0),
       child: Row(
@@ -383,7 +432,9 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
         children: [
           CircleAvatar(
             radius: 12,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
             child: const Icon(Icons.build, size: 12, color: Colors.grey),
           ),
           const SizedBox(width: 8),
@@ -391,14 +442,20 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                   bottomLeft: Radius.circular(4),
                 ),
-                border: Border.all(color: widget.obs.isError ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white10),
+                border: Border.all(
+                  color: widget.obs.isError
+                      ? Colors.redAccent.withValues(alpha: 0.3)
+                      : Colors.white10,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,20 +463,34 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
                   Row(
                     children: [
                       Icon(
-                        widget.obs.isError ? Icons.error : (widget.obs.isPending ? Icons.hourglass_top : Icons.check_circle),
+                        widget.obs.isError
+                            ? Icons.error
+                            : (widget.obs.isPending
+                                  ? Icons.hourglass_top
+                                  : Icons.check_circle),
                         size: 14,
-                        color: widget.obs.isError ? Colors.redAccent : (widget.obs.isPending ? Colors.orangeAccent : Colors.green),
+                        color: widget.obs.isError
+                            ? Colors.redAccent
+                            : (widget.obs.isPending
+                                  ? Colors.orangeAccent
+                                  : Colors.green),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           title,
-                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       Text(
                         DateFormat('HH:mm').format(widget.obs.timestamp),
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -432,9 +503,21 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(_expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: Colors.grey),
+                            Icon(
+                              _expanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
-                            const Text("Technical Details", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                            const Text(
+                              "Technical Details",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -453,11 +536,13 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
                           style: TextStyle(
                             fontSize: 11,
                             fontFamily: 'monospace',
-                            color: widget.obs.isError ? Colors.redAccent : Colors.grey[400],
+                            color: widget.obs.isError
+                                ? Colors.redAccent
+                                : Colors.grey[400],
                           ),
                         ),
                       ),
-                  ]
+                  ],
                 ],
               ),
             ),
@@ -467,4 +552,3 @@ class _AssistantMessageCardState extends State<_AssistantMessageCard> {
     );
   }
 }
-

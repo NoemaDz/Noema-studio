@@ -44,7 +44,7 @@ class OllamaProvider extends LLMProvider {
 
   Future<void> _runAsync(Job job, String prompt) async {
     try {
-      final result = await service.generateStory(prompt);
+      final result = await service.generateStory(job.id, prompt);
       _results[job.id] = ExecutionResult.success(textOutput: result);
       job.transitionTo(JobStatus.completed);
     } on CancelledException {
@@ -68,6 +68,6 @@ class OllamaProvider extends LLMProvider {
 
   @override
   Future<void> cancelJob(String jobId) async {
-    service.abort();
+    service.abort(jobId);
   }
 }

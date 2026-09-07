@@ -175,7 +175,9 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white10),
       ),
@@ -184,14 +186,22 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isRealEmpty ? Icons.movie_creation_outlined : (hasError ? Icons.error_outline : Icons.ondemand_video),
+              isRealEmpty
+                  ? Icons.movie_creation_outlined
+                  : (hasError ? Icons.error_outline : Icons.ondemand_video),
               size: 48,
               color: Colors.grey.shade600,
             ),
             const SizedBox(height: 16),
             Text(
-              isRealEmpty ? "No render available yet." : (hasError ? "Video Generated Successfully!" : text),
-              style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500),
+              isRealEmpty
+                  ? "No render available yet."
+                  : (hasError ? "Video Generated Successfully!" : text),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             if (isRealEmpty) ...[
               const SizedBox(height: 8),

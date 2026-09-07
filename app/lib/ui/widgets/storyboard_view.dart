@@ -12,7 +12,11 @@ class StoryboardViewWidget extends StatelessWidget {
   final NoemaProject project;
   final VoidCallback? onGenerateScenes;
 
-  const StoryboardViewWidget({super.key, required this.project, this.onGenerateScenes});
+  const StoryboardViewWidget({
+    super.key,
+    required this.project,
+    this.onGenerateScenes,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +25,25 @@ class StoryboardViewWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.auto_awesome_motion, size: 48, color: Colors.grey.shade700),
+            Icon(
+              Icons.auto_awesome_motion,
+              size: 48,
+              color: Colors.grey.shade700,
+            ),
             const SizedBox(height: 16),
-            const Text("No scenes generated yet.", style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text(
+              "No scenes generated yet.",
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text("Provide an idea in the Project Director and generate your scenes.", style: TextStyle(color: Colors.white54, fontSize: 13)),
+            const Text(
+              "Provide an idea in the Project Director and generate your scenes.",
+              style: TextStyle(color: Colors.white54, fontSize: 13),
+            ),
             const SizedBox(height: 16),
             if (onGenerateScenes != null)
               OutlinedButton.icon(

@@ -71,7 +71,6 @@ class _AgentPlanningStep implements WorkflowStep {
       // Wait for job completion
       while (job.status == JobStatus.pending ||
           job.status == JobStatus.running) {
-        
         final cancelToken = context.get<CancellationToken>("cancellationToken");
         if (cancelToken?.isCancelled == true) {
           await provider.cancelJob(job.id);

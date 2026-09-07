@@ -18,8 +18,6 @@ import '../widgets/character_list.dart';
 import '../widgets/agent_panel.dart';
 import 'settings_dialog.dart';
 import '../../models/job.dart';
-import '../../core/providers/llm_provider.dart';
-import '../../infrastructure/ollama/ollama_provider.dart';
 
 class StudioScreen extends StatefulWidget {
   const StudioScreen({super.key});
@@ -81,7 +79,10 @@ class _StudioScreenState extends State<StudioScreen> {
     final currentProject = noema.bootstrap.projectState.project;
     final currentState = currentProject?.projectState;
 
-    if (currentProject != null && (currentState == GenerationState.reviewing || currentState == GenerationState.stopped || currentState == GenerationState.generating)) {
+    if (currentProject != null &&
+        (currentState == GenerationState.reviewing ||
+            currentState == GenerationState.stopped ||
+            currentState == GenerationState.generating)) {
       _continueToProduction();
       return;
     }
@@ -227,15 +228,9 @@ class _StudioScreenState extends State<StudioScreen> {
 
   void _cancelGeneration() {
     _cancelToken?.cancel();
-    
+
     noema.bootstrap.agentOrchestratorService.stopTask();
-    
-    // Directly abort any active Ollama HTTP request to free VRAM immediately
-    final ollamaProvider = noema.bootstrap.providerRegistry.getOrNull<LLMProvider>('ollama');
-    if (ollamaProvider is OllamaProvider) {
-      ollamaProvider.service.abort();
-    }
-    
+
     final project = noema.bootstrap.projectState.project;
     if (project != null) {
       for (final job in noema.bootstrap.jobManager.jobs.toList()) {
@@ -248,7 +243,7 @@ class _StudioScreenState extends State<StudioScreen> {
         }
       }
     }
-    
+
     setState(() {
       _statusText = "Cancelling pipeline...";
     });
@@ -390,155 +385,166 @@ class _StudioScreenState extends State<StudioScreen> {
         Expanded(
           child: MenuBar(
             style: MenuStyle(
-        elevation: WidgetStateProperty.all(0),
-        backgroundColor: WidgetStateProperty.all(Colors.transparent),
-      ),
-      children: [
-        SubmenuButton(
-          menuChildren: [
-            MenuItemButton(
-              onPressed: _newProject,
-              leadingIcon: const Icon(Icons.note_add_outlined, size: 18),
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyN,
-                control: true,
+              elevation: WidgetStateProperty.all(0),
+              backgroundColor: WidgetStateProperty.all(Colors.transparent),
+            ),
+            children: [
+              SubmenuButton(
+                menuChildren: [
+                  MenuItemButton(
+                    onPressed: _newProject,
+                    leadingIcon: const Icon(Icons.note_add_outlined, size: 18),
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.keyN,
+                      control: true,
+                    ),
+                    child: const Text('New Project'),
+                  ),
+                  MenuItemButton(
+                    onPressed: _loadProject,
+                    leadingIcon: const Icon(
+                      Icons.folder_open_outlined,
+                      size: 18,
+                    ),
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.keyO,
+                      control: true,
+                    ),
+                    child: const Text('Open Project...'),
+                  ),
+                  MenuItemButton(
+                    onPressed: _saveProject,
+                    leadingIcon: const Icon(Icons.save_outlined, size: 18),
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.keyS,
+                      control: true,
+                    ),
+                    child: const Text('Save Project As...'),
+                  ),
+                  const Divider(),
+                  MenuItemButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const SettingsDialog(),
+                      );
+                    },
+                    leadingIcon: const Icon(Icons.settings_outlined, size: 18),
+                    child: const Text('Settings'),
+                  ),
+                  const Divider(),
+                  MenuItemButton(
+                    onPressed: () {},
+                    leadingIcon: const Icon(Icons.exit_to_app, size: 18),
+                    child: const Text('Exit'),
+                  ),
+                ],
+                child: const Text(
+                  'File',
+                  softWrap: false,
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
               ),
-              child: const Text('New Project'),
-            ),
-            MenuItemButton(
-              onPressed: _loadProject,
-              leadingIcon: const Icon(Icons.folder_open_outlined, size: 18),
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyO,
-                control: true,
+              SubmenuButton(
+                menuChildren: [
+                  MenuItemButton(
+                    onPressed: _generateProject,
+                    leadingIcon: const Icon(
+                      Icons.play_arrow_rounded,
+                      size: 18,
+                      color: Colors.green,
+                    ),
+                    child: const Text(
+                      'Generate / Run Pipeline',
+                      softWrap: false,
+                    ),
+                  ),
+                  MenuItemButton(
+                    onPressed: _importStory,
+                    leadingIcon: const Icon(
+                      Icons.upload_file_outlined,
+                      size: 18,
+                    ),
+                    child: const Text('Import Script...', softWrap: false),
+                  ),
+                  const Divider(),
+                  MenuItemButton(
+                    onPressed: () {},
+                    leadingIcon: const Icon(
+                      Icons.movie_creation_outlined,
+                      size: 18,
+                    ),
+                    child: const Text('Export Video...', softWrap: false),
+                  ),
+                ],
+                child: const Text(
+                  'Project',
+                  softWrap: false,
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
               ),
-              child: const Text('Open Project...'),
-            ),
-            MenuItemButton(
-              onPressed: _saveProject,
-              leadingIcon: const Icon(Icons.save_outlined, size: 18),
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyS,
-                control: true,
+              SubmenuButton(
+                menuChildren: [
+                  MenuItemButton(
+                    onPressed: () {},
+                    leadingIcon: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 18,
+                    ),
+                    child: const Text('Add Scene', softWrap: false),
+                  ),
+                  MenuItemButton(
+                    onPressed: () {},
+                    leadingIcon: const Icon(
+                      Icons.person_add_alt_1_outlined,
+                      size: 18,
+                    ),
+                    child: const Text('Add Character', softWrap: false),
+                  ),
+                ],
+                child: const Text(
+                  'Add',
+                  softWrap: false,
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
               ),
-              child: const Text('Save Project As...'),
-            ),
-            const Divider(),
-            MenuItemButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const SettingsDialog(),
-                );
-              },
-              leadingIcon: const Icon(Icons.settings_outlined, size: 18),
-              child: const Text('Settings'),
-            ),
-            const Divider(),
-            MenuItemButton(
-              onPressed: () {},
-              leadingIcon: const Icon(Icons.exit_to_app, size: 18),
-              child: const Text('Exit'),
-            ),
-          ],
-          child: const Text(
-            'File',
-            softWrap: false,
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
+              SubmenuButton(
+                menuChildren: [
+                  MenuItemButton(
+                    onPressed: _openAdvancedMode,
+                    leadingIcon: const Icon(Icons.developer_board, size: 18),
+                    child: const Text('Advanced Node Editor', softWrap: false),
+                  ),
+                ],
+                child: const Text(
+                  'Tools',
+                  softWrap: false,
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ], // End MenuBar children
+          ), // End MenuBar
+        ), // End Expanded
+        IconButton(
+          icon: Icon(leftOpen ? Icons.menu_open : Icons.menu),
+          tooltip: 'Toggle Director Panel',
+          onPressed: () => setState(() => _isLeftPanelOpen = !leftOpen),
         ),
-        SubmenuButton(
-          menuChildren: [
-            MenuItemButton(
-              onPressed: _generateProject,
-              leadingIcon: const Icon(
-                Icons.play_arrow_rounded,
-                size: 18,
-                color: Colors.green,
-              ),
-              child: const Text('Generate / Run Pipeline', softWrap: false),
-            ),
-            MenuItemButton(
-              onPressed: _importStory,
-              leadingIcon: const Icon(Icons.upload_file_outlined, size: 18),
-              child: const Text('Import Script...', softWrap: false),
-            ),
-            const Divider(),
-            MenuItemButton(
-              onPressed: () {},
-              leadingIcon: const Icon(Icons.movie_creation_outlined, size: 18),
-              child: const Text('Export Video...', softWrap: false),
-            ),
-          ],
-          child: const Text(
-            'Project',
-            softWrap: false,
-            style: TextStyle(fontWeight: FontWeight.w500),
+        IconButton(
+          icon: Icon(
+            rightOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
           ),
+          tooltip: 'Toggle AI Assistant',
+          onPressed: () => setState(() => _isRightPanelOpen = !rightOpen),
         ),
-        SubmenuButton(
-          menuChildren: [
-            MenuItemButton(
-              onPressed: () {},
-              leadingIcon: const Icon(
-                Icons.add_photo_alternate_outlined,
-                size: 18,
-              ),
-              child: const Text('Add Scene', softWrap: false),
-            ),
-            MenuItemButton(
-              onPressed: () {},
-              leadingIcon: const Icon(
-                Icons.person_add_alt_1_outlined,
-                size: 18,
-              ),
-              child: const Text('Add Character', softWrap: false),
-            ),
-          ],
-          child: const Text(
-            'Add',
-            softWrap: false,
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-        ),
-        SubmenuButton(
-          menuChildren: [
-            MenuItemButton(
-              onPressed: _openAdvancedMode,
-              leadingIcon: const Icon(Icons.developer_board, size: 18),
-              child: const Text(
-                'Advanced Node Editor',
-                softWrap: false,
-              ),
-            ),
-          ],
-          child: const Text(
-            'Tools',
-            softWrap: false,
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-        ),
-      ], // End MenuBar children
-    ), // End MenuBar
-    ), // End Expanded
-      IconButton(
-        icon: Icon(leftOpen ? Icons.menu_open : Icons.menu),
-        tooltip: 'Toggle Director Panel',
-        onPressed: () => setState(() => _isLeftPanelOpen = !leftOpen),
-      ),
-      IconButton(
-        icon: Icon(rightOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined),
-        tooltip: 'Toggle AI Assistant',
-        onPressed: () => setState(() => _isRightPanelOpen = !rightOpen),
-      ),
-      const SizedBox(width: 8),
+        const SizedBox(width: 8),
       ],
     );
   }
 
   Widget _buildRightPanel(NoemaProject? project) {
     final hasCharacters = project != null && project.characters.isNotEmpty;
-    
+
     Widget content;
     if (!hasCharacters) {
       content = const AgentPanel();
@@ -568,7 +574,7 @@ class _StudioScreenState extends State<StudioScreen> {
         ),
       );
     }
-    
+
     return Container(
       width: 320,
       decoration: BoxDecoration(
@@ -597,7 +603,10 @@ class _StudioScreenState extends State<StudioScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               border: Border(
-                bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
               ),
             ),
             child: _buildMenuBar(context, leftOpen, rightOpen),
@@ -610,7 +619,8 @@ class _StudioScreenState extends State<StudioScreen> {
               builder: (context, _) {
                 final project = noema.bootstrap.projectState.project;
 
-                final isReviewing = project?.projectState == GenerationState.reviewing;
+                final isReviewing =
+                    project?.projectState == GenerationState.reviewing;
 
                 return Column(
                   children: [
@@ -632,11 +642,16 @@ class _StudioScreenState extends State<StudioScreen> {
                                   ideaController: _ideaController,
                                   isGenerating: _isGenerating,
                                   statusText: _statusText,
-                                  pipelineStatus:
-                                      noema.bootstrap.projectState.pipelineStatus,
+                                  pipelineStatus: noema
+                                      .bootstrap
+                                      .projectState
+                                      .pipelineStatus,
                                   jobs: project != null
                                       ? noema.bootstrap.jobManager.jobs
-                                            .where((j) => project.jobIds.contains(j.id))
+                                            .where(
+                                              (j) =>
+                                                  project.jobIds.contains(j.id),
+                                            )
                                             .toList()
                                       : [],
                                   onGenerate: _generateProject,
@@ -698,14 +713,26 @@ class _StudioScreenState extends State<StudioScreen> {
                             ),
                           ),
                           child: project != null
-                              ? StoryboardViewWidget(project: project, onGenerateScenes: _isGenerating ? null : _generateProject)
+                              ? StoryboardViewWidget(
+                                  project: project,
+                                  onGenerateScenes: _isGenerating
+                                      ? null
+                                      : _generateProject,
+                                )
                               : Center(
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.movie_filter_outlined, size: 48, color: Colors.grey),
+                                      const Icon(
+                                        Icons.movie_filter_outlined,
+                                        size: 48,
+                                        color: Colors.grey,
+                                      ),
                                       const SizedBox(height: 16),
-                                      const Text("Start a new project or open an existing project.", style: TextStyle(color: Colors.grey)),
+                                      const Text(
+                                        "Start a new project or open an existing project.",
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
                                       const SizedBox(height: 16),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
