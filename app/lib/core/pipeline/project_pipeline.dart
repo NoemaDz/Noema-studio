@@ -103,9 +103,8 @@ class ProjectPipeline {
         .where(
           (j) =>
               project.jobIds.contains(j.id) &&
-              (j.status == JobStatus.pending ||
-                  j.status == JobStatus.running ||
-                  j.status == JobStatus.failed),
+              j.status != JobStatus.completed &&
+              j.status != JobStatus.cancelled,
         )
         .map((j) => j.id)
         .toList();

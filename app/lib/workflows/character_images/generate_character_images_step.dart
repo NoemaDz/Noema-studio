@@ -7,6 +7,7 @@ import '../../models/job.dart';
 import '../../models/character.dart';
 import '../../core/contracts/execution_request.dart';
 import '../../core/capabilities/capability.dart';
+import '../../core/cancellation_token.dart';
 
 class GenerateCharacterImagesStep extends WorkflowStep<void> {
   final ImageProvider provider;
@@ -46,11 +47,21 @@ class GenerateCharacterImagesStep extends WorkflowStep<void> {
 
     // Wait for all character image jobs to complete
     final jobManager = context.get<JobManager>("jobManager")!;
+    final cancellationToken = context.get<CancellationToken>(
+      "cancellationToken",
+    );
+
     for (final entry in pendingJobs.entries) {
       final character = entry.key;
       final jobId = entry.value;
 
-      await jobManager.waitForCompletion(jobId);
+      try {
+        await jobManager.waitForCompletion(jobId, token: cancellationToken);
+      } on CancelledException {
+        await jobManager.cancelJob(jobId);
+        rethrow;
+      }
+
       final job = jobManager.find(jobId);
 
       if (job != null && job.status == JobStatus.completed) {

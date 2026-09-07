@@ -52,8 +52,18 @@ class MockToolbox implements AgentToolbox {
         jobs: [JobReference(jobId: job.id, type: job.type)],
       );
     } else if (action.toolId == 'test_multi_job') {
-      final job1 = Job(id: 'jA', providerId: 'test', type: 'test', status: JobStatus.running);
-      final job2 = Job(id: 'jB', providerId: 'test', type: 'test', status: JobStatus.running);
+      final job1 = Job(
+        id: 'jA',
+        providerId: 'test',
+        type: 'test',
+        status: JobStatus.running,
+      );
+      final job2 = Job(
+        id: 'jB',
+        providerId: 'test',
+        type: 'test',
+        status: JobStatus.running,
+      );
       jobManager.add(job1);
       jobManager.add(job2);
       return ToolResult(
@@ -77,10 +87,18 @@ class TestPlanner extends AgentPlanner {
   int formulateCount = 0;
   bool isWaitingForJob = false;
 
-  TestPlanner({required super.llmClient, required super.toolbox, this.targetToolId = 'test_job', this.isWaitingForJob = false});
+  TestPlanner({
+    required super.llmClient,
+    required super.toolbox,
+    this.targetToolId = 'test_job',
+    this.isWaitingForJob = false,
+  });
 
   @override
-  Future<AgentPlan> formulatePlan(AgentSession session, {int maxRetries = 3}) async {
+  Future<AgentPlan> formulatePlan(
+    AgentSession session, {
+    int maxRetries = 3,
+  }) async {
     formulateCount++;
     if (!isWaitingForJob) {
       isWaitingForJob = true;
@@ -143,17 +161,25 @@ void main() {
       );
 
       await oldOrchestrator.startTask(project, "test");
-      expect(oldOrchestrator.currentSession!.state, AgentSessionState.waitingForJobs);
+      expect(
+        oldOrchestrator.currentSession!.state,
+        AgentSessionState.waitingForJobs,
+      );
       expect(oldPlanner.formulateCount, 1);
 
       // Simulate App Restart
       final persistedSession = cloneSession(oldOrchestrator.currentSession!);
-      
+
       final freshJobEvents = JobEvents();
       final freshJobManager = JobManager();
       // restoreJobs converts running jobs to failed BEFORE event listeners attach
       freshJobManager.restoreJobs([
-        Job(id: 'job_1', providerId: 'test_provider', type: 'test', status: JobStatus.running)
+        Job(
+          id: 'job_1',
+          providerId: 'test_provider',
+          type: 'test',
+          status: JobStatus.running,
+        ),
       ]);
       expect(freshJobManager.find('job_1')!.status, JobStatus.failed);
 
@@ -185,7 +211,7 @@ void main() {
       final oldPlanner = TestPlanner(
         llmClient: MockLlmClient(),
         toolbox: oldToolbox,
-        targetToolId: 'test_multi_job'
+        targetToolId: 'test_multi_job',
       );
 
       final oldOrchestrator = AgentOrchestratorService(
@@ -203,16 +229,29 @@ void main() {
       );
 
       await oldOrchestrator.startTask(project, "test");
-      expect(oldOrchestrator.currentSession!.state, AgentSessionState.waitingForJobs);
+      expect(
+        oldOrchestrator.currentSession!.state,
+        AgentSessionState.waitingForJobs,
+      );
 
       // Simulate App Restart
       final persistedSession = cloneSession(oldOrchestrator.currentSession!);
-      
+
       final freshJobEvents = JobEvents();
       final freshJobManager = JobManager();
       freshJobManager.restoreJobs([
-        Job(id: 'jA', providerId: 'test', type: 'test', status: JobStatus.running),
-        Job(id: 'jB', providerId: 'test', type: 'test', status: JobStatus.running)
+        Job(
+          id: 'jA',
+          providerId: 'test',
+          type: 'test',
+          status: JobStatus.running,
+        ),
+        Job(
+          id: 'jB',
+          providerId: 'test',
+          type: 'test',
+          status: JobStatus.running,
+        ),
       ]);
 
       final freshPlanner = TestPlanner(
@@ -232,9 +271,11 @@ void main() {
 
       expect(persistedSession.state, AgentSessionState.failed);
       expect(freshPlanner.formulateCount, 1); // Exactly one resume
-      
+
       // Ensure only one wait observation was created in the fresh session
-      final waitObs = persistedSession.observations.where((o) => o.stepId.endsWith('_waiting')).length;
+      final waitObs = persistedSession.observations
+          .where((o) => o.stepId.endsWith('_waiting'))
+          .length;
       expect(waitObs, 1); // Only the one from the original session
     });
 
@@ -262,13 +303,18 @@ void main() {
       );
 
       await oldOrchestrator.startTask(project, "test");
-      
+
       final persistedSession = cloneSession(oldOrchestrator.currentSession!);
-      
+
       final freshJobEvents = JobEvents();
       final freshJobManager = JobManager();
       freshJobManager.restoreJobs([
-        Job(id: 'job_1', providerId: 'test_provider', type: 'test', status: JobStatus.running)
+        Job(
+          id: 'job_1',
+          providerId: 'test_provider',
+          type: 'test',
+          status: JobStatus.running,
+        ),
       ]);
 
       final freshPlanner = TestPlanner(
@@ -291,7 +337,7 @@ void main() {
 
       // Call resumeSession again
       await freshOrchestrator.resumeSession(persistedSession);
-      
+
       // State should not change, no duplicate planning, no duplicate observations
       expect(persistedSession.state, AgentSessionState.failed);
       expect(freshPlanner.formulateCount, 1);

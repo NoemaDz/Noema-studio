@@ -73,8 +73,8 @@ class ProjectSynchronizer {
     // Always update the savedJobs snapshot before saving
     _updateSavedJobs();
 
-    if (job.status == JobStatus.failed) {
-      // If a job fails, we should update the UI to show the error
+    if (job.status == JobStatus.failed || job.status == JobStatus.cancelled) {
+      // If a job fails or is cancelled, update the UI and save project state
       state.refresh();
       saveProject(project);
       return;

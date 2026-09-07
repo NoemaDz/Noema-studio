@@ -5,13 +5,18 @@ import 'package:noema_studio/core/providers/document_ingestion_provider.dart';
 import 'package:noema_studio/core/capabilities/capability.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:noema_studio/core/cancellation_token.dart';
+
 class DocumentIngestionService {
   final ProviderRegistry registry;
   final JobManager jobManager;
 
   DocumentIngestionService(this.registry, this.jobManager);
 
-  Future<String> importDocument(String filePath) async {
+  Future<String> importDocument(
+    String filePath, {
+    CancellationToken? token,
+  }) async {
     final extension = p.extension(filePath).toLowerCase().replaceAll('.', '');
 
     DocumentIngestionProvider? provider;
@@ -36,7 +41,12 @@ class DocumentIngestionService {
     final job = await provider.execute(request);
     jobManager.add(job);
 
-    await jobManager.waitForCompletion(job.id);
+    try {
+      await jobManager.waitForCompletion(job.id, token: token);
+    } on CancelledException {
+      await jobManager.cancelJob(job.id);
+      rethrow;
+    }
 
     final result = await provider.getResult(job.id);
     if (result.isSuccess) {
