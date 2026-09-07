@@ -119,23 +119,32 @@ class AgentOrchestratorService {
 
   void _reconcileWaitingJobs(AgentSession session) {
     // 1. Identify jobs the session is waiting for
-    final Map<String, int> jobCounts = {};
+    final Set<String> spawnedJobs = {};
+    final Set<String> terminalJobs = {};
+
     for (final obs in session.observations) {
       final jobs = obs.result.jobs;
-      if (jobs != null) {
-        for (final jobRef in jobs) {
-          jobCounts[jobRef.jobId] = (jobCounts[jobRef.jobId] ?? 0) + 1;
+      if (jobs == null || jobs.isEmpty) continue;
+
+      final isTerminal = obs.result.data?['is_terminal_event'] == true;
+      for (final jobRef in jobs) {
+        if (isTerminal) {
+          terminalJobs.add(jobRef.jobId);
+        } else {
+          spawnedJobs.add(jobRef.jobId);
         }
       }
     }
 
-    final pendingJobIds = jobCounts.entries
-        .where((entry) => entry.value == 1)
-        .map((entry) => entry.key)
-        .toList();
+    final pendingJobIds = spawnedJobs.difference(terminalJobs).toList();
+    if (pendingJobIds.isEmpty) return;
+
+    // Temporarily suppress onJobEvent from waking up the agent
+    final originalState = session.state;
+    session.state = AgentSessionState.running;
 
     // 2. Query their state through JobManager and inject missing events if terminal
-    bool injectedEvents = false;
+    bool allResolved = true;
     for (final jobId in pendingJobIds) {
       final job = jobManager.find(jobId);
       if (job != null) {
@@ -143,7 +152,8 @@ class AgentOrchestratorService {
             job.status == JobStatus.failed ||
             job.status == JobStatus.cancelled) {
           _agent.onJobEvent(session, job);
-          injectedEvents = true;
+        } else {
+          allResolved = false;
         }
       } else {
         // If the job is entirely missing (e.g., lost during save/crash)
@@ -159,13 +169,14 @@ class AgentOrchestratorService {
           ),
         );
         _agent.onJobEvent(session, synthesizedJob);
-        injectedEvents = true;
       }
     }
 
-    if (injectedEvents) {
-      onStateChanged?.call();
+    if (!allResolved) {
+      // Revert state so it keeps waiting without triggering a new run loop
+      session.state = originalState;
     }
+    // If allResolved is true, session.state remains running, which causes _runCurrentSession() to be called in resumeSession()
   }
 
   /// Explicitly stop the current task

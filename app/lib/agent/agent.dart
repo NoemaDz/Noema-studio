@@ -56,17 +56,26 @@ abstract class Agent {
         );
 
         // Check for pending jobs BEFORE formulating a plan to avoid concurrent VRAM usage
-        final Map<String, int> jobCounts = {};
+        // We explicitly distinguish between jobs spawned in this session vs terminal events received.
+        final Set<String> spawnedJobs = {};
+        final Set<String> terminalJobs = {};
+
         for (final obs in session.observations) {
           final jobs = obs.result.jobs;
-          if (jobs != null) {
-            for (final jobRef in jobs) {
-              jobCounts[jobRef.jobId] = (jobCounts[jobRef.jobId] ?? 0) + 1;
+          if (jobs == null || jobs.isEmpty) continue;
+
+          final isTerminal = obs.result.data?['is_terminal_event'] == true;
+          for (final jobRef in jobs) {
+            if (isTerminal) {
+              terminalJobs.add(jobRef.jobId);
+            } else {
+              spawnedJobs.add(jobRef.jobId);
             }
           }
         }
-        // A job count of 1 means it was spawned but has no corresponding completion observation yet.
-        final hasPendingJobs = jobCounts.values.any((count) => count == 1);
+
+        // A job is pending if it was spawned but has no corresponding terminal event yet.
+        final hasPendingJobs = spawnedJobs.difference(terminalJobs).isNotEmpty;
 
         if (hasPendingJobs) {
           session.observations.add(
@@ -320,6 +329,7 @@ abstract class Agent {
         jobs: [JobReference(jobId: job.id, type: job.type)],
         artifacts: artifacts,
         error: error,
+        data: const {'is_terminal_event': true},
       ),
       timestamp: DateTime.now(),
     );
