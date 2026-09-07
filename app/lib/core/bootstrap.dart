@@ -153,6 +153,7 @@ class Bootstrap {
       jobEvents: jobEvents,
       permissionPolicy: permissionPolicy,
       planner: agentPlanner,
+      jobManager: jobManager,
     );
 
     agentState = AgentState(agentOrchestratorService);

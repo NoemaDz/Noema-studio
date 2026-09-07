@@ -8,7 +8,9 @@ import '../../agent/permissions/permission_policy.dart';
 import '../../agent/agent_toolbox.dart';
 import '../../agent/agent_planner.dart';
 import '../../core/job_events.dart';
+import '../../core/job_manager.dart';
 import '../../core/noema_project.dart';
+import '../../models/job.dart';
 
 class OrchestratedAgent extends Agent {
   final Future<PermissionOutcome> Function(AgentAction action) onRequest;
@@ -38,6 +40,7 @@ class AgentOrchestratorService {
   final JobEvents jobEvents;
   final PermissionPolicy permissionPolicy;
   final AgentPlanner planner;
+  final JobManager jobManager;
   late final OrchestratedAgent _agent;
 
   AgentSession? _currentSession;
@@ -54,6 +57,7 @@ class AgentOrchestratorService {
     required this.jobEvents,
     required this.permissionPolicy,
     required this.planner,
+    required this.jobManager,
   }) {
     _agent = OrchestratedAgent(
       toolbox: toolbox,
@@ -103,9 +107,64 @@ class AgentOrchestratorService {
     attachJobEvents();
     onStateChanged?.call();
 
+    if (session.state == AgentSessionState.waitingForJobs) {
+      _reconcileWaitingJobs(session);
+    }
+
     if (session.state == AgentSessionState.running ||
         session.state == AgentSessionState.replanning) {
       await _runCurrentSession();
+    }
+  }
+
+  void _reconcileWaitingJobs(AgentSession session) {
+    // 1. Identify jobs the session is waiting for
+    final Map<String, int> jobCounts = {};
+    for (final obs in session.observations) {
+      final jobs = obs.result.jobs;
+      if (jobs != null) {
+        for (final jobRef in jobs) {
+          jobCounts[jobRef.jobId] = (jobCounts[jobRef.jobId] ?? 0) + 1;
+        }
+      }
+    }
+
+    final pendingJobIds = jobCounts.entries
+        .where((entry) => entry.value == 1)
+        .map((entry) => entry.key)
+        .toList();
+
+    // 2. Query their state through JobManager and inject missing events if terminal
+    bool injectedEvents = false;
+    for (final jobId in pendingJobIds) {
+      final job = jobManager.find(jobId);
+      if (job != null) {
+        if (job.status == JobStatus.completed ||
+            job.status == JobStatus.failed ||
+            job.status == JobStatus.cancelled) {
+          _agent.onJobEvent(session, job);
+          injectedEvents = true;
+        }
+      } else {
+        // If the job is entirely missing (e.g., lost during save/crash)
+        // Synthesize a failed job to prevent indefinite hang
+        final synthesizedJob = Job(
+          id: jobId,
+          providerId: 'unknown',
+          type: 'unknown',
+          status: JobStatus.failed,
+          error: JobError(
+            code: 'JOB_LOST',
+            message: 'Job was lost during session recovery.',
+          ),
+        );
+        _agent.onJobEvent(session, synthesizedJob);
+        injectedEvents = true;
+      }
+    }
+
+    if (injectedEvents) {
+      onStateChanged?.call();
     }
   }
 

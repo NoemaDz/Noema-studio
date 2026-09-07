@@ -9,6 +9,7 @@ import 'package:noema_studio/agent/models/permission_outcome.dart';
 import 'package:noema_studio/agent/agent_toolbox.dart';
 import 'package:noema_studio/application/services/agent_orchestrator_service.dart';
 import 'package:noema_studio/core/job_events.dart';
+import 'package:noema_studio/core/job_manager.dart';
 import 'package:noema_studio/core/noema_project.dart';
 import 'package:noema_studio/agent/permissions/permission_policy.dart';
 import 'package:noema_studio/models/story.dart' as import_story;
@@ -59,6 +60,7 @@ void main() {
         jobEvents: jobEvents,
         permissionPolicy: PermissionPolicy(),
         planner: planner,
+        jobManager: JobManager(),
       );
 
       bool stateChanged = false;
@@ -114,6 +116,7 @@ void main() {
         jobEvents: jobEvents,
         permissionPolicy: PermissionPolicy(),
         planner: planner,
+        jobManager: JobManager(),
       );
 
       final project = NoemaProject(

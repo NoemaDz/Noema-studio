@@ -56,15 +56,17 @@ abstract class Agent {
         );
 
         // Check for pending jobs BEFORE formulating a plan to avoid concurrent VRAM usage
-        final hasPendingJobs = session.observations.any((obs) {
+        final Map<String, int> jobCounts = {};
+        for (final obs in session.observations) {
           final jobs = obs.result.jobs;
-          if (jobs == null || jobs.isEmpty) return false;
-
-          final hasCompletion =
-              session.observations.where((o) => o.stepId == obs.stepId).length >
-              1;
-          return !hasCompletion;
-        });
+          if (jobs != null) {
+            for (final jobRef in jobs) {
+              jobCounts[jobRef.jobId] = (jobCounts[jobRef.jobId] ?? 0) + 1;
+            }
+          }
+        }
+        // A job count of 1 means it was spawned but has no corresponding completion observation yet.
+        final hasPendingJobs = jobCounts.values.any((count) => count == 1);
 
         if (hasPendingJobs) {
           session.observations.add(

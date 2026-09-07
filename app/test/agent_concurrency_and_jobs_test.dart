@@ -26,6 +26,15 @@ class DummyToolbox implements AgentToolbox {
         status: ToolResultStatus.success,
         jobs: [JobReference(jobId: 'j1', type: 'test')],
       );
+    } else if (action.toolId == 'test_multi_job') {
+      return ToolResult(
+        toolId: 'test_multi_job',
+        status: ToolResultStatus.success,
+        jobs: [
+          JobReference(jobId: 'multi1', type: 'test'),
+          JobReference(jobId: 'multi2', type: 'test'),
+        ],
+      );
     }
     return ToolResult(toolId: action.toolId, status: ToolResultStatus.success);
   }
@@ -37,10 +46,12 @@ class DummyToolbox implements AgentToolbox {
 class ConcurrencyTestAgent extends Agent {
   int formulateCount = 0;
   bool isWaitingForJob = false;
+  final String targetToolId;
 
   ConcurrencyTestAgent({
     required super.toolbox,
     required super.permissionPolicy,
+    this.targetToolId = 'test_job',
   });
 
   @override
@@ -55,7 +66,7 @@ class ConcurrencyTestAgent extends Agent {
             id: 'step1',
             description: 'Test',
             action: AgentAction(
-              toolId: 'test_job',
+              toolId: targetToolId,
               riskLevel: ToolRiskLevel.safe,
               arguments: {},
             ),
@@ -137,6 +148,108 @@ void main() {
       // With our protection, run2 returns immediately.
       // So run1 does 1 formulation (yields job, then checks hasPendingJobs and stops at waitingForJobs).
       expect(agent.formulateCount, 1);
+    });
+
+    test(
+      'Agent spawns two jobs, waits for BOTH to complete before replanning',
+      () async {
+        final agent = ConcurrencyTestAgent(
+          toolbox: DummyToolbox(),
+          permissionPolicy: PermissionPolicy(),
+          targetToolId: 'test_multi_job',
+        );
+        final session = AgentSession(
+          currentProject: NoemaProject(
+            id: '1',
+            idea: '',
+            story: Story(title: '', scenes: []),
+          ),
+          currentGoal: 'test',
+        );
+
+        await agent.run(session);
+
+        expect(session.state, AgentSessionState.waitingForJobs);
+        expect(agent.formulateCount, 1);
+
+        // Job A completes
+        final jobA = Job(
+          id: 'multi1',
+          providerId: 'test_provider',
+          type: 'test',
+          status: JobStatus.completed,
+        );
+        agent.onJobEvent(session, jobA);
+
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        // Agent MUST remain waiting because multi2 is still pending
+        expect(session.state, AgentSessionState.waitingForJobs);
+        expect(agent.formulateCount, 1); // No new formulation
+
+        // Job B completes
+        final jobB = Job(
+          id: 'multi2',
+          providerId: 'test_provider',
+          type: 'test',
+          status: JobStatus.completed,
+        );
+        agent.onJobEvent(session, jobB);
+
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        // Agent resumes, calls formulatePlan again which returns 0 steps -> fails
+        expect(session.state, AgentSessionState.failed);
+        expect(agent.formulateCount, 2);
+      },
+    );
+
+    test('Agent spawns two jobs, waits for both even if one fails', () async {
+      final agent = ConcurrencyTestAgent(
+        toolbox: DummyToolbox(),
+        permissionPolicy: PermissionPolicy(),
+        targetToolId: 'test_multi_job',
+      );
+      final session = AgentSession(
+        currentProject: NoemaProject(
+          id: '1',
+          idea: '',
+          story: Story(title: '', scenes: []),
+        ),
+        currentGoal: 'test',
+      );
+
+      await agent.run(session);
+
+      expect(session.state, AgentSessionState.waitingForJobs);
+      expect(agent.formulateCount, 1);
+
+      // Job A completes
+      final jobA = Job(
+        id: 'multi1',
+        providerId: 'test_provider',
+        type: 'test',
+        status: JobStatus.completed,
+      );
+      agent.onJobEvent(session, jobA);
+
+      await Future.delayed(const Duration(milliseconds: 50));
+      expect(session.state, AgentSessionState.waitingForJobs);
+
+      // Job B fails
+      final jobB = Job(
+        id: 'multi2',
+        providerId: 'test_provider',
+        type: 'test',
+        status: JobStatus.failed,
+        error: JobError(code: 'ERR', message: 'test error'),
+      );
+      agent.onJobEvent(session, jobB);
+
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      expect(session.state, AgentSessionState.failed);
+      expect(agent.formulateCount, 2);
     });
   });
 }
