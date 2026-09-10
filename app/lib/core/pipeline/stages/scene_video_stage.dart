@@ -20,7 +20,7 @@ class SceneVideoStage extends PipelineStage {
   int get priority => 60; // After Image (50) and before Compilation (70)
 
   @override
-  bool get requiresGPU => true;
+  bool get requiresGPU => provider.hardwareRequirements.requiresGPU;
 
   final WorkflowEngine engine;
   final VideoProvider provider;
@@ -86,7 +86,9 @@ class SceneVideoStage extends PipelineStage {
                   .where((j) => j.id == existingVideo.jobId)
                   .lastOrNull ??
               jobManager.find(existingVideo.jobId);
-          if (job != null) {
+          if (job == null) {
+            isValid = false;
+          } else {
             final jobPrompt = job.metadata['prompt'];
             final jobModel = job.metadata['modelName'];
             final currentModel = provider.id == 'gemini_video'
