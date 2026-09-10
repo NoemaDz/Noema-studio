@@ -19,7 +19,7 @@ class GoogleGeminiVideoProvider extends VideoProvider {
   final Map<String, ExecutionResult> _results = {};
 
   GoogleGeminiVideoProvider(this.context, {http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   @override
   String get id => "gemini_video";
@@ -66,28 +66,16 @@ class GoogleGeminiVideoProvider extends VideoProvider {
       metadata: {
         "prompt": prompt,
         "imagePath": imagePath,
+        "modelName": modelName,
       },
     );
 
-    _startVideoGeneration(job, prompt, imageFile, apiKey, modelName);
-
-    return job;
-  }
-
-  Future<void> _startVideoGeneration(
-    Job job,
-    String prompt,
-    File imageFile,
-    String apiKey,
-    String modelName,
-  ) async {
-    final jobId = job.id;
     int retryCount = 0;
     const maxRetries = 3;
 
     final imageBytes = await imageFile.readAsBytes();
     final base64Image = base64Encode(imageBytes);
-    
+
     final ext = p.extension(imageFile.path).toLowerCase();
     String mimeType = "image/jpeg";
     if (ext == ".png") {
@@ -99,7 +87,8 @@ class GoogleGeminiVideoProvider extends VideoProvider {
     while (retryCount <= maxRetries) {
       try {
         if (_cancelledJobs.contains(jobId)) {
-          return; // Stop if cancelled locally
+          job.transitionTo(JobStatus.cancelled);
+          return job;
         }
 
         final url = Uri.parse(
@@ -113,14 +102,14 @@ class GoogleGeminiVideoProvider extends VideoProvider {
               "image": {
                 "bytesBase64Encoded": base64Image,
                 "mimeType": mimeType,
-              }
-            }
+              },
+            },
           ],
           "parameters": {
             "sampleCount": 1,
             "aspectRatio": "16:9",
             "durationSeconds": 8,
-          }
+          },
         });
 
         final response = await _client
@@ -135,14 +124,15 @@ class GoogleGeminiVideoProvider extends VideoProvider {
             .timeout(const Duration(seconds: 45));
 
         if (_cancelledJobs.contains(jobId)) {
-          return;
+          job.transitionTo(JobStatus.cancelled);
+          return job;
         }
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data["name"] != null) {
             job.metadata["operation_name"] = data["name"];
-            return;
+            return job;
           } else {
             throw Exception("Missing operation name in response");
           }
@@ -151,34 +141,42 @@ class GoogleGeminiVideoProvider extends VideoProvider {
           String errorMsg = "API Error ${response.statusCode}";
           try {
             final errorData = jsonDecode(response.body);
-            if (errorData['error'] != null && errorData['error']['message'] != null) {
+            if (errorData['error'] != null &&
+                errorData['error']['message'] != null) {
               errorMsg = errorData['error']['message'];
             }
           } catch (_) {}
-          
+
           if (response.statusCode == 429) {
             errorMsg = "Rate limit exceeded";
           }
-          
+
           throw Exception(errorMsg);
         }
       } catch (e) {
-        if (e.toString().contains("Cancelled by user") || _cancelledJobs.contains(jobId)) {
-          return;
+        if (e.toString().contains("Cancelled by user") ||
+            _cancelledJobs.contains(jobId)) {
+          job.transitionTo(JobStatus.cancelled);
+          return job;
         }
-        
+
         retryCount++;
         if (retryCount > maxRetries) {
           job.error = JobError(
             code: "api_error",
-            message: "Gemini API Error: ${e.toString()}",
+            message: _sanitizeError(
+              "Gemini API Error: ${e.toString()}",
+              apiKey,
+            ),
           );
           job.transitionTo(JobStatus.failed);
-          return;
+          return job;
         }
         await Future.delayed(Duration(seconds: 2 * retryCount));
       }
     }
+
+    return job;
   }
 
   @override
@@ -203,12 +201,7 @@ class GoogleGeminiVideoProvider extends VideoProvider {
       );
 
       final response = await _client
-          .get(
-            url,
-            headers: {
-              "x-goog-api-key": apiKey,
-            },
-          )
+          .get(url, headers: {"x-goog-api-key": apiKey})
           .timeout(const Duration(seconds: 30));
 
       if (_cancelledJobs.contains(job.id)) {
@@ -227,7 +220,10 @@ class GoogleGeminiVideoProvider extends VideoProvider {
           final errorMessage = data["error"]["message"] ?? "Unknown error";
           return JobStatusUpdate(
             status: JobStatus.failed,
-            error: JobError(code: "operation_failed", message: errorMessage),
+            error: JobError(
+              code: "operation_failed",
+              message: _sanitizeError(errorMessage, apiKey),
+            ),
           );
         }
 
@@ -235,21 +231,23 @@ class GoogleGeminiVideoProvider extends VideoProvider {
         try {
           final responseData = data["response"];
           if (responseData != null) {
-            final generatedVideoResponse = responseData["generateVideoResponse"];
+            final generatedVideoResponse =
+                responseData["generateVideoResponse"];
             if (generatedVideoResponse != null &&
                 generatedVideoResponse["generatedSamples"] != null &&
                 generatedVideoResponse["generatedSamples"].isNotEmpty) {
-              
               final sample = generatedVideoResponse["generatedSamples"][0];
               if (sample["video"] != null && sample["video"]["uri"] != null) {
                 final videoUri = sample["video"]["uri"] as String;
                 job.metadata["video_uri"] = videoUri;
 
                 // Download the video immediately
-                final videoResponse = await _client.get(
-                  Uri.parse(videoUri),
-                  headers: {"x-goog-api-key": apiKey},
-                ).timeout(const Duration(minutes: 5));
+                final videoResponse = await _client
+                    .get(
+                      Uri.parse(videoUri),
+                      headers: {"x-goog-api-key": apiKey},
+                    )
+                    .timeout(const Duration(minutes: 5));
 
                 if (_cancelledJobs.contains(job.id)) {
                   return JobStatusUpdate(status: JobStatus.cancelled);
@@ -257,7 +255,31 @@ class GoogleGeminiVideoProvider extends VideoProvider {
 
                 if (videoResponse.statusCode == 200) {
                   final videoBytes = videoResponse.bodyBytes;
-                  final fileName = 'gemini_${job.id}_${DateTime.now().millisecondsSinceEpoch}.mp4';
+                  if (videoBytes.isEmpty) {
+                    return JobStatusUpdate(
+                      status: JobStatus.failed,
+                      error: JobError(
+                        code: "download_failed",
+                        message: "Downloaded video is empty",
+                      ),
+                    );
+                  }
+
+                  final contentType = videoResponse.headers['content-type'];
+                  if (contentType != null &&
+                      !contentType.startsWith('video/')) {
+                    return JobStatusUpdate(
+                      status: JobStatus.failed,
+                      error: JobError(
+                        code: "download_failed",
+                        message:
+                            "Downloaded content is not a video: $contentType",
+                      ),
+                    );
+                  }
+
+                  final fileName =
+                      'gemini_${job.id}_${DateTime.now().millisecondsSinceEpoch}.mp4';
                   final savePath = p.join(
                     PlatformPaths.instance.getJobOutputPath(job.id),
                     fileName,
@@ -266,7 +288,9 @@ class GoogleGeminiVideoProvider extends VideoProvider {
                   final file = File(savePath);
                   await file.writeAsBytes(videoBytes);
 
-                  _results[job.id] = ExecutionResult.success(textOutput: savePath);
+                  _results[job.id] = ExecutionResult.success(
+                    textOutput: savePath,
+                  );
                   job.metadata["local_video_path"] = savePath;
 
                   return JobStatusUpdate(status: JobStatus.completed);
@@ -275,7 +299,8 @@ class GoogleGeminiVideoProvider extends VideoProvider {
                     status: JobStatus.failed,
                     error: JobError(
                       code: "download_failed",
-                      message: "Failed to download video: HTTP ${videoResponse.statusCode}",
+                      message:
+                          "Failed to download video: HTTP ${videoResponse.statusCode}",
                     ),
                   );
                 }
@@ -294,7 +319,10 @@ class GoogleGeminiVideoProvider extends VideoProvider {
             status: JobStatus.failed,
             error: JobError(
               code: "parse_error",
-              message: "Failed to parse API response: ${e.toString()}",
+              message: _sanitizeError(
+                "Failed to parse API response: ${e.toString()}",
+                apiKey,
+              ),
             ),
           );
         }
@@ -311,9 +339,13 @@ class GoogleGeminiVideoProvider extends VideoProvider {
       if (_cancelledJobs.contains(job.id)) {
         return JobStatusUpdate(status: JobStatus.cancelled);
       }
+      final apiKey = context.appSettings.geminiVideoKey;
       return JobStatusUpdate(
         status: JobStatus.failed,
-        error: JobError(code: "network_error", message: e.toString()),
+        error: JobError(
+          code: "network_error",
+          message: _sanitizeError(e.toString(), apiKey),
+        ),
       );
     }
   }
@@ -345,5 +377,10 @@ class GoogleGeminiVideoProvider extends VideoProvider {
     if (!_cancelledJobs.contains(jobId)) {
       _cancelledJobs.add(jobId);
     }
+  }
+
+  String _sanitizeError(String message, String apiKey) {
+    if (apiKey.isEmpty) return message;
+    return message.replaceAll(apiKey, "[REDACTED_API_KEY]");
   }
 }

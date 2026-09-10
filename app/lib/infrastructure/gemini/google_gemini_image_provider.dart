@@ -185,7 +185,10 @@ class GoogleGeminiImageProvider extends ImageProvider {
             JobError(code: 'cancelled', message: 'Job cancelled by user'),
           );
           job.transitionTo(JobStatus.cancelled);
-          job.error = JobError(code: 'cancelled', message: 'Job cancelled by user');
+          job.error = JobError(
+            code: 'cancelled',
+            message: 'Job cancelled by user',
+          );
           job.metadata["error"] = "Cancelled by user";
         } else {
           _results[jobId] = ExecutionResult.failure(

@@ -28,7 +28,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   bool _obscureOpenAiKey = true;
   late String _geminiImageAspectRatio;
   late String _geminiImageResolution;
-  
+
   late String _activeVideoProvider;
   late TextEditingController _geminiVideoKeyController;
   bool _obscureGeminiVideoKey = true;
@@ -105,7 +105,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
     _geminiImageAspectRatio = settings.geminiImageAspectRatio;
     _geminiImageResolution = settings.geminiImageResolution;
-    
+
     _activeVideoProvider = settings.activeVideoProvider;
     _geminiVideoKeyController = TextEditingController(
       text: settings.geminiVideoKeyRaw,
@@ -649,7 +649,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   : Icons.visibility_off,
                             ),
                             onPressed: () => setState(
-                              () => _obscureGeminiVideoKey = !_obscureGeminiVideoKey,
+                              () => _obscureGeminiVideoKey =
+                                  !_obscureGeminiVideoKey,
                             ),
                           ),
                         ),

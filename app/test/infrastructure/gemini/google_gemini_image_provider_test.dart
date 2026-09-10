@@ -17,7 +17,6 @@ import 'package:noema_studio/core/workflow/workflow_engine.dart';
 import 'package:noema_studio/core/job_manager.dart';
 import 'package:noema_studio/core/capabilities/capability_resolver.dart';
 
-
 class MockAppSettings extends AppSettings {
   @override
   String get geminiImageKey => 'test-key';

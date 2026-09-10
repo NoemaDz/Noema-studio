@@ -46,10 +46,16 @@ class SceneImageStage extends PipelineStage {
     final prompt = scene.imagePrompt ?? scene.description;
 
     // Check if a valid image already exists for this scene
-    final existingImage = project.images.where((img) => img.sceneId == scene.id).lastOrNull;
-    if (existingImage != null && existingImage.prompt == prompt && existingImage.artifact?.path != null) {
+    final existingImage = project.images
+        .where((img) => img.sceneId == scene.id)
+        .lastOrNull;
+    if (existingImage != null &&
+        existingImage.prompt == prompt &&
+        existingImage.artifact?.path != null) {
       if (File(existingImage.artifact!.path).existsSync()) {
-        debugPrint('SceneImageStage: Skipped scene ${scene.id}, valid image already exists.');
+        debugPrint(
+          'SceneImageStage: Skipped scene ${scene.id}, valid image already exists.',
+        );
         return;
       }
     }

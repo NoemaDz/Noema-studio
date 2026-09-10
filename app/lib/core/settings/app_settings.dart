@@ -76,7 +76,8 @@ class AppSettings extends ChangeNotifier {
   String get geminiImageResolution => _geminiImageResolution;
 
   /// Returns the Gemini Video API key, falling back to the image key if empty.
-  String get geminiVideoKey => _geminiVideoKey.isNotEmpty ? _geminiVideoKey : _geminiImageKey;
+  String get geminiVideoKey =>
+      _geminiVideoKey.isNotEmpty ? _geminiVideoKey : _geminiImageKey;
 
   /// Returns the raw stored Gemini Video API key without fallback (empty if not set).
   String get geminiVideoKeyRaw => _geminiVideoKey;
@@ -136,7 +137,9 @@ class AppSettings extends ChangeNotifier {
     // Load Gemini Video API key securely
     String? secureGeminiVideoKey;
     try {
-      secureGeminiVideoKey = await _secureStorage.read(key: _kGeminiVideoKeySecure);
+      secureGeminiVideoKey = await _secureStorage.read(
+        key: _kGeminiVideoKeySecure,
+      );
     } catch (e) {
       secureGeminiVideoKey = '';
     }
@@ -149,8 +152,10 @@ class AppSettings extends ChangeNotifier {
 
     _comfyUIUrl = prefs.getString(_kComfyUIUrl) ?? 'http://127.0.0.1:8188';
     _activeImageProvider = prefs.getString(_kActiveImageProvider) ?? 'comfyui';
-    _activeVideoProvider = prefs.getString(_kActiveVideoProvider) ?? 'gemini_video';
-    _geminiVideoModel = prefs.getString(_kGeminiVideoModel) ?? 'veo-3.1-generate-preview';
+    _activeVideoProvider =
+        prefs.getString(_kActiveVideoProvider) ?? 'gemini_video';
+    _geminiVideoModel =
+        prefs.getString(_kGeminiVideoModel) ?? 'veo-3.1-generate-preview';
     _defaultVideoEffect = prefs.getString(_kDefaultVideoEffect) ?? 'zoom_in';
     _activeTtsProvider = prefs.getString(_kActiveTtsProvider) ?? 'flutter_tts';
     _openAiTtsVoice = prefs.getString(_kOpenAiTtsVoice) ?? 'alloy';

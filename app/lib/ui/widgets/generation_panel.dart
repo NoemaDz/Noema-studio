@@ -43,7 +43,10 @@ class GenerationPanel extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       "Project Director",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -128,82 +131,82 @@ class GenerationPanel extends StatelessWidget {
               LiveProgressTracker(jobs: jobs),
             ],
 
-          const SizedBox(height: 24),
-          _AnimatedGenerateButton(
-            isGenerating: isGenerating,
-            onGenerate: onGenerate,
-            onCancel: onCancel,
-          ),
-          const SizedBox(height: 16),
-          ListenableBuilder(
-            listenable: Listenable.merge([
-              ComfyUIRunnerService.instance,
-              noema.bootstrap.appSettings,
-            ]),
-            builder: (context, _) {
-              final activeProvider =
-                  noema.bootstrap.appSettings.activeImageProvider;
-              Color dotColor = Colors.grey;
-              String text = "Offline";
+            const SizedBox(height: 24),
+            _AnimatedGenerateButton(
+              isGenerating: isGenerating,
+              onGenerate: onGenerate,
+              onCancel: onCancel,
+            ),
+            const SizedBox(height: 16),
+            ListenableBuilder(
+              listenable: Listenable.merge([
+                ComfyUIRunnerService.instance,
+                noema.bootstrap.appSettings,
+              ]),
+              builder: (context, _) {
+                final activeProvider =
+                    noema.bootstrap.appSettings.activeImageProvider;
+                Color dotColor = Colors.grey;
+                String text = "Offline";
 
-              if (activeProvider == 'openai_image') {
-                final hasKey = noema.bootstrap.appSettings.openAiKey
-                    .trim()
-                    .isNotEmpty;
-                if (hasKey) {
-                  dotColor = Colors.green;
-                  text = "Cloud Engine Ready";
-                } else {
-                  dotColor = Colors.red;
-                  text = "Cloud API Key Missing";
-                }
-              } else {
-                final status = ComfyUIRunnerService.instance.status;
-                switch (status) {
-                  case EngineStatus.offline:
-                    dotColor = Colors.grey;
-                    text = "Engine Offline";
-                    break;
-                  case EngineStatus.starting:
-                    dotColor = Colors.amber;
-                    text = "Starting Engine...";
-                    break;
-                  case EngineStatus.ready:
+                if (activeProvider == 'openai_image') {
+                  final hasKey = noema.bootstrap.appSettings.openAiKey
+                      .trim()
+                      .isNotEmpty;
+                  if (hasKey) {
                     dotColor = Colors.green;
-                    text = "Engine Ready";
-                    break;
-                  case EngineStatus.error:
+                    text = "Cloud Engine Ready";
+                  } else {
                     dotColor = Colors.red;
-                    text = "Engine Error";
-                    break;
+                    text = "Cloud API Key Missing";
+                  }
+                } else {
+                  final status = ComfyUIRunnerService.instance.status;
+                  switch (status) {
+                    case EngineStatus.offline:
+                      dotColor = Colors.grey;
+                      text = "Engine Offline";
+                      break;
+                    case EngineStatus.starting:
+                      dotColor = Colors.amber;
+                      text = "Starting Engine...";
+                      break;
+                    case EngineStatus.ready:
+                      dotColor = Colors.green;
+                      text = "Engine Ready";
+                      break;
+                    case EngineStatus.error:
+                      dotColor = Colors.red;
+                      text = "Engine Error";
+                      break;
+                  }
                 }
-              }
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: dotColor,
-                      shape: BoxShape.circle,
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    text,
-                    style: TextStyle(
-                      color: Colors.grey.shade400,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(width: 8),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

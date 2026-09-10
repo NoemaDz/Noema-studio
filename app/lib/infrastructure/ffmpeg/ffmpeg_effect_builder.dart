@@ -14,8 +14,7 @@ class FFmpegEffectBuilder {
     final ratio = width / height;
 
     // Helper string to crop image to correct ratio before zoompan
-    final cropFilter =
-        "crop='min(iw, ih*$ratio)':'min(ih, iw*(1/$ratio))'";
+    final cropFilter = "crop='min(iw, ih*$ratio)':'min(ih, iw*(1/$ratio))'";
 
     switch (effectName.toLowerCase()) {
       case 'zoom_in':

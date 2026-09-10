@@ -39,53 +39,60 @@ class SceneAudioStage extends PipelineStage {
   Future<void> runForScene(NoemaProject project, Scene scene) async {
     // Generate Narration if present
     if (scene.narration != null && scene.narration!.isNotEmpty) {
-      final existingAudio = project.audios.where((a) => a.sceneId == scene.id && a.characterName == "Narrator").lastOrNull;
-      if (existingAudio != null && existingAudio.text == scene.narration! && existingAudio.localPath != null && File(existingAudio.localPath!).existsSync()) {
-        debugPrint('SceneAudioStage: Skipped narration for scene ${scene.id}, valid audio already exists.');
+      final existingAudio = project.audios
+          .where((a) => a.sceneId == scene.id && a.characterName == "Narrator")
+          .lastOrNull;
+      if (existingAudio != null &&
+          existingAudio.text == scene.narration! &&
+          existingAudio.localPath != null &&
+          File(existingAudio.localPath!).existsSync()) {
+        debugPrint(
+          'SceneAudioStage: Skipped narration for scene ${scene.id}, valid audio already exists.',
+        );
       } else {
         final workflow = AudioWorkflow(provider);
         final context = WorkflowContext();
         context.set("text", scene.narration!);
 
-      final result = await engine.runWithContext(workflow, context);
-      final job = result.get<Job>("audio")!;
-      jobManager.add(job);
-      project.jobIds.add(job.id);
+        final result = await engine.runWithContext(workflow, context);
+        final job = result.get<Job>("audio")!;
+        jobManager.add(job);
+        project.jobIds.add(job.id);
 
-      final audio = GeneratedAudio(
-        sceneId: scene.id,
-        characterName: "Narrator",
-        jobId: job.id,
-        text: scene.narration!,
-      );
-      try {
-        await jobManager.waitForCompletion(job.id, token: cancellationToken);
-      } on CancelledException {
-        debugPrint(
-          'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
+        final audio = GeneratedAudio(
+          sceneId: scene.id,
+          characterName: "Narrator",
+          jobId: job.id,
+          text: scene.narration!,
         );
-        await jobManager.cancelJob(job.id);
-        rethrow;
-      }
-
-      if (job.status == JobStatus.completed) {
-        final execResult = await provider.getResult(job.id);
-        if (execResult.isSuccess && execResult.textOutput != null) {
-          audio.artifact = Artifact(
-            id: job.id,
-            path: execResult.textOutput!,
-            type: ArtifactType.audio,
+        try {
+          await jobManager.waitForCompletion(job.id, token: cancellationToken);
+        } on CancelledException {
+          debugPrint(
+            'SceneAudioStage: Cancellation requested, killing job ${job.id} on provider.',
           );
+          await jobManager.cancelJob(job.id);
+          rethrow;
+        }
+
+        if (job.status == JobStatus.completed) {
+          final execResult = await provider.getResult(job.id);
+          if (execResult.isSuccess && execResult.textOutput != null) {
+            audio.artifact = Artifact(
+              id: job.id,
+              path: execResult.textOutput!,
+              type: ArtifactType.audio,
+            );
+          } else {
+            throw Exception(
+              "Audio generation failed: ${execResult.error?.message ?? 'Unknown error'}",
+            );
+          }
         } else {
           throw Exception(
-            "Audio generation failed: ${execResult.error?.message ?? 'Unknown error'}",
+            "Audio generation failed: ${job.error?.message ?? 'Unknown error'}",
           );
         }
-      } else {
-        throw Exception(
-          "Audio generation failed: ${job.error?.message ?? 'Unknown error'}",
-        );
-      }
         project.audios.add(audio);
       }
     }
@@ -94,9 +101,20 @@ class SceneAudioStage extends PipelineStage {
     for (final dialogueLine in scene.dialogue) {
       if (dialogueLine.text.trim().isEmpty) continue;
 
-      final existingAudio = project.audios.where((a) => a.sceneId == scene.id && a.characterName == dialogueLine.characterName).lastOrNull;
-      if (existingAudio != null && existingAudio.text == dialogueLine.text && existingAudio.localPath != null && File(existingAudio.localPath!).existsSync()) {
-        debugPrint('SceneAudioStage: Skipped dialogue for ${dialogueLine.characterName} in scene ${scene.id}, valid audio already exists.');
+      final existingAudio = project.audios
+          .where(
+            (a) =>
+                a.sceneId == scene.id &&
+                a.characterName == dialogueLine.characterName,
+          )
+          .lastOrNull;
+      if (existingAudio != null &&
+          existingAudio.text == dialogueLine.text &&
+          existingAudio.localPath != null &&
+          File(existingAudio.localPath!).existsSync()) {
+        debugPrint(
+          'SceneAudioStage: Skipped dialogue for ${dialogueLine.characterName} in scene ${scene.id}, valid audio already exists.',
+        );
         continue;
       }
 

@@ -53,21 +53,6 @@ class SceneVideoStage extends PipelineStage {
 
     final prompt = scene.imagePrompt ?? scene.description;
 
-    // Check if a valid video already exists for this scene
-    final existingVideo = project.videos.where((vid) => vid.sceneId == scene.id).lastOrNull;
-    if (existingVideo != null && existingVideo.artifact?.path != null) {
-      if (File(existingVideo.artifact!.path).existsSync()) {
-        debugPrint('SceneVideoStage: Skipped scene ${scene.id}, valid video already exists.');
-        return;
-      }
-    }
-
-    debugPrint('SceneVideoStage: Processing scene ${scene.id}...');
-    final workflow = I2vWorkflow(provider);
-    final context = WorkflowContext();
-
-    context.set('prompt', prompt);
-
     // Find the generated image for this scene to use as the source
     final image = project.images.cast<dynamic>().firstWhere(
       (img) => img.sceneId == scene.id,
@@ -83,7 +68,54 @@ class SceneVideoStage extends PipelineStage {
       return;
     }
 
-    context.set('imagePath', image.artifact.path);
+    final currentSourceImage = image.artifact.path;
+
+    // Check if a valid video already exists for this scene
+    final existingVideo = project.videos
+        .where((vid) => vid.sceneId == scene.id)
+        .lastOrNull;
+    if (existingVideo != null && existingVideo.artifact?.path != null) {
+      if (File(existingVideo.artifact!.path).existsSync()) {
+        bool isValid = true;
+
+        if (existingVideo.sourceImagePath != currentSourceImage) {
+          isValid = false;
+        } else {
+          final job =
+              project.savedJobs
+                  .where((j) => j.id == existingVideo.jobId)
+                  .lastOrNull ??
+              jobManager.find(existingVideo.jobId);
+          if (job != null) {
+            final jobPrompt = job.metadata['prompt'];
+            final jobModel = job.metadata['modelName'];
+            final currentModel = provider.id == 'gemini_video'
+                ? appSettings.geminiVideoModel
+                : provider.id;
+
+            if (jobPrompt != prompt || job.providerId != provider.id) {
+              isValid = false;
+            } else if (jobModel != null && jobModel != currentModel) {
+              isValid = false;
+            }
+          }
+        }
+
+        if (isValid) {
+          debugPrint(
+            'SceneVideoStage: Skipped scene ${scene.id}, valid video already exists.',
+          );
+          return;
+        }
+      }
+    }
+
+    debugPrint('SceneVideoStage: Processing scene ${scene.id}...');
+    final workflow = I2vWorkflow(provider);
+    final context = WorkflowContext();
+
+    context.set('prompt', prompt);
+    context.set('imagePath', currentSourceImage);
     context.set('options', scene.extras);
 
     try {
