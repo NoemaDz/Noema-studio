@@ -30,38 +30,38 @@ class GenerationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.smart_toy, color: Colors.blueAccent),
-                  SizedBox(width: 8),
-                  Text(
-                    "Project Director",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.file_upload, size: 20),
-                tooltip: "Import Story (PDF, TXT, DOCX)",
-                onPressed: isGenerating ? null : onImportStory,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListenableBuilder(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.smart_toy, color: Colors.blueAccent),
+                    SizedBox(width: 8),
+                    Text(
+                      "Project Director",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.file_upload, size: 20),
+                  tooltip: "Import Story (PDF, TXT, DOCX)",
+                  onPressed: isGenerating ? null : onImportStory,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ListenableBuilder(
               listenable: noema.bootstrap.appSettings,
               builder: (context, _) {
                 return TextField(
                   controller: ideaController,
-                  maxLines: null,
-                  expands: true,
+                  minLines: 3,
+                  maxLines: 8,
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: noema.bootstrap.appSettings.enableVideoGeneration
@@ -77,61 +77,56 @@ class GenerationPanel extends StatelessWidget {
                 );
               },
             ),
-          ),
-          const SizedBox(height: 24),
-          if (isGenerating) ...[
-            const LinearProgressIndicator(),
-            const SizedBox(height: 16),
-          ],
-          if (statusText.isNotEmpty && statusText != "Ready") ...[
-            Text(
-              statusText,
-              style: TextStyle(
-                color: statusText.startsWith("Error")
-                    ? Colors.red
-                    : Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
+            const SizedBox(height: 24),
+            if (isGenerating) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 16),
+            ],
+            if (statusText.isNotEmpty && statusText != "Ready") ...[
+              Text(
+                statusText,
+                style: TextStyle(
+                  color: statusText.startsWith("Error")
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
-          if (pipelineStatus.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.settings_suggest, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      pipelineStatus,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
+            ],
+            if (pipelineStatus.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.settings_suggest, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        pipelineStatus,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
 
-          if (jobs.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: LiveProgressTracker(jobs: jobs),
-              ),
-            ),
-          ],
+            if (jobs.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              LiveProgressTracker(jobs: jobs),
+            ],
 
           const SizedBox(height: 24),
           _AnimatedGenerateButton(
@@ -208,6 +203,7 @@ class GenerationPanel extends StatelessWidget {
             },
           ),
         ],
+      ),
       ),
     );
   }

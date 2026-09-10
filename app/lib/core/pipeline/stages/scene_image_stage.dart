@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../contracts/pipeline_stage.dart';
 import '../../noema_project.dart';
@@ -34,7 +35,6 @@ class SceneImageStage extends PipelineStage {
   /// Full run — processes ALL scenes (used when called outside DAG context).
   @override
   Future<void> run(NoemaProject project) async {
-    project.images.clear();
     for (final scene in project.story.scenes) {
       await runForScene(project, scene);
     }
@@ -43,6 +43,17 @@ class SceneImageStage extends PipelineStage {
   /// Per-scene run — used by [ProjectPipeline] for parallel DAG execution.
   @override
   Future<void> runForScene(NoemaProject project, Scene scene) async {
+    final prompt = scene.imagePrompt ?? scene.description;
+
+    // Check if a valid image already exists for this scene
+    final existingImage = project.images.where((img) => img.sceneId == scene.id).lastOrNull;
+    if (existingImage != null && existingImage.prompt == prompt && existingImage.artifact?.path != null) {
+      if (File(existingImage.artifact!.path).existsSync()) {
+        debugPrint('SceneImageStage: Skipped scene ${scene.id}, valid image already exists.');
+        return;
+      }
+    }
+
     debugPrint('SceneImageStage: Processing scene ${scene.id}...');
     final workflow = ImageWorkflow(provider);
     final context = WorkflowContext();

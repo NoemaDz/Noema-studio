@@ -11,8 +11,18 @@ class AppSettings extends ChangeNotifier {
   // NOTE: openai_key is intentionally NOT in SharedPreferences (stored in Secure Storage)
   static const _kOpenAiKeySecure = 'openai_key';
   static const _kOpenAiModel = 'openai_model';
+
+  static const _kGeminiImageKeySecure = 'gemini_image_key';
+  static const _kGeminiImageModel = 'gemini_image_model';
+  static const _kGeminiImageAspectRatio = 'gemini_image_aspect_ratio';
+  static const _kGeminiImageResolution = 'gemini_image_resolution';
+
+  static const _kGeminiVideoKeySecure = 'gemini_video_key';
+
   static const _kComfyUIUrl = 'comfyui_url';
   static const _kActiveImageProvider = 'active_image_provider';
+  static const _kActiveVideoProvider = 'active_video_provider';
+  static const _kGeminiVideoModel = 'gemini_video_model';
   static const _kDefaultVideoEffect = 'default_video_effect';
 
   static const _kActiveTtsProvider = 'active_tts_provider';
@@ -29,8 +39,18 @@ class AppSettings extends ChangeNotifier {
   String _openAiUrl = 'https://api.openai.com/v1';
   String _openAiKey = '';
   String _openAiModel = 'gpt-4o';
+
+  String _geminiImageKey = '';
+  String _geminiImageModel = 'gemini-3.1-flash-image';
+  String _geminiImageAspectRatio = '16:9';
+  String _geminiImageResolution = '1K';
+
+  String _geminiVideoKey = '';
+
   String _comfyUIUrl = 'http://127.0.0.1:8188';
   String _activeImageProvider = 'comfyui';
+  String _activeVideoProvider = 'gemini_video';
+  String _geminiVideoModel = 'veo-3.1-generate-preview';
   String _defaultVideoEffect = 'zoom_in';
   String _activeTtsProvider = 'flutter_tts';
   String _openAiTtsVoice = 'alloy';
@@ -49,8 +69,22 @@ class AppSettings extends ChangeNotifier {
   String get openAiUrl => _openAiUrl;
   String get openAiKey => _openAiKey;
   String get openAiModel => _openAiModel;
+
+  String get geminiImageKey => _geminiImageKey;
+  String get geminiImageModel => _geminiImageModel;
+  String get geminiImageAspectRatio => _geminiImageAspectRatio;
+  String get geminiImageResolution => _geminiImageResolution;
+
+  /// Returns the Gemini Video API key, falling back to the image key if empty.
+  String get geminiVideoKey => _geminiVideoKey.isNotEmpty ? _geminiVideoKey : _geminiImageKey;
+
+  /// Returns the raw stored Gemini Video API key without fallback (empty if not set).
+  String get geminiVideoKeyRaw => _geminiVideoKey;
+
   String get comfyUIUrl => _comfyUIUrl;
   String get activeImageProvider => _activeImageProvider;
+  String get activeVideoProvider => _activeVideoProvider;
+  String get geminiVideoModel => _geminiVideoModel;
   String get defaultVideoEffect => _defaultVideoEffect;
   String get activeTtsProvider => _activeTtsProvider;
   String get openAiTtsVoice => _openAiTtsVoice;
@@ -67,32 +101,56 @@ class AppSettings extends ChangeNotifier {
     _llmModelName = prefs.getString(_kLlmModelName) ?? 'qwen2.5:3b';
     _activeLlmProvider = prefs.getString(_kActiveLlmProvider) ?? 'ollama';
     _openAiUrl = prefs.getString(_kOpenAiUrl) ?? 'https://api.openai.com/v1';
-    // Load API key securely from platform Keychain/KeyStore
-    String? secureKey;
+
+    // Load OpenAI API key securely
+    String? secureOpenAiKey;
     try {
-      secureKey = await _secureStorage.read(key: _kOpenAiKeySecure);
+      secureOpenAiKey = await _secureStorage.read(key: _kOpenAiKeySecure);
     } catch (e) {
-      // Handle MissingPluginException in unit tests
-      secureKey = null;
+      secureOpenAiKey = null;
     }
-    if (secureKey == null) {
-      // Legacy migration check
+    if (secureOpenAiKey == null) {
       final legacyKey = prefs.getString(_kOpenAiKeySecure);
       if (legacyKey != null && legacyKey.isNotEmpty) {
         try {
           await _secureStorage.write(key: _kOpenAiKeySecure, value: legacyKey);
-        } catch (_) {} // Ignore in tests
+        } catch (_) {}
         await prefs.remove(_kOpenAiKeySecure);
-        secureKey = legacyKey;
-        debugPrint("Migrated legacy OpenAI key to secure storage.");
+        secureOpenAiKey = legacyKey;
       } else {
-        secureKey = '';
+        secureOpenAiKey = '';
       }
     }
-    _openAiKey = secureKey;
+    _openAiKey = secureOpenAiKey;
     _openAiModel = prefs.getString(_kOpenAiModel) ?? 'gpt-4o';
+
+    // Load Gemini API key securely
+    String? secureGeminiKey;
+    try {
+      secureGeminiKey = await _secureStorage.read(key: _kGeminiImageKeySecure);
+    } catch (e) {
+      secureGeminiKey = '';
+    }
+    _geminiImageKey = secureGeminiKey ?? '';
+
+    // Load Gemini Video API key securely
+    String? secureGeminiVideoKey;
+    try {
+      secureGeminiVideoKey = await _secureStorage.read(key: _kGeminiVideoKeySecure);
+    } catch (e) {
+      secureGeminiVideoKey = '';
+    }
+    _geminiVideoKey = secureGeminiVideoKey ?? '';
+    _geminiImageModel =
+        prefs.getString(_kGeminiImageModel) ?? 'gemini-3.1-flash-image';
+    _geminiImageAspectRatio =
+        prefs.getString(_kGeminiImageAspectRatio) ?? '16:9';
+    _geminiImageResolution = prefs.getString(_kGeminiImageResolution) ?? '1K';
+
     _comfyUIUrl = prefs.getString(_kComfyUIUrl) ?? 'http://127.0.0.1:8188';
     _activeImageProvider = prefs.getString(_kActiveImageProvider) ?? 'comfyui';
+    _activeVideoProvider = prefs.getString(_kActiveVideoProvider) ?? 'gemini_video';
+    _geminiVideoModel = prefs.getString(_kGeminiVideoModel) ?? 'veo-3.1-generate-preview';
     _defaultVideoEffect = prefs.getString(_kDefaultVideoEffect) ?? 'zoom_in';
     _activeTtsProvider = prefs.getString(_kActiveTtsProvider) ?? 'flutter_tts';
     _openAiTtsVoice = prefs.getString(_kOpenAiTtsVoice) ?? 'alloy';
@@ -128,8 +186,15 @@ class AppSettings extends ChangeNotifier {
     required String openAiUrl,
     required String openAiKey,
     required String openAiModel,
+    required String geminiImageKey,
+    required String geminiVideoKey,
+    required String geminiImageModel,
+    required String geminiImageAspectRatio,
+    required String geminiImageResolution,
     required String comfyUIUrl,
     required String activeImageProvider,
+    required String activeVideoProvider,
+    required String geminiVideoModel,
     required String defaultVideoEffect,
     required String activeTtsProvider,
     required String openAiTtsVoice,
@@ -158,16 +223,33 @@ class AppSettings extends ChangeNotifier {
     await prefs.setString(_kLlmModelName, llmModelName.trim());
     await prefs.setString(_kActiveLlmProvider, activeLlmProvider);
     await prefs.setString(_kOpenAiUrl, cleanOpenAiUrl);
-    // Save API key securely (NOT in SharedPreferences)
+
+    // Save API keys securely
     try {
       await _secureStorage.write(
         key: _kOpenAiKeySecure,
         value: openAiKey.trim(),
       );
+      await _secureStorage.write(
+        key: _kGeminiImageKeySecure,
+        value: geminiImageKey.trim(),
+      );
+      await _secureStorage.write(
+        key: _kGeminiVideoKeySecure,
+        value: geminiVideoKey.trim(),
+      );
     } catch (_) {} // Ignore in tests
+
     await prefs.setString(_kOpenAiModel, openAiModel.trim());
+
+    await prefs.setString(_kGeminiImageModel, geminiImageModel.trim());
+    await prefs.setString(_kGeminiImageAspectRatio, geminiImageAspectRatio);
+    await prefs.setString(_kGeminiImageResolution, geminiImageResolution);
+
     await prefs.setString(_kComfyUIUrl, cleanComfyUIUrl);
     await prefs.setString(_kActiveImageProvider, activeImageProvider);
+    await prefs.setString(_kActiveVideoProvider, activeVideoProvider);
+    await prefs.setString(_kGeminiVideoModel, geminiVideoModel.trim());
     await prefs.setString(_kDefaultVideoEffect, defaultVideoEffect);
     await prefs.setString(_kActiveTtsProvider, activeTtsProvider);
     await prefs.setString(_kOpenAiTtsVoice, openAiTtsVoice);
@@ -186,8 +268,17 @@ class AppSettings extends ChangeNotifier {
     _openAiUrl = cleanOpenAiUrl;
     _openAiKey = openAiKey.trim();
     _openAiModel = openAiModel.trim();
+
+    _geminiImageKey = geminiImageKey.trim();
+    _geminiVideoKey = geminiVideoKey.trim();
+    _geminiImageModel = geminiImageModel.trim();
+    _geminiImageAspectRatio = geminiImageAspectRatio;
+    _geminiImageResolution = geminiImageResolution;
+
     _comfyUIUrl = cleanComfyUIUrl;
     _activeImageProvider = activeImageProvider;
+    _activeVideoProvider = activeVideoProvider;
+    _geminiVideoModel = geminiVideoModel.trim();
     _defaultVideoEffect = defaultVideoEffect;
     _activeTtsProvider = activeTtsProvider;
     _openAiTtsVoice = openAiTtsVoice;

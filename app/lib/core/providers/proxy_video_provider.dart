@@ -26,10 +26,10 @@ class ProxyVideoProvider extends VideoProvider {
   HardwareRequirements get hardwareRequirements => const HardwareRequirements();
 
   VideoProvider get _activeProvider {
-    final preferredId = "${context.appSettings.activeImageProvider}_video";
+    final preferredId = context.appSettings.activeVideoProvider;
     final capability = VideoGenerationCapability(
-      requiresGPU: true,
-      requiredVRAMGB: 8,
+      requiresGPU: false,
+      requiredVRAMGB: 0,
     );
 
     final provider = context.capabilityResolver.resolve(

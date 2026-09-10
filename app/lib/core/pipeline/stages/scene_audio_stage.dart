@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../contracts/pipeline_stage.dart';
 import '../../noema_project.dart';
 import '../../workflow/workflow_engine.dart';
@@ -29,7 +30,6 @@ class SceneAudioStage extends PipelineStage {
 
   @override
   Future<void> run(NoemaProject project) async {
-    project.audios.clear();
     for (final scene in project.story.scenes) {
       await runForScene(project, scene);
     }
@@ -39,9 +39,13 @@ class SceneAudioStage extends PipelineStage {
   Future<void> runForScene(NoemaProject project, Scene scene) async {
     // Generate Narration if present
     if (scene.narration != null && scene.narration!.isNotEmpty) {
-      final workflow = AudioWorkflow(provider);
-      final context = WorkflowContext();
-      context.set("text", scene.narration!);
+      final existingAudio = project.audios.where((a) => a.sceneId == scene.id && a.characterName == "Narrator").lastOrNull;
+      if (existingAudio != null && existingAudio.text == scene.narration! && existingAudio.localPath != null && File(existingAudio.localPath!).existsSync()) {
+        debugPrint('SceneAudioStage: Skipped narration for scene ${scene.id}, valid audio already exists.');
+      } else {
+        final workflow = AudioWorkflow(provider);
+        final context = WorkflowContext();
+        context.set("text", scene.narration!);
 
       final result = await engine.runWithContext(workflow, context);
       final job = result.get<Job>("audio")!;
@@ -82,12 +86,19 @@ class SceneAudioStage extends PipelineStage {
           "Audio generation failed: ${job.error?.message ?? 'Unknown error'}",
         );
       }
-      project.audios.add(audio);
+        project.audios.add(audio);
+      }
     }
 
     // Generate Dialogue Audio
     for (final dialogueLine in scene.dialogue) {
       if (dialogueLine.text.trim().isEmpty) continue;
+
+      final existingAudio = project.audios.where((a) => a.sceneId == scene.id && a.characterName == dialogueLine.characterName).lastOrNull;
+      if (existingAudio != null && existingAudio.text == dialogueLine.text && existingAudio.localPath != null && File(existingAudio.localPath!).existsSync()) {
+        debugPrint('SceneAudioStage: Skipped dialogue for ${dialogueLine.characterName} in scene ${scene.id}, valid audio already exists.');
+        continue;
+      }
 
       final workflow = AudioWorkflow(provider);
       final context = WorkflowContext();

@@ -60,4 +60,12 @@ class PlatformPaths {
       dir.createSync(recursive: true);
     }
   }
+
+  static void overrideInstanceForTesting(String basePath) {
+    PlatformPaths.instance._baseAppDataPath = basePath;
+  }
+
+  static void resetInstanceForTesting() {
+    PlatformPaths.instance._baseAppDataPath = null;
+  }
 }

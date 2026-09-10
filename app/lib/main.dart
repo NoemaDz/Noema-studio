@@ -11,11 +11,14 @@ import 'ui/screens/studio_screen.dart';
 import 'core/plugins/ingestion_plugin.dart';
 import 'infrastructure/openai/openai_plugin.dart';
 import 'infrastructure/openai/openai_image_plugin.dart';
+import 'infrastructure/gemini/gemini_plugin.dart';
 import 'application/comfyui_installer_service.dart';
 import 'ui/screens/setup_wizard_screen.dart';
 
 import 'core/errors/crash_logger.dart';
 import 'ui/widgets/error_boundary.dart';
+
+import 'core/settings/platform_paths.dart';
 
 final noema = Noema();
 
@@ -23,11 +26,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   CrashLogger.setupGlobalErrorHandler();
 
+  await PlatformPaths.instance.init();
+
   noema.init([
     ComfyUIPlugin(),
     OllamaPlugin(),
     OpenAIPlugin(),
     OpenAIImagePlugin(),
+    GeminiPlugin(),
     FlutterTTSPlugin(),
     FFmpegPlugin(),
     IngestionPlugin(),

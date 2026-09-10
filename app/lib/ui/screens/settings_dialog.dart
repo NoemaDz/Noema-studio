@@ -22,6 +22,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   late TextEditingController _comfyUIUrlController;
   late String _activeImageProvider;
+  late TextEditingController _geminiImageKeyController;
+  late TextEditingController _geminiImageModelController;
+  bool _obscureGeminiKey = true;
+  bool _obscureOpenAiKey = true;
+  late String _geminiImageAspectRatio;
+  late String _geminiImageResolution;
+  
+  late String _activeVideoProvider;
+  late TextEditingController _geminiVideoKeyController;
+  bool _obscureGeminiVideoKey = true;
+  late TextEditingController _geminiVideoModelController;
   late String _selectedEffect;
 
   late String _activeTtsProvider;
@@ -86,6 +97,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
     _comfyUIUrlController = TextEditingController(text: settings.comfyUIUrl);
     _activeImageProvider = settings.activeImageProvider;
+    _geminiImageKeyController = TextEditingController(
+      text: settings.geminiImageKey,
+    );
+    _geminiImageModelController = TextEditingController(
+      text: settings.geminiImageModel,
+    );
+    _geminiImageAspectRatio = settings.geminiImageAspectRatio;
+    _geminiImageResolution = settings.geminiImageResolution;
+    
+    _activeVideoProvider = settings.activeVideoProvider;
+    _geminiVideoKeyController = TextEditingController(
+      text: settings.geminiVideoKeyRaw,
+    );
+    _geminiVideoModelController = TextEditingController(
+      text: settings.geminiVideoModel,
+    );
     _selectedEffect = settings.defaultVideoEffect;
     if (!_effects.contains(_selectedEffect)) {
       _selectedEffect = 'random';
@@ -132,22 +159,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _openAiKeyController.dispose();
     _openAiModelController.dispose();
     _comfyUIUrlController.dispose();
+    _geminiImageKeyController.dispose();
+    _geminiImageModelController.dispose();
+    _geminiVideoKeyController.dispose();
+    _geminiVideoModelController.dispose();
     super.dispose();
   }
 
   void _save() {
-    if ((_activeLlmProvider == 'openai' ||
-            _activeTtsProvider == 'openai_tts' ||
-            _activeImageProvider == 'openai_image') &&
-        _openAiKeyController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter your OpenAI API key before saving."),
-        ),
-      );
-      return;
-    }
-
     noema.bootstrap.appSettings.saveSettings(
       ollamaUrl: _ollamaUrlController.text,
       llmModelName: _llmModelNameController.text,
@@ -155,8 +174,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
       openAiUrl: _openAiUrlController.text,
       openAiKey: _openAiKeyController.text,
       openAiModel: _openAiModelController.text,
+      geminiImageKey: _geminiImageKeyController.text,
+      geminiVideoKey: _geminiVideoKeyController.text,
+      geminiImageModel: _geminiImageModelController.text,
+      geminiImageAspectRatio: _geminiImageAspectRatio,
+      geminiImageResolution: _geminiImageResolution,
       comfyUIUrl: _comfyUIUrlController.text,
       activeImageProvider: _activeImageProvider,
+      activeVideoProvider: _activeVideoProvider,
+      geminiVideoModel: _geminiVideoModelController.text,
       defaultVideoEffect: _selectedEffect,
       activeTtsProvider: _activeTtsProvider,
       openAiTtsVoice: _openAiTtsVoice,
@@ -293,11 +319,21 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: _openAiKeyController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
+                        obscureText: _obscureOpenAiKey,
+                        decoration: InputDecoration(
                           labelText: "API Key (Bearer Token)",
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                           hintText: "sk-...",
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureOpenAiKey
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscureOpenAiKey = !_obscureOpenAiKey,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -379,11 +415,21 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: _openAiKeyController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
+                          obscureText: _obscureOpenAiKey,
+                          decoration: InputDecoration(
                             labelText: "OpenAI API Key (Required for TTS)",
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                             hintText: "sk-...",
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureOpenAiKey
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureOpenAiKey = !_obscureOpenAiKey,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -441,6 +487,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           value: 'openai_image',
                           child: Text('OpenAI DALL-E 3 (Cloud)'),
                         ),
+                        DropdownMenuItem(
+                          value: 'gemini_image',
+                          child: Text('Google Gemini (Cloud)'),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value != null) {
@@ -459,20 +509,160 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                    ] else if (_activeImageProvider == 'gemini_image') ...[
+                      TextField(
+                        controller: _geminiImageKeyController,
+                        obscureText: _obscureGeminiKey,
+                        decoration: InputDecoration(
+                          labelText: "Google Gemini API Key",
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureGeminiKey
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscureGeminiKey = !_obscureGeminiKey,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _geminiImageModelController,
+                        decoration: const InputDecoration(
+                          labelText: "Gemini Model",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: _geminiImageAspectRatio,
+                        decoration: const InputDecoration(
+                          labelText: "Aspect Ratio",
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: '16:9',
+                            child: Text('16:9 (Landscape)'),
+                          ),
+                          DropdownMenuItem(
+                            value: '9:16',
+                            child: Text('9:16 (Portrait)'),
+                          ),
+                          DropdownMenuItem(
+                            value: '1:1',
+                            child: Text('1:1 (Square)'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _geminiImageAspectRatio = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: _geminiImageResolution,
+                        decoration: const InputDecoration(
+                          labelText: "Resolution",
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: '1K', child: Text('1K')),
+                          DropdownMenuItem(value: '2K', child: Text('2K')),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _geminiImageResolution = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
                     ] else ...[
                       if (_activeLlmProvider != 'openai' &&
                           _activeTtsProvider != 'openai_tts') ...[
                         TextField(
                           controller: _openAiKeyController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
+                          obscureText: _obscureOpenAiKey,
+                          decoration: InputDecoration(
                             labelText: "OpenAI API Key (Required for DALL-E 3)",
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                             hintText: "sk-...",
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureOpenAiKey
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureOpenAiKey = !_obscureOpenAiKey,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
                       ],
+                    ],
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _activeVideoProvider,
+                      decoration: const InputDecoration(
+                        labelText: "Active Video Generator",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'comfyui_video',
+                          child: Text('ComfyUI (Local)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'ffmpeg_video',
+                          child: Text('FFmpeg (Local)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'gemini_video',
+                          child: Text('Google Gemini (Cloud)'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _activeVideoProvider = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    if (_activeVideoProvider == 'gemini_video') ...[
+                      TextField(
+                        controller: _geminiVideoKeyController,
+                        obscureText: _obscureGeminiVideoKey,
+                        decoration: InputDecoration(
+                          labelText: "Gemini Video API Key",
+                          border: const OutlineInputBorder(),
+                          hintText: "اتركه فارغاً لاستخدام مفتاح الصور",
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureGeminiVideoKey
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscureGeminiVideoKey = !_obscureGeminiVideoKey,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _geminiVideoModelController,
+                        decoration: const InputDecoration(
+                          labelText: "Gemini Video Model",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
                     DropdownButtonFormField<String>(
                       initialValue: _selectedEffect,

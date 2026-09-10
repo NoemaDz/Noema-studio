@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../contracts/pipeline_stage.dart';
 import '../../cancellation_token.dart';
@@ -39,7 +40,6 @@ class SceneVideoStage extends PipelineStage {
       debugPrint("SceneVideoStage: Skipping (enableVideoGeneration is false)");
       return;
     }
-    project.videos.clear();
     for (final scene in project.story.scenes) {
       await runForScene(project, scene);
     }
@@ -51,11 +51,22 @@ class SceneVideoStage extends PipelineStage {
       return;
     }
 
+    final prompt = scene.imagePrompt ?? scene.description;
+
+    // Check if a valid video already exists for this scene
+    final existingVideo = project.videos.where((vid) => vid.sceneId == scene.id).lastOrNull;
+    if (existingVideo != null && existingVideo.artifact?.path != null) {
+      if (File(existingVideo.artifact!.path).existsSync()) {
+        debugPrint('SceneVideoStage: Skipped scene ${scene.id}, valid video already exists.');
+        return;
+      }
+    }
+
     debugPrint('SceneVideoStage: Processing scene ${scene.id}...');
     final workflow = I2vWorkflow(provider);
     final context = WorkflowContext();
 
-    context.set('prompt', scene.imagePrompt ?? scene.description);
+    context.set('prompt', prompt);
 
     // Find the generated image for this scene to use as the source
     final image = project.images.cast<dynamic>().firstWhere(
